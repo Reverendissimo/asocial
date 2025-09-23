@@ -138,7 +138,12 @@
           <div id="paste-tab" class="tab-content active">
             <div class="form-group">
               <label for="pasted-key">Public Key:</label>
-              <textarea id="pasted-key" placeholder="Paste the public key here..." rows="6"></textarea>
+              <textarea id="pasted-key" placeholder="Paste the base64 public key here (starts with MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...)" rows="6"></textarea>
+              <small style="color: #00ff00; font-size: 12px;">
+                You can paste either:<br>
+                • Raw base64 public key (starts with MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...)<br>
+                • JSON format: {"publicKey":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...","groupName":"Group Name"}
+              </small>
             </div>
             <div class="form-group">
               <label for="contact-name">Contact Name:</label>

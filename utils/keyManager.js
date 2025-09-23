@@ -159,22 +159,34 @@ class AsocialKeyManager {
   }
 
   /**
-   * Import key group public key from QR code data
+   * Import key group public key from QR code data or raw base64 string
    */
-  async importGroupPublicKey(qrData, groupName) {
+  async importGroupPublicKey(keyData, groupName) {
     try {
-      const importData = JSON.parse(qrData);
+      let publicKey, groupNameFromData;
       
-      if (!importData.publicKey || !importData.groupName) {
-        throw new Error('Invalid QR code data');
+      // Try to parse as JSON first (for QR code data)
+      try {
+        const importData = JSON.parse(keyData);
+        if (importData.publicKey && importData.groupName) {
+          publicKey = importData.publicKey;
+          groupNameFromData = importData.groupName;
+        } else {
+          throw new Error('Invalid JSON format');
+        }
+      } catch (jsonError) {
+        // If JSON parsing fails, treat as raw base64 public key
+        console.log('Not JSON format, treating as raw base64 public key');
+        publicKey = keyData.trim();
+        groupNameFromData = groupName || 'Imported Group';
       }
       
-      // Validate the public key
-      await this.crypto.importKey(importData.publicKey, 'public', ['encrypt']);
+      // Validate the public key by trying to import it
+      await this.crypto.importKey(publicKey, 'public', ['encrypt']);
       
       return {
-        groupName: importData.groupName,
-        publicKey: importData.publicKey
+        groupName: groupNameFromData,
+        publicKey: publicKey
       };
     } catch (error) {
       console.error('Failed to import public key:', error);
