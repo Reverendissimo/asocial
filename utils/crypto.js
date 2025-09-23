@@ -26,7 +26,7 @@ class AsocialCrypto {
       const keyPair = await crypto.subtle.generateKey(
         {
           name: 'RSA-OAEP',
-          modulusLength: 4096,
+          modulusLength: 2048, // Reduced from 4096 to 2048 for smaller encrypted messages
           publicExponent: new Uint8Array([1, 0, 1]),
           hash: 'SHA-1'
         },
@@ -34,7 +34,7 @@ class AsocialCrypto {
         ['encrypt', 'decrypt']
       );
       
-      console.log('RSA-4096 key pair generated successfully');
+      console.log('RSA-2048 key pair generated successfully');
       return keyPair;
     } catch (error) {
       console.error('Key generation failed:', error);

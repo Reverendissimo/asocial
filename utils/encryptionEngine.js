@@ -31,7 +31,7 @@ class AsocialEncryptionEngine {
       // Get public key for the group
       const publicKey = await this.keyManager.getPublicKeyForGroup(groupId);
       
-      // Encrypt symmetric key with RSA-4096
+      // Encrypt symmetric key with RSA-2048
       const encryptedSymmetricKey = await this.crypto.encryptSymmetricKey(symmetricKey, publicKey);
       
       // Note: RSA-OAEP doesn't support signing, so we skip signature for now
@@ -43,24 +43,24 @@ class AsocialEncryptionEngine {
       const groupName = group ? group.name : 'Unknown Group';
       const keyId = group ? group.keyId : 'UNKNOWN';
       
-      // Create payload
+      // Create compact payload (minimal metadata)
       const payload = {
-        version: '1.0',
-        algorithm: 'RSA-4096/AES-256-GCM',
-        groupId: groupId,
-        groupName: groupName,
-        sender: 'You', // This would be the actual sender name
-        encryptedData: this.arrayBufferToBase64(encryptedData),
-        encryptedSymmetricKey: this.arrayBufferToBase64(encryptedSymmetricKey),
-        iv: this.arrayBufferToBase64(iv),
-        signature: this.arrayBufferToBase64(signature),
-        timestamp: new Date().toISOString()
+        v: '1.0', // version
+        d: this.arrayBufferToBase64(encryptedData), // encrypted data
+        k: this.arrayBufferToBase64(encryptedSymmetricKey), // encrypted key
+        i: this.arrayBufferToBase64(iv), // iv
+        t: Date.now() // timestamp (number instead of ISO string)
       };
       
       // Create final encrypted message with key ID
       const encryptedMessage = `${this.messageTagPrefix} ${keyId}] ${btoa(JSON.stringify(payload))}`;
       
-      console.log('Message encrypted successfully');
+      // Check if encrypted message is too long for LinkedIn
+      if (encryptedMessage.length > 3000) {
+        throw new Error(`Encrypted message too long (${encryptedMessage.length} chars). Try a shorter message.`);
+      }
+      
+      console.log(`Message encrypted successfully (${encryptedMessage.length} chars)`);
       return encryptedMessage;
     } catch (error) {
       console.error('Encryption failed:', error);
@@ -89,8 +89,12 @@ class AsocialEncryptionEngine {
       const payloadBase64 = encryptedMessage.substring(payloadStart);
       const payload = JSON.parse(atob(payloadBase64));
       
-      // Validate payload structure
-      if (!payload.encryptedData || !payload.encryptedSymmetricKey || !payload.iv) {
+      // Validate payload structure (handle both old and new formats)
+      const encryptedData = payload.encryptedData || payload.d;
+      const encryptedSymmetricKey = payload.encryptedSymmetricKey || payload.k;
+      const iv = payload.iv || payload.i;
+      
+      if (!encryptedData || !encryptedSymmetricKey || !iv) {
         throw new Error('Invalid encrypted message format');
       }
       
@@ -109,12 +113,12 @@ class AsocialEncryptionEngine {
         const privateKey = await this.keyManager.getPrivateKeyForGroup(matchingGroup.id);
         
         // Decrypt symmetric key
-        const encryptedSymmetricKeyBuffer = this.base64ToArrayBuffer(payload.encryptedSymmetricKey);
+        const encryptedSymmetricKeyBuffer = this.base64ToArrayBuffer(encryptedSymmetricKey);
         const symmetricKey = await this.crypto.decryptSymmetricKey(encryptedSymmetricKeyBuffer, privateKey);
         
         // Decrypt message content
-        const encryptedDataBuffer = this.base64ToArrayBuffer(payload.encryptedData);
-        const ivBuffer = this.base64ToArrayBuffer(payload.iv);
+        const encryptedDataBuffer = this.base64ToArrayBuffer(encryptedData);
+        const ivBuffer = this.base64ToArrayBuffer(iv);
         const decryptedMessage = await this.crypto.decryptMessage(
           encryptedDataBuffer, 
           ivBuffer, 
@@ -128,8 +132,8 @@ class AsocialEncryptionEngine {
           groupName: matchingGroup.name,
           groupId: matchingGroup.id,
           keyId: keyId,
-          timestamp: payload.timestamp,
-          algorithm: payload.algorithm,
+          timestamp: payload.timestamp || new Date(payload.t).toISOString(),
+          algorithm: payload.algorithm || 'RSA-2048/AES-256-GCM',
           sender: payload.sender || 'Unknown'
         };
       } catch (error) {
@@ -147,10 +151,44 @@ class AsocialEncryptionEngine {
    */
   detectEncryptedMessages() {
     const messages = [];
-    const textNodes = this.getTextNodes(document.body);
     
+    // Look for encrypted messages in various LinkedIn post containers
+    const postSelectors = [
+      '.feed-shared-update-v2__description',
+      '.feed-shared-text',
+      '.feed-shared-text__text-view',
+      '.comments-comment-item-content-body',
+      '.msg-s-message-list-content',
+      '.feed-shared-inline-show-more-text'
+    ];
+    
+    for (const selector of postSelectors) {
+      const elements = document.querySelectorAll(selector);
+      for (const element of elements) {
+        if (element.textContent && element.textContent.includes(this.messageTagPrefix)) {
+          // Check if already processed
+          if (element.classList.contains('asocial-processed')) {
+            continue;
+          }
+          
+          messages.push({
+            node: element,
+            text: element.textContent,
+            isEncrypted: true
+          });
+        }
+      }
+    }
+    
+    // Also check text nodes as fallback
+    const textNodes = this.getTextNodes(document.body);
     for (const node of textNodes) {
       if (node.textContent.includes(this.messageTagPrefix)) {
+        // Check if already processed
+        if (node.parentElement && node.parentElement.classList.contains('asocial-processed')) {
+          continue;
+        }
+        
         messages.push({
           node: node,
           text: node.textContent,
@@ -167,11 +205,10 @@ class AsocialEncryptionEngine {
    */
   async replaceEncryptedMessage(node, decryptedContent) {
     try {
-      const parent = node.parentNode;
       const textContent = node.textContent;
       
       // Find the encrypted part
-      const encryptedStart = textContent.indexOf(this.messageTag);
+      const encryptedStart = textContent.indexOf(this.messageTagPrefix);
       if (encryptedStart === -1) return;
       
       const beforeEncrypted = textContent.substring(0, encryptedStart);
@@ -183,7 +220,7 @@ class AsocialEncryptionEngine {
       const afterPart = afterEncrypted.substring(encryptedEnd);
       
       // Create replacement content
-      const replacement = document.createElement('span');
+      const replacement = document.createElement('div');
       replacement.className = 'asocial-decrypted-message';
       replacement.innerHTML = `
         <div class="asocial-message-header">
@@ -196,12 +233,35 @@ class AsocialEncryptionEngine {
         <div class="asocial-encrypted" style="display: none;">${this.escapeHtml(encryptedPart)}</div>
       `;
       
-      // Replace the node
-      const newTextNode = document.createTextNode(beforeEncrypted);
-      parent.insertBefore(newTextNode, node);
-      parent.insertBefore(replacement, node);
-      parent.insertBefore(document.createTextNode(afterPart), node);
-      parent.removeChild(node);
+      // Mark as processed to avoid re-processing
+      replacement.classList.add('asocial-processed');
+      
+      // Use a more gentle approach to avoid triggering LinkedIn's observers
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        // Instead of clearing and replacing, just hide the original and append
+        node.style.display = 'none';
+        node.classList.add('asocial-processed');
+        
+        // Insert our replacement after the original node
+        if (node.parentNode) {
+          node.parentNode.insertBefore(replacement, node.nextSibling);
+        }
+      } else {
+        // For text nodes, be more careful
+        const parent = node.parentNode;
+        if (parent) {
+          // Hide the original text
+          const span = document.createElement('span');
+          span.style.display = 'none';
+          span.appendChild(node.cloneNode());
+          parent.replaceChild(span, node);
+          
+          // Insert our content
+          parent.insertBefore(document.createTextNode(beforeEncrypted), span);
+          parent.insertBefore(replacement, span);
+          parent.insertBefore(document.createTextNode(afterPart), span);
+        }
+      }
       
     } catch (error) {
       console.error('Failed to replace encrypted message:', error);

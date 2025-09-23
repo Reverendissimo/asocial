@@ -75,6 +75,17 @@ class LinkedInAsocial {
       }
     }, 6000);
     
+    // Add periodic check every 10 seconds to ensure buttons are always available
+    setInterval(() => {
+      const inputs = this.findLinkedInPostInputs();
+      const buttons = document.querySelectorAll('.asocial-button');
+      
+      if (inputs.length > 0 && buttons.length === 0) {
+        console.log('Periodic check: Found inputs but no buttons, re-injecting...');
+        this.injectAsocialButtons();
+      }
+    }, 10000);
+    
     console.log('LinkedIn Asocial integration setup complete');
   }
 
@@ -291,8 +302,29 @@ class LinkedInAsocial {
       // Encrypt message
       const encryptedMessage = await this.encryptionEngine.encryptMessage(message, selectedGroup.id);
       
+      // Store original content for potential restoration
+      const originalContent = this.extractMessageContent(inputArea);
+      
       // Replace content in input area
       this.replaceInputContent(inputArea, encryptedMessage);
+      
+      // Simple approach: just ensure the content is set and LinkedIn knows about it
+      setTimeout(() => {
+        const currentContent = this.extractMessageContent(inputArea);
+        if (!currentContent || currentContent.trim() === '') {
+          console.log('Content disappeared, restoring once...');
+          // Use a more gentle approach to avoid triggering LinkedIn's observers
+          if (inputArea.contentEditable === 'true') {
+            inputArea.innerHTML = encryptedMessage;
+          } else {
+            inputArea.value = encryptedMessage;
+          }
+          
+          // Trigger a single input event
+          const inputEvent = new Event('input', { bubbles: true });
+          inputArea.dispatchEvent(inputEvent);
+        }
+      }, 500);
       
       // Show success notification
       this.showNotification(`Message encrypted for group: ${selectedGroup.name}`, 'success');
@@ -328,15 +360,27 @@ class LinkedInAsocial {
    */
   replaceInputContent(inputArea, newContent) {
     if (inputArea.contentEditable === 'true') {
-      inputArea.textContent = newContent;
+      // For contenteditable, be gentle to avoid triggering LinkedIn's observers
       inputArea.innerHTML = newContent;
+      
+      // Set cursor to end
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(inputArea);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      
     } else if (inputArea.tagName === 'TEXTAREA') {
       inputArea.value = newContent;
     }
     
-    // Trigger input event
-    const event = new Event('input', { bubbles: true });
-    inputArea.dispatchEvent(event);
+    // Trigger minimal events to make LinkedIn aware without causing conflicts
+    const inputEvent = new Event('input', { bubbles: true });
+    inputArea.dispatchEvent(inputEvent);
+    
+    // Focus the input
+    inputArea.focus();
   }
 
   /**
@@ -456,6 +500,20 @@ class LinkedInAsocial {
   setupMessageDecryption() {
     // Find and decrypt existing encrypted messages
     this.decryptExistingMessages();
+    
+    // Trigger decryption on page load with delay
+    window.addEventListener('load', () => {
+      setTimeout(() => this.decryptExistingMessages(), 2000);
+    });
+    
+    // Trigger decryption when scrolling (for infinite scroll) - less frequently
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        this.decryptExistingMessages();
+      }, 2000); // Increased delay to reduce conflicts
+    });
   }
 
   /**
@@ -463,11 +521,15 @@ class LinkedInAsocial {
    */
   async decryptExistingMessages() {
     try {
+      console.log('Looking for encrypted messages...');
       const encryptedMessages = this.encryptionEngine.detectEncryptedMessages();
+      console.log(`Found ${encryptedMessages.length} encrypted messages`);
       
       for (const message of encryptedMessages) {
         try {
+          console.log('Attempting to decrypt message:', message.text.substring(0, 100) + '...');
           const decrypted = await this.encryptionEngine.decryptMessage(message.text);
+          console.log('Successfully decrypted message');
           await this.encryptionEngine.replaceEncryptedMessage(message.node, decrypted.message);
         } catch (error) {
           console.log('Cannot decrypt message:', error.message);
@@ -493,14 +555,22 @@ class LinkedInAsocial {
           // Check if new content was added
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              // Look for new post input areas - be more specific
+              // Look for new post input areas - be more comprehensive
               const inputs = node.querySelectorAll('.ql-editor[contenteditable="true"]:not(.ql-clipboard)');
               if (inputs.length > 0) {
                 console.log(`Mutation observer found ${inputs.length} new input areas`);
                 shouldUpdate = true;
               }
               
-              // Look for new encrypted messages
+              // Also check if the node itself is an input area
+              if (node.classList && node.classList.contains('ql-editor') && 
+                  node.getAttribute('contenteditable') === 'true' && 
+                  !node.classList.contains('ql-clipboard')) {
+                console.log('Mutation observer found direct input area');
+                shouldUpdate = true;
+              }
+              
+              // Look for encrypted messages in feed posts
               if (node.textContent && node.textContent.includes('[ASOCIAL')) {
                 console.log('Mutation observer found encrypted message');
                 shouldUpdate = true;
@@ -516,14 +586,19 @@ class LinkedInAsocial {
         this.updateTimeout = setTimeout(() => {
           console.log('Updating LinkedIn integration...');
           this.injectAsocialButtons();
-          this.decryptExistingMessages();
-        }, 2000); // Increased debounce time
+          // Only decrypt if we're not in the middle of encryption
+          if (!this.injecting) {
+            this.decryptExistingMessages();
+          }
+        }, 1000); // Reduced debounce time for better responsiveness
       }
     });
     
-    this.observer.observe(document.body, {
+    // Observe the main content area with subtree to catch all input areas
+    const feedContainer = document.querySelector('.scaffold-layout__content') || document.body;
+    this.observer.observe(feedContainer, {
       childList: true,
-      subtree: true
+      subtree: true // Re-enable subtree to catch input areas
     });
     
     console.log('Mutation observer setup complete');
@@ -565,6 +640,15 @@ class LinkedInAsocial {
   manualInjectButtons() {
     console.log('Manual button injection triggered');
     this.injectAsocialButtons();
+  }
+
+  /**
+   * Force refresh - manually trigger button injection and decryption
+   */
+  forceRefresh() {
+    console.log('Force refresh triggered');
+    this.injectAsocialButtons();
+    this.decryptExistingMessages();
   }
 }
 
