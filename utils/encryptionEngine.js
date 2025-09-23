@@ -225,41 +225,111 @@ class AsocialEncryptionEngine {
       replacement.innerHTML = `
         <div class="asocial-message-header">
           <span class="asocial-tag">🔒 Decrypted Message</span>
-          <button class="asocial-toggle" onclick="this.parentElement.parentElement.classList.toggle('show-encrypted')">
+          <button class="asocial-toggle">
             Show Encrypted
           </button>
         </div>
         <div class="asocial-content">${this.escapeHtml(decryptedContent)}</div>
-        <div class="asocial-encrypted" style="display: none;">${this.escapeHtml(encryptedPart)}</div>
+        <div class="asocial-encrypted" style="display: none;"></div>
       `;
+      
+      // Store encrypted content in data attribute for the toggle
+      replacement.setAttribute('data-encrypted-content', encryptedPart);
       
       // Mark as processed to avoid re-processing
       replacement.classList.add('asocial-processed');
       
-      // Use a more gentle approach to avoid triggering LinkedIn's observers
+      // Completely remove encrypted content from DOM to prevent URL exposure
       if (node.nodeType === Node.ELEMENT_NODE) {
-        // Instead of clearing and replacing, just hide the original and append
-        node.style.display = 'none';
+        // Store the encrypted content in a data attribute for potential restoration
+        replacement.setAttribute('data-asocial-encrypted', encryptedPart);
+        replacement.classList.add('asocial-processed');
+        
+        // Clear the original node completely
+        node.innerHTML = '';
+        node.textContent = '';
         node.classList.add('asocial-processed');
         
         // Insert our replacement after the original node
         if (node.parentNode) {
           node.parentNode.insertBefore(replacement, node.nextSibling);
+          
+          // Add event listener after the element is in the DOM
+          const toggleButton = replacement.querySelector('.asocial-toggle');
+          console.log('Toggle button found:', toggleButton);
+          if (toggleButton) {
+            console.log('Adding click listener to toggle button');
+            toggleButton.addEventListener('click', (e) => {
+              console.log('Toggle button clicked!');
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const encryptedDiv = replacement.querySelector('.asocial-encrypted');
+              console.log('Encrypted div found:', encryptedDiv);
+              if (encryptedDiv) {
+                if (encryptedDiv.textContent === '') {
+                  console.log('Loading encrypted content...');
+                  encryptedDiv.textContent = replacement.getAttribute('data-encrypted-content');
+                }
+                replacement.classList.toggle('show-encrypted');
+                console.log('Toggled show-encrypted class:', replacement.classList.contains('show-encrypted'));
+                console.log('Element classes:', replacement.className);
+                console.log('Encrypted div display style:', getComputedStyle(encryptedDiv).display);
+                
+                // Update button text
+                const buttonText = replacement.classList.contains('show-encrypted') ? 'Hide Encrypted' : 'Show Encrypted';
+                toggleButton.textContent = buttonText;
+                console.log('Updated button text to:', buttonText);
+              }
+            });
+          } else {
+            console.error('Toggle button not found!');
+          }
         }
       } else {
-        // For text nodes, be more careful
+        // For text nodes, completely remove the encrypted content
         const parent = node.parentNode;
         if (parent) {
-          // Hide the original text
-          const span = document.createElement('span');
-          span.style.display = 'none';
-          span.appendChild(node.cloneNode());
-          parent.replaceChild(span, node);
+          // Store encrypted content in parent's data attribute
+          parent.setAttribute('data-asocial-encrypted', encryptedPart);
           
-          // Insert our content
-          parent.insertBefore(document.createTextNode(beforeEncrypted), span);
-          parent.insertBefore(replacement, span);
-          parent.insertBefore(document.createTextNode(afterPart), span);
+          // Replace the text node with our content
+          const newTextNode = document.createTextNode(beforeEncrypted);
+          parent.replaceChild(newTextNode, node);
+          parent.insertBefore(replacement, newTextNode.nextSibling);
+          parent.insertBefore(document.createTextNode(afterPart), replacement.nextSibling);
+          
+          // Add event listener after the element is in the DOM
+          const toggleButton = replacement.querySelector('.asocial-toggle');
+          console.log('Toggle button found (text node):', toggleButton);
+          if (toggleButton) {
+            console.log('Adding click listener to toggle button (text node)');
+            toggleButton.addEventListener('click', (e) => {
+              console.log('Toggle button clicked (text node)!');
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const encryptedDiv = replacement.querySelector('.asocial-encrypted');
+              console.log('Encrypted div found (text node):', encryptedDiv);
+              if (encryptedDiv) {
+                if (encryptedDiv.textContent === '') {
+                  console.log('Loading encrypted content (text node)...');
+                  encryptedDiv.textContent = replacement.getAttribute('data-encrypted-content');
+                }
+                replacement.classList.toggle('show-encrypted');
+                console.log('Toggled show-encrypted class (text node):', replacement.classList.contains('show-encrypted'));
+                console.log('Element classes:', replacement.className);
+                console.log('Encrypted div display style:', getComputedStyle(encryptedDiv).display);
+                
+                // Update button text
+                const buttonText = replacement.classList.contains('show-encrypted') ? 'Hide Encrypted' : 'Show Encrypted';
+                toggleButton.textContent = buttonText;
+                console.log('Updated button text to (text node):', buttonText);
+              }
+            });
+          } else {
+            console.error('Toggle button not found (text node)!');
+          }
         }
       }
       

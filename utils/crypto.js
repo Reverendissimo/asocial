@@ -267,11 +267,20 @@ class AsocialCrypto {
    */
   async importKey(base64Key, keyType, keyUsages) {
     try {
+      console.log(`Importing ${keyType} key with usages:`, keyUsages);
+      console.log('Base64 key length:', base64Key.length);
+      console.log('Key starts with:', base64Key.substring(0, 20));
+      
       const binaryString = atob(base64Key);
+      console.log('Binary string length:', binaryString.length);
+      
       const keyData = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         keyData[i] = binaryString.charCodeAt(i);
       }
+      
+      console.log('Key data array length:', keyData.length);
+      console.log('First 10 bytes:', Array.from(keyData.slice(0, 10)));
       
       const key = await crypto.subtle.importKey(
         keyType === 'private' ? 'pkcs8' : 'spki',
@@ -284,10 +293,13 @@ class AsocialCrypto {
         keyUsages
       );
       
+      console.log('Key import successful');
       return key;
     } catch (error) {
       console.error('Key import failed:', error);
       console.error('Error details:', error);
+      console.error('Key type:', keyType);
+      console.error('Key usages:', keyUsages);
       throw new Error('Failed to import key: ' + error.message);
     }
   }

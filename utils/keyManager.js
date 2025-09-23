@@ -150,8 +150,12 @@ class AsocialKeyManager {
         throw new Error('Key group not found');
       }
       
-      // Return just the public key (everyone in the group uses the same one)
-      return group.publicKey;
+      // Return both the public key AND the key ID (the "magic")
+      return {
+        publicKey: group.publicKey,
+        keyId: group.keyId,
+        groupName: group.name
+      };
     } catch (error) {
       console.error('Failed to export public key:', error);
       throw new Error(`Failed to export public key: ${error.message}`);
@@ -163,34 +167,97 @@ class AsocialKeyManager {
    */
   async importGroupPublicKey(keyData, groupName) {
     try {
+      console.log('Importing key data:', keyData.substring(0, 50) + '...');
+      console.log('Key data length:', keyData.length);
+      
       let publicKey, groupNameFromData;
+      
+      let keyId;
       
       // Try to parse as JSON first (for QR code data)
       try {
         const importData = JSON.parse(keyData);
-        if (importData.publicKey && importData.groupName) {
+        console.log('Parsed JSON data:', importData);
+        
+        if (importData.publicKey) {
           publicKey = importData.publicKey;
-          groupNameFromData = importData.groupName;
+          groupNameFromData = importData.groupName || importData.name || 'Imported Group';
+          keyId = importData.keyId; // Get the key ID from the import data
+          console.log('Parsed as JSON format with keyId:', keyId);
+          console.log('Group name:', groupNameFromData);
         } else {
-          throw new Error('Invalid JSON format');
+          throw new Error('Invalid JSON format - missing publicKey');
         }
       } catch (jsonError) {
         // If JSON parsing fails, treat as raw base64 public key
         console.log('Not JSON format, treating as raw base64 public key');
         publicKey = keyData.trim();
         groupNameFromData = groupName || 'Imported Group';
+        keyId = null; // No key ID for raw keys
+        console.log('Raw key length:', publicKey.length);
+        console.log('Key starts with:', publicKey.substring(0, 20));
+        console.log('Key ends with:', publicKey.substring(publicKey.length - 20));
       }
       
       // Validate the public key by trying to import it
+      console.log('Validating public key...');
       await this.crypto.importKey(publicKey, 'public', ['encrypt']);
+      console.log('Public key validation successful');
       
       return {
         groupName: groupNameFromData,
-        publicKey: publicKey
+        publicKey: publicKey,
+        keyId: keyId
       };
     } catch (error) {
       console.error('Failed to import public key:', error);
       throw new Error(`Failed to import public key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update group's public key (for importing keys from others)
+   */
+  async updateGroupPublicKey(groupId, newPublicKey, importData = null) {
+    try {
+      console.log(`Updating public key for group: ${groupId}`);
+      console.log(`New public key length: ${newPublicKey.length}`);
+      
+      const groups = await this.getStoredKeyGroups();
+      console.log(`Found ${groups.length} groups`);
+      
+      const groupIndex = groups.findIndex(g => g.id === groupId);
+      console.log(`Group index: ${groupIndex}`);
+      
+      if (groupIndex === -1) {
+        console.error('Group not found. Available groups:', groups.map(g => ({ id: g.id, name: g.name })));
+        throw new Error('Group not found');
+      }
+      
+      // Update the group's public key and key ID
+      const oldKeyId = groups[groupIndex].keyId;
+      groups[groupIndex].publicKey = newPublicKey;
+      
+      // Use the imported key ID if available, otherwise generate a new one
+      if (importData && importData.keyId) {
+        groups[groupIndex].keyId = importData.keyId;
+        console.log(`Using imported key ID: ${importData.keyId}`);
+        console.log(`This means encrypted messages with key ID ${importData.keyId} can now be decrypted`);
+      } else {
+        groups[groupIndex].keyId = this.generateShortKeyId();
+        console.log(`Generated new key ID: ${groups[groupIndex].keyId}`);
+        console.log(`Note: This new key ID won't match existing encrypted messages`);
+      }
+      
+      console.log(`Updated group ${groupId}: old keyId=${oldKeyId}, new keyId=${groups[groupIndex].keyId}`);
+      
+      // Store the updated groups
+      await this.storeKeyGroups(groups);
+      
+      console.log(`Successfully updated public key for group ${groupId}`);
+    } catch (error) {
+      console.error('Failed to update group public key:', error);
+      throw new Error(`Failed to update group public key: ${error.message}`);
     }
   }
 

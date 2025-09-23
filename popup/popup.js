@@ -317,15 +317,30 @@ class AsocialPopup {
       // Import the key (single shared key for the group)
       const importData = await this.keyManager.importGroupPublicKey(keyData, contactName);
       
-      // Add to a group (for now, add to first group or create default)
+      // Get available groups
       const groups = await this.keyManager.getKeyGroups();
       if (groups.length === 0) {
         this.showStatus('Please create a group first', 'error');
         return;
       }
       
+      // For now, update the first group (in the future, we could show a group selection)
+      const groupId = groups[0].id;
+      const groupName = groups[0].name;
+      console.log(`Attempting to update group "${groupName}" (${groupId}) with imported key`);
+      
+      try {
+        await this.keyManager.updateGroupPublicKey(groupId, importData.publicKey, importData);
+        console.log('Successfully updated group public key');
+        this.showStatus(`Updated public key for group: ${groupName}`, 'success');
+      } catch (error) {
+        console.error('Failed to update group public key:', error);
+        this.showStatus(`Failed to update group "${groupName}": ${error.message}`, 'error');
+        return;
+      }
+      
       // Add contact with just the name (no individual key needed)
-      await this.keyManager.addContactToGroup(groups[0].id, contactName);
+      await this.keyManager.addContactToGroup(groupId, contactName);
       
       this.hideModal('import-key-modal');
       this.showStatus(`Key imported for ${contactName}!`, 'success');
@@ -409,9 +424,16 @@ class AsocialPopup {
     try {
       const keyData = await this.keyManager.exportGroupPublicKey(groupId);
       
-      // Copy to clipboard
-      await navigator.clipboard.writeText(keyData);
-      this.showStatus('Public key copied to clipboard!', 'success');
+      // Create JSON format with key ID for sharing
+      const exportData = {
+        publicKey: keyData.publicKey,
+        keyId: keyData.keyId,
+        groupName: keyData.groupName
+      };
+      
+      // Copy to clipboard as JSON
+      await navigator.clipboard.writeText(JSON.stringify(exportData));
+      this.showStatus('Public key with key ID copied to clipboard!', 'success');
       
     } catch (error) {
       console.error('Failed to export group key:', error);

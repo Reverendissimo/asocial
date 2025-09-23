@@ -98,6 +98,15 @@
   border: 1px solid #00ff00 !important;
 }
 
+/* Toggle functionality */
+.asocial-decrypted-message.show-encrypted .asocial-content {
+  display: none !important;
+}
+
+.asocial-decrypted-message.show-encrypted .asocial-encrypted {
+  display: block !important;
+}
+
 /* Cannot Decrypt Message Styles */
 .asocial-cannot-decrypt {
   background: #000000 !important;
