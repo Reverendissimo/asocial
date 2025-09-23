@@ -22,9 +22,13 @@ class AsocialKeyManager {
       const privateKeyBase64 = await this.crypto.exportKey(keyPair.privateKey, 'pkcs8');
       const publicKeyBase64 = await this.crypto.exportKey(keyPair.publicKey, 'spki');
       
+      // Generate unique key ID for this group
+      const keyId = this.generateKeyId();
+      
       // Create group data
       const groupData = {
         id: this.generateGroupId(),
+        keyId: keyId, // Unique short ID for key identification
         name: groupName,
         privateKey: privateKeyBase64,
         publicKey: publicKeyBase64,
@@ -274,6 +278,18 @@ class AsocialKeyManager {
    */
   generateGroupId() {
     return 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Generate unique short key ID (8 characters)
+   */
+  generateKeyId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
   }
 
   /**

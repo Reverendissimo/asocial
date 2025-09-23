@@ -382,10 +382,10 @@ class LinkedInAsocial {
                 shouldUpdate = true;
               }
               
-              // Look for new encrypted messages
-              if (node.textContent && node.textContent.includes('[ASOCIAL MESSAGE]')) {
-                shouldUpdate = true;
-              }
+      // Look for new encrypted messages
+      if (node.textContent && node.textContent.includes('[ASOCIAL')) {
+        shouldUpdate = true;
+      }
             }
           });
         }

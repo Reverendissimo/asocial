@@ -7,7 +7,7 @@ class AsocialEncryptionEngine {
   constructor() {
     this.crypto = new AsocialCrypto();
     this.keyManager = new AsocialKeyManager();
-    this.messageTag = '[ASOCIAL MESSAGE]';
+    this.messageTagPrefix = '[ASOCIAL';
   }
 
   /**
@@ -37,11 +37,18 @@ class AsocialEncryptionEngine {
       // Sign the message for authenticity
       const signature = await this.crypto.signMessage(message, privateKey);
       
+      // Get group info for sender identification
+      const group = await this.keyManager.getKeyGroup(groupId);
+      const groupName = group ? group.name : 'Unknown Group';
+      const keyId = group ? group.keyId : 'UNKNOWN';
+      
       // Create payload
       const payload = {
         version: '1.0',
         algorithm: 'RSA-4096/AES-256-GCM',
         groupId: groupId,
+        groupName: groupName,
+        sender: 'You', // This would be the actual sender name
         encryptedData: this.arrayBufferToBase64(encryptedData),
         encryptedSymmetricKey: this.arrayBufferToBase64(encryptedSymmetricKey),
         iv: this.arrayBufferToBase64(iv),
@@ -49,8 +56,8 @@ class AsocialEncryptionEngine {
         timestamp: new Date().toISOString()
       };
       
-      // Create final encrypted message
-      const encryptedMessage = this.messageTag + ' ' + btoa(JSON.stringify(payload));
+      // Create final encrypted message with key ID
+      const encryptedMessage = `${this.messageTagPrefix} ${keyId}] ${btoa(JSON.stringify(payload))}`;
       
       console.log('Message encrypted successfully');
       return encryptedMessage;
@@ -67,13 +74,18 @@ class AsocialEncryptionEngine {
     try {
       console.log('Attempting to decrypt message');
       
-      // Check if message has our tag
-      if (!encryptedMessage.startsWith(this.messageTag)) {
+      // Check if message has our tag and extract key ID
+      const tagMatch = encryptedMessage.match(/^\[ASOCIAL\s+([A-Z0-9]+)\]/);
+      if (!tagMatch) {
         throw new Error('Not an Asocial encrypted message');
       }
       
+      const keyId = tagMatch[1];
+      console.log(`Message encrypted with key ID: ${keyId}`);
+      
       // Extract payload
-      const payloadBase64 = encryptedMessage.substring(this.messageTag.length + 1);
+      const payloadStart = encryptedMessage.indexOf('] ') + 2;
+      const payloadBase64 = encryptedMessage.substring(payloadStart);
       const payload = JSON.parse(atob(payloadBase64));
       
       // Validate payload structure
@@ -81,52 +93,59 @@ class AsocialEncryptionEngine {
         throw new Error('Invalid encrypted message format');
       }
       
-      // Try to decrypt with available key groups
+      // Find the group with matching key ID
       const groups = await this.keyManager.getKeyGroups();
+      const matchingGroup = groups.find(group => group.keyId === keyId);
       
-      for (const group of groups) {
-        try {
-          // Get public key for this group
-          const publicKey = await this.keyManager.getPublicKeyForGroup(group.id);
-          
-          // Decrypt symmetric key
-          const encryptedSymmetricKeyBuffer = this.base64ToArrayBuffer(payload.encryptedSymmetricKey);
-          const symmetricKey = await this.crypto.decryptSymmetricKey(encryptedSymmetricKeyBuffer, publicKey);
-          
-          // Decrypt message content
-          const encryptedDataBuffer = this.base64ToArrayBuffer(payload.encryptedData);
-          const ivBuffer = this.base64ToArrayBuffer(payload.iv);
-          const decryptedMessage = await this.crypto.decryptMessage(
-            encryptedDataBuffer, 
-            ivBuffer, 
-            symmetricKey
-          );
-          
-          // Verify signature
-          const signatureBuffer = this.base64ToArrayBuffer(payload.signature);
-          const isValidSignature = await this.crypto.verifySignature(
-            decryptedMessage, 
-            signatureBuffer, 
-            publicKey
-          );
-          
-          if (isValidSignature) {
-            console.log(`Message decrypted successfully with group: ${group.name}`);
-            return {
-              message: decryptedMessage,
-              groupName: group.name,
-              timestamp: payload.timestamp,
-              algorithm: payload.algorithm
-            };
-          }
-        } catch (error) {
-          // Try next group
-          console.log(`Failed to decrypt with group ${group.name}:`, error.message);
-          continue;
-        }
+      if (!matchingGroup) {
+        throw new Error(`No key found for key ID: ${keyId}`);
       }
       
-      throw new Error('Unable to decrypt message - no matching key found');
+      console.log(`Found matching group: ${matchingGroup.name} (${matchingGroup.keyId})`);
+      
+      try {
+        // Get public key for this group
+        const publicKey = await this.keyManager.getPublicKeyForGroup(matchingGroup.id);
+        
+        // Decrypt symmetric key
+        const encryptedSymmetricKeyBuffer = this.base64ToArrayBuffer(payload.encryptedSymmetricKey);
+        const symmetricKey = await this.crypto.decryptSymmetricKey(encryptedSymmetricKeyBuffer, publicKey);
+        
+        // Decrypt message content
+        const encryptedDataBuffer = this.base64ToArrayBuffer(payload.encryptedData);
+        const ivBuffer = this.base64ToArrayBuffer(payload.iv);
+        const decryptedMessage = await this.crypto.decryptMessage(
+          encryptedDataBuffer, 
+          ivBuffer, 
+          symmetricKey
+        );
+        
+        // Verify signature
+        const signatureBuffer = this.base64ToArrayBuffer(payload.signature);
+        const isValidSignature = await this.crypto.verifySignature(
+          decryptedMessage, 
+          signatureBuffer, 
+          publicKey
+        );
+        
+        if (isValidSignature) {
+          console.log(`✅ Message decrypted successfully with group: ${matchingGroup.name}`);
+          return {
+            message: decryptedMessage,
+            groupName: matchingGroup.name,
+            groupId: matchingGroup.id,
+            keyId: keyId,
+            timestamp: payload.timestamp,
+            algorithm: payload.algorithm,
+            sender: payload.sender || 'Unknown'
+          };
+        } else {
+          throw new Error('Invalid signature');
+        }
+      } catch (error) {
+        console.error(`❌ Failed to decrypt with key ID ${keyId}:`, error.message);
+        throw new Error(`Decryption failed: ${error.message}`);
+      }
     } catch (error) {
       console.error('Decryption failed:', error);
       throw new Error(`Decryption failed: ${error.message}`);
@@ -141,7 +160,7 @@ class AsocialEncryptionEngine {
     const textNodes = this.getTextNodes(document.body);
     
     for (const node of textNodes) {
-      if (node.textContent.includes(this.messageTag)) {
+      if (node.textContent.includes(this.messageTagPrefix)) {
         messages.push({
           node: node,
           text: node.textContent,
