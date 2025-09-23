@@ -9,11 +9,23 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 - **Single Shared Key System**: One public key per group - simple and practical
 - **LinkedIn Integration**: "Be Asocial" button for easy encryption
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
+- **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
+- **Content Security**: No encrypted data exposure in share URLs
+- **Toggle Functionality**: "Show Encrypted" button to view original encrypted content
 - **Key Management**: Secure key storage with master passphrase protection
 - **Cross-Platform Support**: LinkedIn, Facebook, Twitter (LinkedIn implemented first)
 
 ## Installation
 
+### Quick Install (Recommended)
+1. Download the latest release: `asocial-extension-v2.4.zip`
+2. Extract the zip file
+3. Load the extension in Chrome:
+   - Open Chrome and go to `chrome://extensions/`
+   - Enable "Developer mode"
+   - Click "Load unpacked" and select the extracted folder
+
+### Development Install
 1. Clone this repository
 2. Install dependencies: `npm install`
 3. Build the extension: `npm run build`
@@ -36,9 +48,10 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 1. In the extension popup, select a group
 2. Click "Export Public Key"
 3. Share the **same public key** with all contacts in the group via:
-   - Copy/paste
-   - QR code
-   - File export
+   - Export key (includes "magic" key ID for proper decryption)
+   - Copy/paste JSON format
+   - QR code (future feature)
+   - File export (future feature)
 
 ### Encrypting Posts
 
@@ -51,11 +64,16 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 
 - Posts are automatically decrypted if you have the correct key
 - Users without the key see encrypted content with visual indicators
+- Click "Show Encrypted" to view the original encrypted content
+- Click "Hide Encrypted" to return to decrypted view
 
 ## Security Features
 
-- **RSA-4096 Encryption**: Maximum RSA key strength for military-grade security
+- **RSA-2048 Encryption**: Strong RSA key strength for high security
 - **AES-256-GCM**: Advanced symmetric encryption with authentication
+- **Secure Key Sharing**: Keys include "magic" key IDs for proper decryption
+- **URL Security**: No encrypted content exposure in share URLs
+- **CSP Compliance**: Follows LinkedIn's Content Security Policy
 - **Argon2id Key Derivation**: Secure key derivation from passphrases
 - **SHA-512 Hashing**: Maximum hash security for signatures
 - **Local Key Storage**: Keys never leave your device

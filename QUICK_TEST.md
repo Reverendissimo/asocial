@@ -1,10 +1,15 @@
 # Quick Testing Guide
 
-## ✅ Icons Created!
-I've created anarchy symbol icons in SVG format:
-- `assets/icon16.svg` (16x16)
-- `assets/icon48.svg` (48x48) 
-- `assets/icon128.svg` (128x128)
+## ✅ Latest Version: v2.4
+All features are now working:
+- ✅ Icon loading (PNG format)
+- ✅ Popup sizing (600px width)
+- ✅ Black & lime green theme
+- ✅ RSA key generation (RSA-2048)
+- ✅ Button injection and content preservation
+- ✅ Key import with "magic" key IDs
+- ✅ Secure URL sharing
+- ✅ "Show Encrypted" toggle functionality
 
 ## 🚀 Test the Extension Now!
 
@@ -28,14 +33,16 @@ I've created anarchy symbol icons in SVG format:
 7. Click "Be Asocial" and select your test group
 8. Post should be encrypted with `[ASOCIAL ABC12345]` format
 
-### Step 3: Test Decryption
+### Step 3: Test Key Sharing & Decryption
 1. Open the extension popup again
-2. Export the public key for your test group (this is the shared key for everyone)
+2. Export the public key for your test group (includes "magic" key ID)
 3. In a different browser/incognito window:
    - Load the extension again
-   - Import the same public key you exported
+   - Import the JSON key you exported (includes key ID)
    - Go to LinkedIn and view the encrypted post
    - It should automatically decrypt
+   - Click "Show Encrypted" to view original encrypted content
+   - Click "Hide Encrypted" to return to decrypted view
 
 ## 🎯 What to Look For
 
