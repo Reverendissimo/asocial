@@ -82,12 +82,20 @@ class AsocialBackground {
    * Show welcome notification
    */
   showWelcomeNotification() {
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'assets/icon48.png',
-      title: 'Welcome to Asocial!',
-      message: 'Your posts can now be encrypted for specific groups. Click the extension icon to get started.'
-    });
+    try {
+      if (chrome.notifications && chrome.notifications.create) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'assets/icon48.svg',
+          title: 'Welcome to Asocial!',
+          message: 'Your posts can now be encrypted for specific groups. Click the extension icon to get started.'
+        });
+      } else {
+        console.log('Welcome to Asocial! Your posts can now be encrypted for specific groups.');
+      }
+    } catch (error) {
+      console.log('Welcome to Asocial! Your posts can now be encrypted for specific groups.');
+    }
   }
 
   /**
@@ -100,12 +108,20 @@ class AsocialBackground {
     await this.migrateSettings(previousVersion);
     
     // Show update notification
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'assets/icon48.png',
-      title: 'Asocial Updated!',
-      message: 'New features and improvements are available.'
-    });
+    try {
+      if (chrome.notifications && chrome.notifications.create) {
+        chrome.notifications.create({
+          type: 'basic',
+          iconUrl: 'assets/icon48.svg',
+          title: 'Asocial Updated!',
+          message: 'New features and improvements are available.'
+        });
+      } else {
+        console.log('Asocial Updated! New features and improvements are available.');
+      }
+    } catch (error) {
+      console.log('Asocial Updated! New features and improvements are available.');
+    }
   }
 
   /**

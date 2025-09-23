@@ -7,7 +7,8 @@
     "activeTab",
     "storage",
     "clipboardWrite",
-    "clipboardRead"
+    "clipboardRead",
+    "notifications"
   ],
   "host_permissions": [
     "https://www.linkedin.com/*",
@@ -36,9 +37,9 @@
     "default_title": "Asocial - Encrypted Social Posts"
   },
   "icons": {
-    "16": "assets/icon16.png",
-    "48": "assets/icon48.png",
-    "128": "assets/icon128.png"
+    "16": "assets/icon16.svg",
+    "48": "assets/icon48.svg",
+    "128": "assets/icon128.svg"
   },
   "web_accessible_resources": [
     {
