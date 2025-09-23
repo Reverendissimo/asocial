@@ -41,7 +41,7 @@ class AsocialEncryptionEngine {
       // Get group info for sender identification
       const group = await this.keyManager.getKeyGroup(groupId);
       const groupName = group ? group.name : 'Unknown Group';
-      const keyId = group ? group.keyId : 'UNKNOWN';
+      const keyId = group ? group.keyId.toUpperCase() : 'UNKNOWN';
       
       // Create compact payload (minimal metadata)
       const payload = {
@@ -98,9 +98,9 @@ class AsocialEncryptionEngine {
         throw new Error('Invalid encrypted message format');
       }
       
-      // Find the group with matching key ID
+      // Find the group with matching key ID (case-insensitive comparison)
       const groups = await this.keyManager.getKeyGroups();
-      const matchingGroup = groups.find(group => group.keyId === keyId);
+      const matchingGroup = groups.find(group => group.keyId.toUpperCase() === keyId.toUpperCase());
       
       if (!matchingGroup) {
         throw new Error(`No key found for key ID: ${keyId}`);

@@ -183,6 +183,10 @@ class AsocialKeyManager {
           publicKey = importData.publicKey;
           groupNameFromData = importData.groupName || importData.name || 'Imported Group';
           keyId = importData.keyId; // Get the key ID from the import data
+          // Ensure key ID is uppercase for consistency
+          if (keyId) {
+            keyId = keyId.toUpperCase();
+          }
           console.log('Parsed as JSON format with keyId:', keyId);
           console.log('Group name:', groupNameFromData);
         } else {
@@ -238,16 +242,16 @@ class AsocialKeyManager {
       const oldKeyId = groups[groupIndex].keyId;
       groups[groupIndex].publicKey = newPublicKey;
       
-      // Use the imported key ID if available, otherwise generate a new one
-      if (importData && importData.keyId) {
-        groups[groupIndex].keyId = importData.keyId;
-        console.log(`Using imported key ID: ${importData.keyId}`);
-        console.log(`This means encrypted messages with key ID ${importData.keyId} can now be decrypted`);
-      } else {
-        groups[groupIndex].keyId = this.generateShortKeyId();
-        console.log(`Generated new key ID: ${groups[groupIndex].keyId}`);
-        console.log(`Note: This new key ID won't match existing encrypted messages`);
-      }
+            // Use the imported key ID if available, otherwise generate a new one
+            if (importData && importData.keyId) {
+              groups[groupIndex].keyId = importData.keyId.toUpperCase();
+              console.log(`Using imported key ID: ${importData.keyId.toUpperCase()}`);
+              console.log(`This means encrypted messages with key ID ${importData.keyId.toUpperCase()} can now be decrypted`);
+            } else {
+              groups[groupIndex].keyId = this.generateKeyId();
+              console.log(`Generated new key ID: ${groups[groupIndex].keyId}`);
+              console.log(`Note: This new key ID won't match existing encrypted messages`);
+            }
       
       console.log(`Updated group ${groupId}: old keyId=${oldKeyId}, new keyId=${groups[groupIndex].keyId}`);
       
