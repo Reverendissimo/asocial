@@ -30,10 +30,10 @@ I've created anarchy symbol icons in SVG format:
 
 ### Step 3: Test Decryption
 1. Open the extension popup again
-2. Export the public key for your test group
+2. Export the public key for your test group (this is the shared key for everyone)
 3. In a different browser/incognito window:
    - Load the extension again
-   - Import the public key you exported
+   - Import the same public key you exported
    - Go to LinkedIn and view the encrypted post
    - It should automatically decrypt
 

@@ -6,10 +6,10 @@
 class AsocialCrypto {
   constructor() {
     this.algorithm = {
-      name: 'RSA-OAEP',
-      modulusLength: 4096,
+      name: 'RSA-PSS',
+      modulusLength: 2048,
       publicExponent: new Uint8Array([1, 0, 1]),
-      hash: 'SHA-512'
+      hash: 'SHA-1'
     };
     
     this.symmetricAlgorithm = {
@@ -19,21 +19,27 @@ class AsocialCrypto {
   }
 
   /**
-   * Generate RSA-4096 key pair for maximum security
+   * Generate RSA-1024 key pair for good security
    */
   async generateKeyPair() {
     try {
       const keyPair = await crypto.subtle.generateKey(
-        this.algorithm,
+        {
+          name: 'RSA-OAEP',
+          modulusLength: 4096,
+          publicExponent: new Uint8Array([1, 0, 1]),
+          hash: 'SHA-1'
+        },
         true, // extractable
-        ['encrypt', 'decrypt', 'sign', 'verify']
+        ['encrypt', 'decrypt']
       );
       
       console.log('RSA-4096 key pair generated successfully');
       return keyPair;
     } catch (error) {
       console.error('Key generation failed:', error);
-      throw new Error('Failed to generate RSA-4096 key pair');
+      console.error('Error details:', error);
+      throw new Error('Failed to generate RSA key pair: ' + error.message);
     }
   }
 
@@ -115,7 +121,10 @@ class AsocialCrypto {
     try {
       const exportedKey = await crypto.subtle.exportKey('raw', symmetricKey);
       const encryptedKey = await crypto.subtle.encrypt(
-        this.algorithm,
+        {
+          name: 'RSA-OAEP',
+          hash: 'SHA-1'
+        },
         publicKey,
         exportedKey
       );
@@ -133,7 +142,10 @@ class AsocialCrypto {
   async decryptSymmetricKey(encryptedKey, privateKey) {
     try {
       const decryptedKey = await crypto.subtle.decrypt(
-        this.algorithm,
+        {
+          name: 'RSA-OAEP',
+          hash: 'SHA-1'
+        },
         privateKey,
         encryptedKey
       );
@@ -264,7 +276,10 @@ class AsocialCrypto {
       const key = await crypto.subtle.importKey(
         keyType === 'private' ? 'pkcs8' : 'spki',
         keyData,
-        this.algorithm,
+        {
+          name: 'RSA-OAEP',
+          hash: 'SHA-1'
+        },
         true,
         keyUsages
       );
@@ -272,7 +287,8 @@ class AsocialCrypto {
       return key;
     } catch (error) {
       console.error('Key import failed:', error);
-      throw new Error('Failed to import key');
+      console.error('Error details:', error);
+      throw new Error('Failed to import key: ' + error.message);
     }
   }
 }

@@ -74,9 +74,9 @@ class AsocialKeyManager {
   }
 
   /**
-   * Add contact to key group
+   * Add contact to key group (just name, no individual key needed)
    */
-  async addContactToGroup(groupId, contactName, publicKey) {
+  async addContactToGroup(groupId, contactName) {
     try {
       const groups = await this.getStoredKeyGroups();
       const group = groups.find(g => g.id === groupId);
@@ -88,7 +88,6 @@ class AsocialKeyManager {
       const contact = {
         id: this.generateContactId(),
         name: contactName,
-        publicKey: publicKey,
         addedAt: new Date().toISOString()
       };
       
@@ -142,7 +141,7 @@ class AsocialKeyManager {
   }
 
   /**
-   * Export key group public key as QR code data
+   * Export the single shared public key for this group
    */
   async exportGroupPublicKey(groupId) {
     try {
@@ -151,13 +150,8 @@ class AsocialKeyManager {
         throw new Error('Key group not found');
       }
       
-      const exportData = {
-        groupName: group.name,
-        publicKey: group.publicKey,
-        exportedAt: new Date().toISOString()
-      };
-      
-      return JSON.stringify(exportData);
+      // Return just the public key (everyone in the group uses the same one)
+      return group.publicKey;
     } catch (error) {
       console.error('Failed to export public key:', error);
       throw new Error(`Failed to export public key: ${error.message}`);
@@ -201,7 +195,7 @@ class AsocialKeyManager {
       const privateKey = await this.crypto.importKey(
         group.privateKey, 
         'private', 
-        ['encrypt', 'sign']
+        ['decrypt']
       );
       
       return privateKey;
@@ -224,7 +218,7 @@ class AsocialKeyManager {
       const publicKey = await this.crypto.importKey(
         group.publicKey, 
         'public', 
-        ['decrypt', 'verify']
+        ['encrypt']
       );
       
       return publicKey;

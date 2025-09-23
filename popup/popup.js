@@ -19,6 +19,9 @@ class AsocialPopup {
     console.log('Initializing Asocial popup');
     
     try {
+      // Force popup size
+      this.forcePopupSize();
+      
       // Setup event listeners
       this.setupEventListeners();
       
@@ -33,6 +36,25 @@ class AsocialPopup {
       console.error('Failed to initialize popup:', error);
       this.showStatus('Failed to initialize popup', 'error');
     }
+  }
+
+  /**
+   * Force popup size to be usable
+   */
+  forcePopupSize() {
+    // Set body and container size
+    document.body.style.width = '600px';
+    document.body.style.minWidth = '600px';
+    document.body.style.maxWidth = '600px';
+    
+    const container = document.querySelector('.popup-container');
+    if (container) {
+      container.style.width = '600px';
+      container.style.minWidth = '600px';
+      container.style.maxWidth = '600px';
+    }
+    
+    console.log('Forced popup size to 600px');
   }
 
   /**
@@ -168,7 +190,6 @@ class AsocialPopup {
     try {
       const groupName = document.getElementById('group-name').value.trim();
       const description = document.getElementById('group-description').value.trim();
-      const autoAddContacts = document.getElementById('auto-add-contacts').checked;
       
       // Validate group name
       const validation = this.keyManager.validateGroupName(groupName);
@@ -186,10 +207,6 @@ class AsocialPopup {
         await this.keyManager.storeKeyGroups(await this.keyManager.getKeyGroups());
       }
       
-      // Auto-add LinkedIn connections if requested
-      if (autoAddContacts) {
-        await this.autoAddLinkedInContacts(group.id);
-      }
       
       this.hideModal('create-group-modal');
       this.showStatus(`Group "${groupName}" created successfully!`, 'success');
@@ -197,7 +214,6 @@ class AsocialPopup {
       // Clear form
       document.getElementById('group-name').value = '';
       document.getElementById('group-description').value = '';
-      document.getElementById('auto-add-contacts').checked = false;
       
       // Reload groups
       await this.loadGroups();
@@ -209,15 +225,25 @@ class AsocialPopup {
   }
 
   /**
-   * Auto-add LinkedIn contacts to group
+   * Auto-add sample contacts to group for testing
    */
   async autoAddLinkedInContacts(groupId) {
     try {
-      // This would integrate with LinkedIn API to get connections
-      // For now, we'll show a placeholder
-      this.showStatus('LinkedIn integration coming soon!', 'info');
+      // Add some sample contacts for testing
+      const sampleContacts = [
+        { name: 'Alice Johnson', publicKey: 'sample-key-alice' },
+        { name: 'Bob Smith', publicKey: 'sample-key-bob' },
+        { name: 'Carol Davis', publicKey: 'sample-key-carol' }
+      ];
+      
+      for (const contact of sampleContacts) {
+        await this.keyManager.addContactToGroup(groupId, contact.name, contact.publicKey);
+      }
+      
+      this.showStatus(`Added ${sampleContacts.length} sample contacts for testing!`, 'success');
     } catch (error) {
-      console.error('Failed to auto-add LinkedIn contacts:', error);
+      console.error('Failed to add sample contacts:', error);
+      this.showStatus('Failed to add sample contacts', 'error');
     }
   }
 
@@ -288,7 +314,7 @@ class AsocialPopup {
         return;
       }
       
-      // Import the key
+      // Import the key (single shared key for the group)
       const importData = await this.keyManager.importGroupPublicKey(keyData, contactName);
       
       // Add to a group (for now, add to first group or create default)
@@ -298,7 +324,8 @@ class AsocialPopup {
         return;
       }
       
-      await this.keyManager.addContactToGroup(groups[0].id, contactName, importData.publicKey);
+      // Add contact with just the name (no individual key needed)
+      await this.keyManager.addContactToGroup(groups[0].id, contactName);
       
       this.hideModal('import-key-modal');
       this.showStatus(`Key imported for ${contactName}!`, 'success');
@@ -393,17 +420,14 @@ class AsocialPopup {
   }
 
   /**
-   * Add contact to group
+   * Add contact to group (just name, no individual key needed)
    */
   async addContactToGroup(groupId) {
     const contactName = prompt('Enter contact name:');
     if (!contactName) return;
     
-    const publicKey = prompt('Enter public key:');
-    if (!publicKey) return;
-    
     try {
-      await this.keyManager.addContactToGroup(groupId, contactName, publicKey);
+      await this.keyManager.addContactToGroup(groupId, contactName);
       this.showStatus(`Contact ${contactName} added!`, 'success');
       this.showGroupDetails(groupId); // Refresh
     } catch (error) {

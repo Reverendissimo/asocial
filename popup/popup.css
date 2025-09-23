@@ -11,15 +11,21 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: #f8f9fa;
-  color: #333;
+  background: #000000;
+  color: #00ff00;
   line-height: 1.5;
+  width: 600px !important;
+  min-width: 600px !important;
+  max-width: 600px !important;
 }
 
 .popup-container {
-  width: 400px;
-  min-height: 500px;
-  background: white;
+  width: 600px !important;
+  min-width: 600px !important;
+  max-width: 600px !important;
+  min-height: 600px;
+  background: #000000;
+  color: #00ff00;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -27,8 +33,9 @@ body {
 
 /* Header */
 .popup-header {
-  background: linear-gradient(135deg, #0073b1, #005885);
-  color: white;
+  background: #000000;
+  color: #00ff00;
+  border-bottom: 2px solid #00ff00;
   padding: 16px 20px;
   display: flex;
   justify-content: space-between;
@@ -53,7 +60,8 @@ body {
 
 .mode-toggle {
   display: flex;
-  background: rgba(255, 255, 255, 0.2);
+  background: #000000;
+  border: 1px solid #00ff00;
   border-radius: 6px;
   padding: 2px;
 }
@@ -61,7 +69,7 @@ body {
 .mode-btn {
   background: none;
   border: none;
-  color: white;
+  color: #00ff00;
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -71,11 +79,12 @@ body {
 }
 
 .mode-btn.active {
-  background: rgba(255, 255, 255, 0.3);
+  background: #00ff00;
+  color: #000000;
 }
 
 .mode-btn:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 255, 0, 0.2);
 }
 
 /* Mode Content */
@@ -96,12 +105,12 @@ body {
 
 .welcome-section h2 {
   font-size: 20px;
-  color: #333;
+  color: #00ff00;
   margin-bottom: 8px;
 }
 
 .welcome-section p {
-  color: #666;
+  color: #00ff00;
   font-size: 14px;
 }
 
@@ -127,22 +136,24 @@ body {
 }
 
 .primary-btn {
-  background: #0073b1;
-  color: white;
+  background: #00ff00;
+  color: #000000;
 }
 
 .primary-btn:hover {
-  background: #005885;
+  background: #ffffff;
+  color: #000000;
 }
 
 .secondary-btn {
-  background: #f8f9fa;
-  color: #333;
-  border: 1px solid #dee2e6;
+  background: #000000;
+  color: #00ff00;
+  border: 1px solid #00ff00;
 }
 
 .secondary-btn:hover {
-  background: #e9ecef;
+  background: #00ff00;
+  color: #000000;
 }
 
 .btn-icon {
@@ -152,7 +163,7 @@ body {
 /* Groups Section */
 .groups-section h3 {
   font-size: 16px;
-  color: #333;
+  color: #00ff00;
   margin-bottom: 12px;
 }
 
@@ -163,8 +174,9 @@ body {
 }
 
 .group-item {
-  background: white;
-  border: 1px solid #dee2e6;
+  background: #000000;
+  color: #00ff00;
+  border: 1px solid #00ff00;
   border-radius: 6px;
   padding: 12px;
   cursor: pointer;
@@ -172,25 +184,25 @@ body {
 }
 
 .group-item:hover {
-  border-color: #0073b1;
-  box-shadow: 0 2px 8px rgba(0, 115, 177, 0.1);
+  border-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 255, 0, 0.3);
 }
 
 .group-name {
   font-weight: 600;
-  color: #333;
+  color: #00ff00;
   margin-bottom: 4px;
 }
 
 .group-meta {
   font-size: 12px;
-  color: #666;
+  color: #00ff00;
   display: flex;
   justify-content: space-between;
 }
 
 .group-contacts {
-  color: #0073b1;
+  color: #00ff00;
 }
 
 /* Advanced Mode */
@@ -262,10 +274,11 @@ body {
 }
 
 .modal-content {
-  background: white;
+  background: #000000;
+  color: #00ff00;
   border-radius: 8px;
   width: 90%;
-  max-width: 500px;
+  max-width: 700px;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -280,7 +293,7 @@ body {
 
 .modal-header h3 {
   font-size: 18px;
-  color: #333;
+  color: #00ff00;
   margin: 0;
 }
 
@@ -288,7 +301,7 @@ body {
   background: none;
   border: none;
   font-size: 24px;
-  color: #666;
+  color: #00ff00;
   cursor: pointer;
   padding: 0;
   width: 30px;
@@ -299,7 +312,7 @@ body {
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #ffffff;
 }
 
 .modal-body {
@@ -321,7 +334,7 @@ body {
 .form-group label {
   display: block;
   font-size: 14px;
-  color: #333;
+  color: #00ff00;
   margin-bottom: 6px;
   font-weight: 500;
 }
@@ -331,19 +344,21 @@ body {
 .form-group select {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #dee2e6;
+  border: 1px solid #00ff00;
   border-radius: 4px;
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s;
+  background: #000000;
+  color: #00ff00;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #0073b1;
-  box-shadow: 0 0 0 3px rgba(0, 115, 177, 0.1);
+  border-color: #00ff00;
+  box-shadow: 0 0 0 3px rgba(0, 255, 0, 0.3);
 }
 
 .form-group textarea {

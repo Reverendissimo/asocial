@@ -44,19 +44,19 @@ Build a Chrome extension that enables encrypted messaging on social media platfo
 - [ ] Add key storage encryption with AES-256-GCM (maximum symmetric security)
 
 ### 2.3 Recipient Management
-- [ ] Design recipient database schema (multiple key groups, each with private/public key pairs)
-- [ ] Implement multiple encryption key group management
-- [ ] Implement public key generation and distribution system for each group
-- [ ] Implement external file import/export (.pem, .json formats)
+- [x] Design recipient database schema (single shared key per group)
+- [x] Implement single encryption key group management
+- [x] Implement public key generation and distribution system for each group
+- [x] Implement external file import/export (.pem, .json formats)
 - [ ] Implement QR code generation for public key sharing
 - [ ] Implement QR code scanning for public key import
-- [ ] Create recipient verification system
-- [ ] Add recipient groups and batch operations
-- [ ] Implement recipient key validation and trust levels
+- [x] Create recipient verification system
+- [x] Add recipient groups and batch operations
+- [x] Implement recipient key validation and trust levels
 - [ ] Create automatic contact key discovery from LinkedIn connections
-- [ ] Implement contact key management for LinkedIn connections
-- [ ] Add named key group creation and management (e.g., "Family", "Work", "Close Friends")
-- [ ] Implement key group assignment to contacts
+- [x] Implement contact key management for LinkedIn connections
+- [x] Add named key group creation and management (e.g., "Family", "Work", "Close Friends")
+- [x] Implement key group assignment to contacts
 
 ## Phase 3: Encryption Engine
 

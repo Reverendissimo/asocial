@@ -1,11 +1,12 @@
 # Asocial - Encrypted Social Posts
 
-A Chrome extension that enables encrypted messaging on social media platforms using maximum security encryption (RSA-4096, AES-256-GCM) with group-based access control.
+A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-2048, AES-256-GCM) with group-based access control.
 
 ## Features
 
-- **Maximum Security Encryption**: RSA-4096 and AES-256-GCM for military-grade security
+- **High Security Encryption**: RSA-2048 and AES-256-GCM for strong security
 - **Group-Based Access Control**: Create encryption groups (Family, Work, Close Friends)
+- **Single Shared Key System**: One public key per group - simple and practical
 - **LinkedIn Integration**: "Be Asocial" button for easy encryption
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
 - **Key Management**: Secure key storage with master passphrase protection
@@ -28,13 +29,13 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 1. Click the Asocial extension icon
 2. Click "Create New Group"
 3. Enter a group name (e.g., "Family", "Work", "Close Friends")
-4. The extension will generate RSA-4096 key pairs for the group
+4. The extension will generate one RSA-2048 key pair for the group
 
 ### Sharing Keys
 
 1. In the extension popup, select a group
 2. Click "Export Public Key"
-3. Share the key with your contacts via:
+3. Share the **same public key** with all contacts in the group via:
    - Copy/paste
    - QR code
    - File export

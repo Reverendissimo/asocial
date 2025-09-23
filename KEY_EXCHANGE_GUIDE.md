@@ -77,14 +77,14 @@ You're absolutely right! This is a critical question: **How does a contact know 
 
 ### **Your Setup:**
 - **You have multiple private keys** (one per group)
-- **You share different public keys** with different people
-- **Family gets your "Family" public key**
-- **Work colleagues get your "Work" public key**
+- **You share the same public key** with everyone in each group
+- **Family gets your "Family" public key** (same key for all family members)
+- **Work colleagues get your "Work" public key** (same key for all work colleagues)
 
 ### **Contact's Setup:**
-- **Each contact imports your public keys**
-- **They assign keys to groups** in their extension
-- **Extension automatically matches** keys to messages
+- **Each contact imports your group's public key**
+- **They assign the key to the corresponding group** in their extension
+- **Extension automatically matches** keys to messages using the key ID
 
 ## **Visual Example**
 
@@ -92,15 +92,15 @@ You're absolutely right! This is a critical question: **How does a contact know 
 Your Groups:                    Contact's Imported Keys:
 ┌─────────────────┐            ┌─────────────────────┐
 │ Family Group    │            │ Your Family Key    │
-│ - Private Key   │            │ - Public Key       │
-│ - Public Key    │ ──────────→│ - Assigned to      │
-└─────────────────┘            │   "Your Family"    │
+│ - Private Key   │            │ - Same Public Key  │
+│ - Public Key    │ ──────────→│   for ALL family   │
+└─────────────────┘            │   members          │
                                └─────────────────────┘
 ┌─────────────────┐            ┌─────────────────────┐
 │ Work Group      │            │ Your Work Key       │
-│ - Private Key   │            │ - Public Key       │
-│ - Public Key    │ ──────────→│ - Assigned to      │
-└─────────────────┘            │   "Your Work"      │
+│ - Private Key   │            │ - Same Public Key  │
+│ - Public Key    │ ──────────→│   for ALL work      │
+└─────────────────┘            │   colleagues        │
                                └─────────────────────┘
 ```
 
