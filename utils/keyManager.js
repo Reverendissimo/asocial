@@ -1,0 +1,322 @@
+/**
+ * Asocial Key Manager
+ * Manages encryption key groups and storage
+ */
+
+class AsocialKeyManager {
+  constructor() {
+    this.crypto = new AsocialCrypto();
+    this.storageKey = 'asocial_keys';
+    this.groupsKey = 'asocial_groups';
+  }
+
+  /**
+   * Create a new encryption key group
+   */
+  async createKeyGroup(groupName, passphrase) {
+    try {
+      // Generate RSA-4096 key pair for this group
+      const keyPair = await this.crypto.generateKeyPair();
+      
+      // Export keys
+      const privateKeyBase64 = await this.crypto.exportKey(keyPair.privateKey, 'pkcs8');
+      const publicKeyBase64 = await this.crypto.exportKey(keyPair.publicKey, 'spki');
+      
+      // Create group data
+      const groupData = {
+        id: this.generateGroupId(),
+        name: groupName,
+        privateKey: privateKeyBase64,
+        publicKey: publicKeyBase64,
+        createdAt: new Date().toISOString(),
+        contacts: []
+      };
+      
+      // Store group
+      await this.storeKeyGroup(groupData);
+      
+      console.log(`Key group "${groupName}" created successfully`);
+      return groupData;
+    } catch (error) {
+      console.error('Failed to create key group:', error);
+      throw new Error(`Failed to create key group: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get all key groups
+   */
+  async getKeyGroups() {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      return groups || [];
+    } catch (error) {
+      console.error('Failed to get key groups:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get specific key group by ID
+   */
+  async getKeyGroup(groupId) {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      return groups.find(group => group.id === groupId);
+    } catch (error) {
+      console.error('Failed to get key group:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Add contact to key group
+   */
+  async addContactToGroup(groupId, contactName, publicKey) {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      const group = groups.find(g => g.id === groupId);
+      
+      if (!group) {
+        throw new Error('Key group not found');
+      }
+      
+      const contact = {
+        id: this.generateContactId(),
+        name: contactName,
+        publicKey: publicKey,
+        addedAt: new Date().toISOString()
+      };
+      
+      group.contacts.push(contact);
+      await this.storeKeyGroups(groups);
+      
+      console.log(`Contact "${contactName}" added to group "${group.name}"`);
+      return contact;
+    } catch (error) {
+      console.error('Failed to add contact to group:', error);
+      throw new Error(`Failed to add contact: ${error.message}`);
+    }
+  }
+
+  /**
+   * Remove contact from key group
+   */
+  async removeContactFromGroup(groupId, contactId) {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      const group = groups.find(g => g.id === groupId);
+      
+      if (!group) {
+        throw new Error('Key group not found');
+      }
+      
+      group.contacts = group.contacts.filter(c => c.id !== contactId);
+      await this.storeKeyGroups(groups);
+      
+      console.log(`Contact removed from group "${group.name}"`);
+    } catch (error) {
+      console.error('Failed to remove contact from group:', error);
+      throw new Error(`Failed to remove contact: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete key group
+   */
+  async deleteKeyGroup(groupId) {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      const filteredGroups = groups.filter(g => g.id !== groupId);
+      await this.storeKeyGroups(filteredGroups);
+      
+      console.log(`Key group deleted`);
+    } catch (error) {
+      console.error('Failed to delete key group:', error);
+      throw new Error(`Failed to delete key group: ${error.message}`);
+    }
+  }
+
+  /**
+   * Export key group public key as QR code data
+   */
+  async exportGroupPublicKey(groupId) {
+    try {
+      const group = await this.getKeyGroup(groupId);
+      if (!group) {
+        throw new Error('Key group not found');
+      }
+      
+      const exportData = {
+        groupName: group.name,
+        publicKey: group.publicKey,
+        exportedAt: new Date().toISOString()
+      };
+      
+      return JSON.stringify(exportData);
+    } catch (error) {
+      console.error('Failed to export public key:', error);
+      throw new Error(`Failed to export public key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Import key group public key from QR code data
+   */
+  async importGroupPublicKey(qrData, groupName) {
+    try {
+      const importData = JSON.parse(qrData);
+      
+      if (!importData.publicKey || !importData.groupName) {
+        throw new Error('Invalid QR code data');
+      }
+      
+      // Validate the public key
+      await this.crypto.importKey(importData.publicKey, 'public', ['encrypt']);
+      
+      return {
+        groupName: importData.groupName,
+        publicKey: importData.publicKey
+      };
+    } catch (error) {
+      console.error('Failed to import public key:', error);
+      throw new Error(`Failed to import public key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get private key for encryption
+   */
+  async getPrivateKeyForGroup(groupId) {
+    try {
+      const group = await this.getKeyGroup(groupId);
+      if (!group) {
+        throw new Error('Key group not found');
+      }
+      
+      const privateKey = await this.crypto.importKey(
+        group.privateKey, 
+        'private', 
+        ['encrypt', 'sign']
+      );
+      
+      return privateKey;
+    } catch (error) {
+      console.error('Failed to get private key:', error);
+      throw new Error(`Failed to get private key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get public key for decryption
+   */
+  async getPublicKeyForGroup(groupId) {
+    try {
+      const group = await this.getKeyGroup(groupId);
+      if (!group) {
+        throw new Error('Key group not found');
+      }
+      
+      const publicKey = await this.crypto.importKey(
+        group.publicKey, 
+        'public', 
+        ['decrypt', 'verify']
+      );
+      
+      return publicKey;
+    } catch (error) {
+      console.error('Failed to get public key:', error);
+      throw new Error(`Failed to get public key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Store key groups in browser storage
+   */
+  async storeKeyGroups(groups) {
+    try {
+      await chrome.storage.local.set({ [this.groupsKey]: groups });
+    } catch (error) {
+      console.error('Failed to store key groups:', error);
+      throw new Error('Failed to store key groups');
+    }
+  }
+
+  /**
+   * Get stored key groups from browser storage
+   */
+  async getStoredKeyGroups() {
+    try {
+      const result = await chrome.storage.local.get([this.groupsKey]);
+      return result[this.groupsKey] || [];
+    } catch (error) {
+      console.error('Failed to get stored key groups:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Store key group
+   */
+  async storeKeyGroup(groupData) {
+    try {
+      const groups = await this.getStoredKeyGroups();
+      groups.push(groupData);
+      await this.storeKeyGroups(groups);
+    } catch (error) {
+      console.error('Failed to store key group:', error);
+      throw new Error('Failed to store key group');
+    }
+  }
+
+  /**
+   * Generate unique group ID
+   */
+  generateGroupId() {
+    return 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Generate unique contact ID
+   */
+  generateContactId() {
+    return 'contact_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  /**
+   * Validate group name
+   */
+  validateGroupName(name) {
+    if (!name || name.trim().length === 0) {
+      return { valid: false, error: 'Group name cannot be empty' };
+    }
+    
+    if (name.length > 50) {
+      return { valid: false, error: 'Group name too long (max 50 characters)' };
+    }
+    
+    return { valid: true };
+  }
+
+  /**
+   * Validate contact name
+   */
+  validateContactName(name) {
+    if (!name || name.trim().length === 0) {
+      return { valid: false, error: 'Contact name cannot be empty' };
+    }
+    
+    if (name.length > 100) {
+      return { valid: false, error: 'Contact name too long (max 100 characters)' };
+    }
+    
+    return { valid: true };
+  }
+}
+
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = AsocialKeyManager;
+} else {
+  window.AsocialKeyManager = AsocialKeyManager;
+}
