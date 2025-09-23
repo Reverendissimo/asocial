@@ -150,9 +150,10 @@ class AsocialKeyManager {
         throw new Error('Key group not found');
       }
       
-      // Return both the public key AND the key ID (the "magic")
+      // Return the private key AND the key ID (the "magic")
+      // Note: In a shared key system, we share the private key for decryption
       return {
-        publicKey: group.publicKey,
+        privateKey: group.privateKey,
         keyId: group.keyId,
         groupName: group.name
       };
@@ -179,8 +180,8 @@ class AsocialKeyManager {
         const importData = JSON.parse(keyData);
         console.log('Parsed JSON data:', importData);
         
-        if (importData.publicKey) {
-          publicKey = importData.publicKey;
+        if (importData.privateKey) {
+          publicKey = importData.privateKey; // We're importing the private key
           groupNameFromData = importData.groupName || importData.name || 'Imported Group';
           keyId = importData.keyId; // Get the key ID from the import data
           // Ensure key ID is uppercase for consistency
@@ -190,7 +191,7 @@ class AsocialKeyManager {
           console.log('Parsed as JSON format with keyId:', keyId);
           console.log('Group name:', groupNameFromData);
         } else {
-          throw new Error('Invalid JSON format - missing publicKey');
+          throw new Error('Invalid JSON format - missing privateKey');
         }
       } catch (jsonError) {
         // If JSON parsing fails, treat as raw base64 public key
@@ -203,10 +204,10 @@ class AsocialKeyManager {
         console.log('Key ends with:', publicKey.substring(publicKey.length - 20));
       }
       
-      // Validate the public key by trying to import it
-      console.log('Validating public key...');
-      await this.crypto.importKey(publicKey, 'public', ['encrypt']);
-      console.log('Public key validation successful');
+      // Validate the private key by trying to import it
+      console.log('Validating private key...');
+      await this.crypto.importKey(publicKey, 'private', ['decrypt']);
+      console.log('Private key validation successful');
       
       return {
         groupName: groupNameFromData,
@@ -238,9 +239,9 @@ class AsocialKeyManager {
         throw new Error('Group not found');
       }
       
-      // Update the group's public key and key ID
+      // Update the group's private key and key ID
       const oldKeyId = groups[groupIndex].keyId;
-      groups[groupIndex].publicKey = newPublicKey;
+      groups[groupIndex].privateKey = newPublicKey; // We're actually storing the private key
       
             // Use the imported key ID if available, otherwise generate a new one
             if (importData && importData.keyId) {

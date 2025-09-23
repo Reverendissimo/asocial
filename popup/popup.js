@@ -331,10 +331,10 @@ class AsocialPopup {
       
       try {
         await this.keyManager.updateGroupPublicKey(groupId, importData.publicKey, importData);
-        console.log('Successfully updated group public key');
-        this.showStatus(`Updated public key for group: ${groupName}`, 'success');
+        console.log('Successfully updated group private key');
+        this.showStatus(`Updated private key for group: ${groupName}`, 'success');
       } catch (error) {
-        console.error('Failed to update group public key:', error);
+        console.error('Failed to update group private key:', error);
         this.showStatus(`Failed to update group "${groupName}": ${error.message}`, 'error');
         return;
       }
@@ -426,14 +426,14 @@ class AsocialPopup {
       
       // Create JSON format with key ID for sharing
       const exportData = {
-        publicKey: keyData.publicKey,
+        privateKey: keyData.privateKey,
         keyId: keyData.keyId,
         groupName: keyData.groupName
       };
       
       // Copy to clipboard as JSON
       await navigator.clipboard.writeText(JSON.stringify(exportData));
-      this.showStatus('Public key with key ID copied to clipboard!', 'success');
+      this.showStatus('Private key with key ID copied to clipboard!', 'success');
       
     } catch (error) {
       console.error('Failed to export group key:', error);
