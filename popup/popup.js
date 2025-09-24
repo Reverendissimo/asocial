@@ -239,7 +239,7 @@ class AsocialPopup {
       const switchUserBtn = document.getElementById('switch-user-btn');
       if (createGroupBtn) createGroupBtn.addEventListener('click', () => this.showCreateWriterKeyModal());
       if (importKeyBtn) importKeyBtn.addEventListener('click', () => this.showImportKeyModal());
-      if (switchUserBtn) switchUserBtn.addEventListener('click', () => this.switchUser());
+      if (switchUserBtn) switchUserBtn.addEventListener('click', () => this.switchKeystore());
     
     // Create group modal
       const createGroup = document.getElementById('create-group');
@@ -318,9 +318,9 @@ class AsocialPopup {
   }
 
   /**
-   * Switch user
+   * Switch keystore
    */
-  async switchUser() {
+  async switchKeystore() {
     try {
       // Logout current user
       await this.encryptedStorage.logout();
@@ -332,8 +332,8 @@ class AsocialPopup {
       // Redirect to login
       this.redirectToLogin();
     } catch (error) {
-      console.error('Failed to switch user:', error);
-      this.showStatus('Failed to switch user', 'error');
+      console.error('Failed to switch keystore:', error);
+      this.showStatus('Failed to switch keystore', 'error');
     }
   }
 
@@ -584,6 +584,16 @@ class AsocialPopup {
         this.encryptedStorage.currentStorage.readerKeys = [];
       }
       this.encryptedStorage.currentStorage.readerKeys.push(readerKey);
+      
+      // Also save to temporary storage for key manager access
+      const tempResult = await chrome.storage.local.get(['asocial_temp_storage']);
+      const tempStorage = tempResult.asocial_temp_storage || {};
+      
+      if (!tempStorage.readerKeys) {
+        tempStorage.readerKeys = [];
+      }
+      tempStorage.readerKeys.push(readerKey);
+      await chrome.storage.local.set({ asocial_temp_storage: tempStorage });
       
       // Save the storage to persist the changes
       await this.encryptedStorage.saveStorage();
