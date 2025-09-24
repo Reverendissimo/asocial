@@ -5,21 +5,24 @@
 
 /* Asocial Button Styles */
 .asocial-button {
-  background: #0073b1 !important;
+  background: #000000 !important;
   color: #00ff00 !important;
-  border: none !important;
+  border: 1px solid #00ff00 !important;
   border-radius: 4px !important;
   padding: 8px 16px !important;
   font-size: 14px !important;
   font-weight: 600 !important;
   cursor: pointer !important;
   margin-left: 8px !important;
-  transition: background-color 0.2s !important;
+  transition: all 0.2s ease !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 .asocial-button:hover {
-  background: #005885 !important;
+  background: #001100 !important;
+  border-color: #00ff00 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3) !important;
 }
 
 .asocial-button:disabled {
@@ -262,7 +265,7 @@
 .asocial-button:focus,
 .asocial-toggle:focus,
 .asocial-cancel:focus {
-  outline: 2px solid #0073b1 !important;
+  outline: 2px solid #00ff00 !important;
   outline-offset: 2px !important;
 }
 
