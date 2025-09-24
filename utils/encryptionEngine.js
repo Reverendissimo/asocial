@@ -172,23 +172,36 @@ class AsocialEncryptionEngine {
       '.feed-shared-text__text-view',
       '.comments-comment-item-content-body',
       '.msg-s-message-list-content',
-      '.feed-shared-inline-show-more-text'
+      '.feed-shared-inline-show-more-text',
+      '.msg-s-event-listitem__body',
+      'p.msg-s-event-listitem__body',
+      '.msg-s-message-list-item__body',
+      '.msg-s-message-list-item__content',
+      '.msg-s-message-list-item__text',
+      '.msg-s-message-list-item__body-text'
     ];
     
     for (const selector of postSelectors) {
       const elements = document.querySelectorAll(selector);
+      console.log(`Checking selector "${selector}": found ${elements.length} elements`);
+      
       for (const element of elements) {
         if (element.textContent && element.textContent.includes(this.messageTagPrefix)) {
+          console.log(`Found potential encrypted message in ${selector}:`, element.textContent.substring(0, 100));
+          
           // Check if already processed
           if (element.classList.contains('asocial-processed')) {
+            console.log('Message already processed, skipping');
             continue;
           }
           
           // Check if this is actually an encrypted message (starts with [ASOCIAL)
           if (!element.textContent.trim().startsWith('[ASOCIAL')) {
+            console.log('Message does not start with [ASOCIAL, skipping');
             continue;
           }
           
+          console.log('Adding encrypted message to processing queue');
           messages.push({
             node: element,
             text: element.textContent,
