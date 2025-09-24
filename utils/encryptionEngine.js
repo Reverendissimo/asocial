@@ -175,10 +175,13 @@ class AsocialEncryptionEngine {
       '.feed-shared-inline-show-more-text',
       '.msg-s-event-listitem__body',
       'p.msg-s-event-listitem__body',
+      'p[class*="msg-s-event-listitem__body"]',
       '.msg-s-message-list-item__body',
       '.msg-s-message-list-item__content',
       '.msg-s-message-list-item__text',
-      '.msg-s-message-list-item__body-text'
+      '.msg-s-message-list-item__body-text',
+      'p[class*="msg-s-event-listitem"]',
+      'p[class*="msg-s-message-list-item"]'
     ];
     
     for (const selector of postSelectors) {
@@ -186,6 +189,9 @@ class AsocialEncryptionEngine {
       console.log(`Checking selector "${selector}": found ${elements.length} elements`);
       
       for (const element of elements) {
+        // Log element details for debugging
+        console.log(`Element classes: ${element.className}, text: ${element.textContent.substring(0, 50)}...`);
+        
         if (element.textContent && element.textContent.includes(this.messageTagPrefix)) {
           console.log(`Found potential encrypted message in ${selector}:`, element.textContent.substring(0, 100));
           
