@@ -8,7 +8,8 @@
     "storage",
     "clipboardWrite",
     "clipboardRead",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://www.linkedin.com/*",
@@ -23,18 +24,15 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.linkedin.com/*",
-        "https://linkedin.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "js": [
         "utils/crypto.js",
         "utils/keyManager.js", 
         "utils/encryptionEngine.js",
         "utils/encryptedStorage.js",
-        "content/linkedin.js"
+        "content/universal.js"
       ],
-      "css": ["content/linkedin.css"],
+      "css": ["content/universal.css"],
       "run_at": "document_end"
     }
   ],
@@ -50,7 +48,7 @@
   "web_accessible_resources": [
     {
       "resources": ["assets/*", "utils/*", "content/*"],
-      "matches": ["https://www.linkedin.com/*", "https://linkedin.com/*"]
+      "matches": ["<all_urls>"]
     }
   ],
   "content_security_policy": {

@@ -33,6 +33,42 @@ class AsocialBackground {
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       this.handleTabUpdate(tabId, changeInfo, tab);
     });
+    
+    // Setup context menu
+    this.setupContextMenu();
+  }
+
+  /**
+   * Setup context menu
+   */
+  setupContextMenu() {
+    // Create main context menu item
+    chrome.contextMenus.create({
+      id: 'asocial-encrypt',
+      title: 'Encrypt with Asocial',
+      contexts: ['selection'],
+      documentUrlPatterns: ['<all_urls>']
+    });
+
+    // Handle context menu clicks
+    chrome.contextMenus.onClicked.addListener((info, tab) => {
+      if (info.menuItemId === 'asocial-encrypt') {
+        this.handleContextMenuClick(info, tab);
+      }
+    });
+  }
+
+  /**
+   * Handle context menu click
+   */
+  handleContextMenuClick(info, tab) {
+    // Send message to content script to show encryption modal
+    chrome.tabs.sendMessage(tab.id, {
+      action: 'showEncryptionModal',
+      selectedText: info.selectionText
+    }).catch(error => {
+      console.error('Failed to send message to content script:', error);
+    });
   }
 
   /**
