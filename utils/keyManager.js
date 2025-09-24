@@ -452,9 +452,17 @@ class AsocialKeyManager {
    */
   async storeReaderKey(readerKey) {
     try {
-      const readerKeys = await this.getStoredReaderKeys();
-      readerKeys.push(readerKey);
-      await chrome.storage.local.set({ asocial_reader_keys: readerKeys });
+      // Use new storage system
+      const result = await chrome.storage.local.get(['asocial_temp_storage']);
+      const tempStorage = result.asocial_temp_storage || {};
+      
+      if (!tempStorage.readerKeys) {
+        tempStorage.readerKeys = [];
+      }
+      
+      tempStorage.readerKeys.push(readerKey);
+      await chrome.storage.local.set({ asocial_temp_storage: tempStorage });
+      console.log('Reader key stored in new storage system');
     } catch (error) {
       console.error('Failed to store reader key:', error);
       throw new Error('Failed to store reader key');
@@ -466,8 +474,17 @@ class AsocialKeyManager {
    */
   async getStoredReaderKeys() {
     try {
-      const result = await chrome.storage.local.get(['asocial_reader_keys']);
-      return result.asocial_reader_keys || [];
+      // Try new storage system first
+      const result = await chrome.storage.local.get(['asocial_temp_storage']);
+      if (result.asocial_temp_storage && result.asocial_temp_storage.readerKeys) {
+        console.log('Found reader keys in new storage system:', result.asocial_temp_storage.readerKeys);
+        return result.asocial_temp_storage.readerKeys;
+      }
+      
+      // Fallback to old storage system
+      const oldResult = await chrome.storage.local.get(['asocial_reader_keys']);
+      console.log('Found reader keys in old storage system:', oldResult.asocial_reader_keys);
+      return oldResult.asocial_reader_keys || [];
     } catch (error) {
       console.error('Failed to get stored reader keys:', error);
       return [];
