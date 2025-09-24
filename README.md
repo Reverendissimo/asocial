@@ -1,16 +1,19 @@
-# Asocial - Cypher Squatting Tool
+# Asocial - Cypher Squatting Tool v2.6
 
-A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-4096, AES-256-GCM) with encrypted local storage and multi-user support.
+A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-2048, AES-256-GCM) with encrypted local storage and multi-user support.
 
 ## Features
 
-- **High Security Encryption**: RSA-4096 and AES-256-GCM for maximum security
+- **High Security Encryption**: RSA-2048 and AES-256-GCM for maximum security
 - **Encrypted Local Storage**: All keys stored in password-protected `.ASoc` files
 - **Multi-User Support**: Separate encrypted vaults for different users
 - **Session Authentication**: Password required each time you open the extension
 - **Writer Key System**: Create writer keys (Family, Work, Close Friends) for encrypting your messages
 - **Reader Key System**: Import reader keys from others to decrypt their messages
 - **LinkedIn Integration**: "Be Asocial" button for easy encryption
+- **Encryption Modal**: Beautiful modal with message input and key selection
+- **Auto-Encryption**: Click key = instant encryption (no OK button needed)
+- **Chat Message Support**: Full support for LinkedIn messaging conversations
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
 - **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
 - **Content Security**: No encrypted data exposure in share URLs
@@ -20,7 +23,7 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 ## Installation
 
 ### Quick Install (Recommended)
-1. Download the latest release: `asocial-extension-v2.4.zip`
+1. Download the latest release: `asocial_v2.6_final.zip`
 2. Extract the zip file
 3. Load the extension in Chrome:
    - Open Chrome and go to `chrome://extensions/`

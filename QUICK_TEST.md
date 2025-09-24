@@ -1,11 +1,13 @@
 # Quick Testing Guide
 
-## ✅ Latest Version: v2.4
+## ✅ Latest Version: v2.6
 All features are now working:
 - ✅ Icon loading (PNG format)
 - ✅ Popup sizing (600px width)
 - ✅ Black & lime green theme
 - ✅ RSA key generation (RSA-2048)
+- ✅ Encryption modal with auto-encryption
+- ✅ Chat message support for LinkedIn messaging
 - ✅ Button injection and content preservation
 - ✅ Key import with "magic" key IDs
 - ✅ Secure URL sharing
@@ -30,8 +32,19 @@ All features are now working:
    - Click "Create Group"
 5. Go to LinkedIn feed and try to create a post
 6. Look for "Be Asocial" button next to the post button
-7. Click "Be Asocial" and select your test group
+7. Click "Be Asocial" - a modal will open with:
+   - Message input area (pre-filled with your text)
+   - Key selection list
+   - Click any key to auto-encrypt
 8. Post should be encrypted with `[ASOCIAL ABC12345]` format
+
+### Step 2.5: Test LinkedIn Messaging
+1. Go to LinkedIn messaging
+2. Start a conversation
+3. Look for "Be Asocial" button in the message input
+4. Click "Be Asocial" and use the encryption modal
+5. Send the encrypted message
+6. The message should be automatically decrypted for you
 
 ### Step 3: Test Key Sharing & Decryption
 1. Open the extension popup again

@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial-extension.zip` file
+1. **Download the extension**: Extract the `asocial_v2.6_final.zip` file
 2. **Open Chrome Extensions**: Go to `chrome://extensions/`
 3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
@@ -22,9 +22,15 @@
 ### Encrypting Messages:
 1. **Go to LinkedIn** and start writing a post
 2. **Click "Be Asocial"** button that appears next to the text input
-3. **Select your group** from the popup
-4. **Your message gets encrypted** and replaced with encrypted text
+3. **Encryption modal opens** with message input and key selection
+4. **Click any key** to auto-encrypt your message
 5. **Post normally** - only people with your key can decrypt it
+
+### LinkedIn Messaging:
+1. **Go to LinkedIn messaging** and start a conversation
+2. **Click "Be Asocial"** in the message input area
+3. **Use the encryption modal** to encrypt your message
+4. **Send the encrypted message** - it will be automatically decrypted for you
 
 ### Decrypting Messages:
 1. **Encrypted messages auto-decrypt** if you have the right reader key
