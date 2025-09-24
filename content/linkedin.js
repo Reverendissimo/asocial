@@ -402,6 +402,44 @@ class LinkedInAsocial {
         inputArea.dispatchEvent(changeEvent);
       }
       
+      // Additional events to trigger LinkedIn's validation
+      setTimeout(() => {
+        // Trigger focus/blur cycle to wake up LinkedIn's validation
+        inputArea.blur();
+        setTimeout(() => {
+          inputArea.focus();
+          
+          // Trigger additional events that LinkedIn might be listening for
+          const keyupEvent = new KeyboardEvent('keyup', {
+            key: 'Enter',
+            code: 'Enter',
+            bubbles: true,
+            cancelable: true
+          });
+          inputArea.dispatchEvent(keyupEvent);
+          
+          const pasteEvent = new ClipboardEvent('paste', {
+            bubbles: true,
+            cancelable: true
+          });
+          inputArea.dispatchEvent(pasteEvent);
+          
+          // Trigger composition events
+          const compositionStart = new CompositionEvent('compositionstart', {
+            bubbles: true,
+            cancelable: true
+          });
+          inputArea.dispatchEvent(compositionStart);
+          
+          const compositionEnd = new CompositionEvent('compositionend', {
+            bubbles: true,
+            cancelable: true
+          });
+          inputArea.dispatchEvent(compositionEnd);
+          
+        }, 100);
+      }, 100);
+      
       // Set cursor to end
       if (inputArea.contentEditable === 'true') {
         const range = document.createRange();
