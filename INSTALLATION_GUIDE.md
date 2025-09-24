@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial_v2.7.1_final.zip` file
+1. **Download the extension**: Extract the `asocial_v2.8_final.zip` file
 2. **Open Chrome Extensions**: Go to `chrome://extensions/`
 3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
@@ -19,32 +19,35 @@
 
 ## 🔒 How to Use
 
-### Encrypting Messages:
-1. **Go to LinkedIn** and start writing a post
-2. **Click "Be Asocial"** button that appears next to the text input
-3. **Encryption modal opens** with message input and key selection
-4. **Click any key** to auto-encrypt your message
-5. **Post normally** - only people with your key can decrypt it
+### Encrypting Messages (Any Website):
+**Method 1: Keyboard Shortcut (Recommended)**
+1. **Click in any text input field** (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, etc.)
+2. **Press Ctrl+Shift+E** - automatically selects all text and shows encryption modal
+3. **Choose writer key** from the modal
+4. **Text is encrypted and pasted automatically**
 
-### LinkedIn Messaging:
-1. **Go to LinkedIn messaging** and start a conversation
-2. **Click "Be Asocial"** in the message input area
-3. **Use the encryption modal** to encrypt your message
-4. **Send the encrypted message** - it will be automatically decrypted for you
+**Method 2: Right-Click Menu**
+1. **Select any text** in any input field
+2. **Right-click** → "Encrypt with Asocial"
+3. **Choose writer key** from the modal
+4. **Text is encrypted and pasted automatically**
 
 ### Decrypting Messages:
-1. **Encrypted messages auto-decrypt** if you have the right reader key
-2. **To get a reader key**: Ask the sender to share their group's writer key
-3. **Import the reader key**: In the extension popup, click "Import Reader Key" and paste the key
+1. **Decrypted messages** show as `[ASOCIAL] decrypted text`
+2. **Encrypted messages** show as `[ASOCIAL ENCRYPTED] encrypted text`
+3. **Automatic decryption** if you have the right reader key
+4. **To get a reader key**: Ask the sender to share their group's writer key
+5. **Import the reader key**: In the extension popup, click "Import Reader Key" and paste the key
 
 ## 🎯 Key Features
 
 - **Maximum Security**: RSA-2048 + AES-256-GCM encryption
 - **Group-based**: One key per group, simple to manage
-- **Universal Compatibility**: Works on LinkedIn, Facebook, Twitter, Gmail, and any website
+- **Universal Compatibility**: Works on LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, and ANY website
 - **Right-Click Encryption**: Select text → Right-click → "Encrypt with Asocial"
-- **Keyboard Shortcut**: Ctrl+Shift+E for quick encryption
-- **Smart Decryption**: Only decrypts displayed content, not input fields
+- **Keyboard Shortcut**: Ctrl+Shift+E with automatic text selection and pasting
+- **Simple Text Display**: Decrypted messages show as `[ASOCIAL] decrypted text`
+- **No DOM Breaking**: Simple text replacement that doesn't break websites
 
 ## 🆘 Troubleshooting
 

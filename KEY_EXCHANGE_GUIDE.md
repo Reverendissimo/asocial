@@ -1,4 +1,4 @@
-# How People Know Which Key to Use (v2.7.1 - Decryption Fix)
+# How People Know Which Key to Use (v2.8 - Universal Clipboard Approach)
 
 ## The Problem You Identified
 

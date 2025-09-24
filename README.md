@@ -1,6 +1,6 @@
-# Asocial - Cypher Squatting Tool v2.7.1
+# Asocial - Cypher Squatting Tool v2.8
 
-A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-2048, AES-256-GCM) with encrypted local storage and multi-user support. **Latest update fixes decryption interference with input fields.**
+A Chrome extension that enables encrypted messaging on ANY website using high security encryption (RSA-2048, AES-256-GCM) with encrypted local storage and multi-user support. **Latest update: Universal clipboard approach with automatic text selection and pasting.**
 
 ## Features
 
@@ -11,18 +11,19 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 - **Writer Key System**: Create writer keys (Family, Work, Close Friends) for encrypting your messages
 - **Reader Key System**: Import reader keys from others to decrypt their messages
 - **Universal Contextual Menu**: Right-click any selected text → "Encrypt with Asocial"
-- **Cross-Platform Support**: Works on LinkedIn, Facebook, Twitter, Gmail, and any website
-- **Keyboard Shortcut**: Ctrl+Shift+E to encrypt selected text
+- **Cross-Platform Support**: Works on LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, and ANY website
+- **Keyboard Shortcut**: Ctrl+Shift+E to automatically select all text and encrypt
+- **Automatic Text Selection**: Ctrl+Shift+E automatically selects all text in current input field
+- **Automatic Pasting**: Encrypted text is automatically pasted after encryption
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
+- **Simple Text Display**: Decrypted messages show as `[ASOCIAL] decrypted text`
 - **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
-- **Content Security**: No encrypted data exposure in share URLs
-- **Toggle Functionality**: "Show Encrypted" button to view original encrypted content
-- **No Platform-Specific Code**: Clean, maintainable universal approach
+- **No DOM Breaking**: Simple text replacement that doesn't break websites
 
 ## Installation
 
 ### Quick Install (Recommended)
-1. Download the latest release: `asocial_v2.7.1_final.zip`
+1. Download the latest release: `asocial_v2.8_final.zip`
 2. Extract the zip file
 3. Load the extension in Chrome:
    - Open Chrome and go to `chrome://extensions/`
@@ -66,17 +67,24 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 
 ### Encrypting Messages
 
-1. **Select any text** in any input field (LinkedIn, Facebook, Twitter, Gmail, etc.)
-2. **Right-click** → "Encrypt with Asocial" (or use Ctrl+Shift+E)
+**Method 1: Keyboard Shortcut (Recommended)**
+1. **Click in any text input field** (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, etc.)
+2. **Press Ctrl+Shift+E** - automatically selects all text and shows encryption modal
 3. **Choose writer key** from the modal
-4. **Text is encrypted and replaced** automatically
+4. **Text is encrypted and pasted automatically**
+
+**Method 2: Right-Click Menu**
+1. **Select any text** in any input field
+2. **Right-click** → "Encrypt with Asocial"
+3. **Choose writer key** from the modal
+4. **Text is encrypted and pasted automatically**
 
 ### Decrypting Messages
 
-- Messages are automatically decrypted if you have the correct reader key
-- Users without the reader key see encrypted content with visual indicators
-- Click "Show Encrypted" to view the original encrypted content
-- Click "Hide Encrypted" to return to decrypted view
+- **Decrypted messages** show as `[ASOCIAL] decrypted message text`
+- **Encrypted messages** show as `[ASOCIAL ENCRYPTED] encrypted message text`
+- **Automatic decryption** if you have the correct reader key
+- **Simple text display** that doesn't break websites
 
 ## Security Features
 

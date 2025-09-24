@@ -10,6 +10,8 @@ class AsocialUniversal {
     this.encryptionEngine = null;
     this.keyManager = null;
     this.encrypting = false;
+    this.originalElement = null; // Store the original element that had focus
+    this.encryptedText = null; // Store the encrypted text for pasting
     this.init();
   }
 
@@ -79,14 +81,18 @@ class AsocialUniversal {
       if (selectedText && this.isTextInputElement(event.target)) {
         this.selectedText = selectedText;
         this.selectionRange = selection.getRangeAt(0);
+        this.originalElement = event.target; // Store the original element
         console.log('Asocial Universal: Text selected and stored:', selectedText.substring(0, 50) + '...');
+        console.log('Original element stored:', this.originalElement);
       } else if (selectedText) {
         // Even if target is not a text input, store the selection if it's in a text input area
         const textInput = event.target.closest('textarea, input[type="text"], input[type="email"], input[type="search"], input[type="url"], [contenteditable="true"]');
         if (textInput) {
           this.selectedText = selectedText;
           this.selectionRange = selection.getRangeAt(0);
+          this.originalElement = textInput; // Store the original element
           console.log('Asocial Universal: Text selected in text input area:', selectedText.substring(0, 50) + '...');
+          console.log('Original element stored:', this.originalElement);
         } else {
           // Only clear if we're not in the middle of encryption
           if (!this.encrypting) {
@@ -140,6 +146,7 @@ class AsocialUniversal {
     return false;
   }
 
+
   /**
    * Set up keyboard shortcuts
    */
@@ -148,7 +155,15 @@ class AsocialUniversal {
       // Ctrl+Shift+E for encryption
       if (e.ctrlKey && e.shiftKey && e.key === 'E') {
         e.preventDefault();
-        this.showEncryptionModal();
+        console.log('Asocial Universal: Ctrl+Shift+E detected');
+        
+        // First, select all text in the current input field
+        this.selectAllTextFirst();
+        
+        // Then show encryption modal
+        setTimeout(() => {
+          this.showEncryptionModal();
+        }, 100);
       }
     });
   }
@@ -381,165 +396,243 @@ class AsocialUniversal {
   }
 
   /**
-   * Replace selected text with encrypted version
+   * Replace selected text with encrypted version - CLIPBOARD ONLY
    */
   replaceSelectedText(encryptedText) {
     try {
-      console.log('Asocial Universal: Replacing text with encrypted version');
+      console.log('Asocial Universal: Copying encrypted text to clipboard');
       console.log('Encrypted text:', encryptedText.substring(0, 100) + '...');
-      console.log('Original selected text:', this.selectedText);
       
-      // Get current selection
-      const selection = window.getSelection();
-      console.log('Current selection rangeCount:', selection.rangeCount);
-      console.log('Stored selectionRange:', this.selectionRange);
-      console.log('Current selection text:', selection.toString());
+      // Store the encrypted text for pasting
+      this.encryptedText = encryptedText;
       
-      // Check if current selection is targeting the modal (wrong target)
-      if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        const startContainer = range.startContainer;
-        const endContainer = range.endContainer;
-        
-        // Check if containers are text nodes from the modal
-        const isModalText = (startContainer.nodeType === Node.TEXT_NODE && 
-                           (startContainer.textContent.includes('Storage:') || 
-                            startContainer.textContent.includes('Linkedin-common'))) ||
-                          (endContainer.nodeType === Node.TEXT_NODE && 
-                           (endContainer.textContent.includes('Storage:') || 
-                            endContainer.textContent.includes('Linkedin-common')));
-        
-        console.log('Is targeting modal text:', isModalText);
-        console.log('Start container text:', startContainer.textContent);
-        console.log('End container text:', endContainer.textContent);
-        
-        if (isModalText) {
-          console.log('Current selection is targeting modal, using fallback method');
-          this.replaceTextInInput(encryptedText);
-          return;
-        }
-      }
+      // ALWAYS use clipboard approach - no text replacement
+      this.copyToClipboard(encryptedText);
       
-      if (selection.rangeCount > 0) {
-        const range = selection.getRangeAt(0);
-        console.log('Using current selection range');
-        console.log('Range start container:', range.startContainer);
-        console.log('Range end container:', range.endContainer);
-        console.log('Range start offset:', range.startOffset);
-        console.log('Range end offset:', range.endOffset);
-        
-        // Check if range is valid
-        if (range.startContainer && range.endContainer) {
-          // Delete the selected content
-          range.deleteContents();
-          console.log('Deleted contents from range');
-          
-          // Insert the encrypted text
-          const textNode = document.createTextNode(encryptedText);
-          range.insertNode(textNode);
-          console.log('Inserted encrypted text node');
-          
-          // Clear selection
-          selection.removeAllRanges();
-          
-          console.log('Asocial Universal: Text replaced successfully with current selection');
-        } else {
-          console.log('Range is invalid, using fallback');
-          this.replaceTextInInput(encryptedText);
-        }
-      } else if (this.selectionRange) {
-        console.log('Using stored selection range');
-        console.log('Stored range start container:', this.selectionRange.startContainer);
-        console.log('Stored range end container:', this.selectionRange.endContainer);
-        
-        // Check if stored range is valid
-        if (this.selectionRange.startContainer && this.selectionRange.endContainer) {
-          // Fallback to stored range
-          this.selectionRange.deleteContents();
-          const textNode = document.createTextNode(encryptedText);
-          this.selectionRange.insertNode(textNode);
-          window.getSelection().removeAllRanges();
-          console.log('Asocial Universal: Text replaced using stored range');
-        } else {
-          console.log('Stored range is invalid, using fallback');
-          // Try LinkedIn chat-specific replacement first
-          if (this.replaceTextInLinkedInChat(encryptedText)) {
-            console.log('LinkedIn chat replacement successful');
-            this.showNotification('Text replaced successfully!', 'success');
-          } else {
-            // Fallback to general input replacement
-            this.replaceTextInInput(encryptedText);
-          }
-        }
+    } catch (error) {
+      console.error('Asocial Universal: Error copying to clipboard:', error);
+      this.showNotification('Failed to copy to clipboard', 'error');
+    }
+  }
+
+  /**
+   * Copy text to clipboard using multiple methods
+   */
+  copyToClipboard(text) {
+    try {
+      // Method 1: Try modern clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          this.selectAllText();
+          this.showNotification('🔒 Encrypted text copied to clipboard! Paste it manually (Ctrl+V)', 'success');
+          console.log('Clipboard API: Text copied successfully');
+        }).catch(error => {
+          console.log('Clipboard API failed, trying fallback:', error);
+          this.copyToClipboardFallback(text);
+        });
       } else {
-        console.log('No selection found, using fallback method');
-        // Try LinkedIn chat-specific replacement first
-        if (this.replaceTextInLinkedInChat(encryptedText)) {
-          console.log('LinkedIn chat replacement successful');
-          this.showNotification('Text replaced successfully!', 'success');
-        } else {
-          // Fallback to general input replacement
-          this.replaceTextInInput(encryptedText);
-        }
+        console.log('Clipboard API not available, using fallback');
+        this.copyToClipboardFallback(text);
       }
     } catch (error) {
-      console.error('Asocial Universal: Error replacing text:', error);
-      this.showNotification('Failed to replace text', 'error');
+      console.error('Clipboard copy failed:', error);
+      this.copyToClipboardFallback(text);
+    }
+  }
+
+  /**
+   * Fallback clipboard method using execCommand
+   */
+  copyToClipboardFallback(text) {
+    try {
+      // Create a temporary textarea
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-999999px';
+      textarea.style.top = '-999999px';
+      document.body.appendChild(textarea);
+      
+      // Select and copy
+      textarea.focus();
+      textarea.select();
+      
+      const success = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      
+      if (success) {
+        this.selectAllText();
+        this.showNotification('🔒 Encrypted text copied to clipboard! Paste it manually (Ctrl+V)', 'success');
+        console.log('execCommand: Text copied successfully');
+      } else {
+        this.showNotification('Failed to copy to clipboard', 'error');
+        console.log('execCommand: Copy failed');
+      }
+    } catch (error) {
+      console.error('Fallback clipboard copy failed:', error);
+      this.showNotification('Failed to copy to clipboard', 'error');
+    }
+  }
+
+  /**
+   * Select all text in the current input field (for keyboard shortcut)
+   */
+  selectAllTextFirst() {
+    try {
+      // Find the currently focused element or the last text input
+      const activeElement = document.activeElement;
+      let targetElement = null;
+      
+      if (activeElement && this.isTextInputElement(activeElement)) {
+        targetElement = activeElement;
+      } else {
+        // Find the last text input on the page
+        const textInputs = document.querySelectorAll('textarea, input[type="text"], input[type="email"], input[type="search"], input[type="url"], [contenteditable="true"]');
+        if (textInputs.length > 0) {
+          targetElement = textInputs[textInputs.length - 1];
+        }
+      }
+      
+      if (targetElement) {
+        console.log('Selecting all text in current input:', targetElement);
+        
+        // Focus the element first
+        targetElement.focus();
+        
+        // Select all text immediately
+        if (targetElement.contentEditable === 'true') {
+          // For contentEditable, use range selection
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(targetElement);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          console.log('ContentEditable text selected');
+        } else {
+          // For regular inputs, use select() method
+          targetElement.select();
+          console.log('Input text selected');
+        }
+        
+        // Store the selected text and element for the modal
+        this.selectedText = targetElement.textContent || targetElement.value || '';
+        this.originalElement = targetElement;
+        console.log('Selected text stored:', this.selectedText.substring(0, 50) + '...');
+      } else {
+        console.log('No target element found for selection');
+      }
+    } catch (error) {
+      console.error('Error selecting text:', error);
+    }
+  }
+
+  /**
+   * Select all text in the original element using Ctrl+A simulation
+   */
+  selectAllText() {
+    try {
+      // Use the original element where the user selected text
+      let targetElement = this.originalElement;
+      
+      if (!targetElement) {
+        // Fallback to active element or last text input
+        const activeElement = document.activeElement;
+        if (activeElement && this.isTextInputElement(activeElement)) {
+          targetElement = activeElement;
+        } else {
+          const textInputs = document.querySelectorAll('textarea, input[type="text"], input[type="email"], input[type="search"], input[type="url"], [contenteditable="true"]');
+          if (textInputs.length > 0) {
+            targetElement = textInputs[textInputs.length - 1];
+          }
+        }
+      }
+      
+      if (targetElement) {
+        console.log('Selecting all text in original element:', targetElement);
+        
+        // Focus the original element
+        targetElement.focus();
+        
+        // Small delay to ensure focus, then select all text
+        setTimeout(() => {
+          console.log('Attempting to select all text in:', targetElement);
+          console.log('Element type:', targetElement.tagName);
+          console.log('ContentEditable:', targetElement.contentEditable);
+          
+          if (targetElement.contentEditable === 'true') {
+            // For contentEditable, try multiple methods
+            console.log('Using contentEditable selection methods');
+            
+            // Method 1: execCommand
+            const success1 = document.execCommand('selectAll', false, null);
+            console.log('execCommand selectAll result:', success1);
+            
+            // Method 2: Range selection
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(targetElement);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            console.log('Range selection applied');
+            
+          } else {
+            // For regular inputs, use select() method
+            console.log('Using input select() method');
+            targetElement.select();
+            console.log('Input select() called');
+            
+            // Also try to set selection range manually
+            if (targetElement.setSelectionRange) {
+              targetElement.setSelectionRange(0, targetElement.value.length);
+              console.log('setSelectionRange called');
+            }
+          }
+          
+          console.log('Text selection completed');
+          
+          // After selecting text, try to paste the content
+          setTimeout(() => {
+            console.log('Attempting to paste encrypted text');
+            
+            // Method 1: Try execCommand paste
+            const pasteSuccess = document.execCommand('paste', false, null);
+            console.log('execCommand paste result:', pasteSuccess);
+            
+            // Method 2: If paste didn't work, try execCommand insertText
+            if (!pasteSuccess) {
+              console.log('Paste failed, trying insertText');
+              const insertSuccess = document.execCommand('insertText', false, this.encryptedText || '');
+              console.log('execCommand insertText result:', insertSuccess);
+            }
+            
+            // Method 3: Direct text insertion as fallback
+            if (!pasteSuccess && !document.execCommand('insertText', false, this.encryptedText || '')) {
+              console.log('Both paste methods failed, using direct insertion');
+              if (targetElement.contentEditable === 'true') {
+                targetElement.textContent = this.encryptedText || '';
+              } else {
+                targetElement.value = this.encryptedText || '';
+              }
+              
+              // Trigger input event
+              const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+              targetElement.dispatchEvent(inputEvent);
+              console.log('Direct text insertion completed');
+            }
+            
+            console.log('Paste attempt completed');
+          }, 200); // Wait a bit longer for selection to complete
+        }, 100);
+        
+        console.log('Text selected for easy pasting');
+      } else {
+        console.log('No target element found for selection');
+      }
+    } catch (error) {
+      console.error('Error selecting text:', error);
     }
   }
   
-  /**
-   * LinkedIn-specific text replacement for chat inputs
-   */
-  replaceTextInLinkedInChat(encryptedText) {
-    try {
-      console.log('Asocial Universal: LinkedIn chat-specific replacement');
-      
-      // Find LinkedIn chat input specifically
-      const chatInputs = document.querySelectorAll('[data-test-id="msg-form-input"], [data-test-id="msg-form-text-input"], .msg-form__contenteditable, .msg-form__text-input');
-      console.log('Found LinkedIn chat inputs:', chatInputs.length);
-      
-      for (const input of chatInputs) {
-        console.log('Processing LinkedIn chat input:', input);
-        
-        if (input.contentEditable === 'true') {
-          // Clear and set content
-          input.innerHTML = '';
-          input.textContent = encryptedText;
-        } else {
-          input.value = encryptedText;
-        }
-        
-        // Trigger LinkedIn-specific events
-        const events = [
-          new Event('input', { bubbles: true, cancelable: true }),
-          new Event('change', { bubbles: true, cancelable: true }),
-          new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }),
-          new KeyboardEvent('keyup', { key: 'a', bubbles: true, cancelable: true }),
-          new ClipboardEvent('paste', { bubbles: true, cancelable: true }),
-          new CompositionEvent('compositionstart', { bubbles: true, cancelable: true }),
-          new CompositionEvent('compositionend', { bubbles: true, cancelable: true })
-        ];
-        
-        events.forEach(event => {
-          input.dispatchEvent(event);
-        });
-        
-        // Force focus and additional events
-        input.focus();
-        input.blur();
-        input.focus();
-        
-        console.log('LinkedIn chat input processed');
-        return true;
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Asocial Universal: Error in LinkedIn chat replacement:', error);
-      return false;
-    }
-  }
 
   /**
    * Fallback method to replace text in input element
@@ -605,36 +698,16 @@ class AsocialUniversal {
           targetInput.value = encryptedText;
         }
         
-        // Trigger comprehensive events to notify the platform (especially LinkedIn chat)
+        // Trigger minimal events to avoid detection
         const inputEvent = new Event('input', { bubbles: true, cancelable: true });
         const changeEvent = new Event('change', { bubbles: true, cancelable: true });
-        const keyupEvent = new KeyboardEvent('keyup', { bubbles: true, cancelable: true });
-        const keydownEvent = new KeyboardEvent('keydown', { bubbles: true, cancelable: true });
-        const keypressEvent = new KeyboardEvent('keypress', { bubbles: true, cancelable: true });
-        const pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
-        const compositionStartEvent = new CompositionEvent('compositionstart', { bubbles: true, cancelable: true });
-        const compositionEndEvent = new CompositionEvent('compositionend', { bubbles: true, cancelable: true });
-        const focusEvent = new FocusEvent('focus', { bubbles: true, cancelable: true });
-        const blurEvent = new FocusEvent('blur', { bubbles: true, cancelable: true });
         
-        // Trigger all events in sequence
-        targetInput.dispatchEvent(focusEvent);
-        targetInput.dispatchEvent(compositionStartEvent);
-        targetInput.dispatchEvent(keydownEvent);
         targetInput.dispatchEvent(inputEvent);
-        targetInput.dispatchEvent(changeEvent);
-        targetInput.dispatchEvent(keypressEvent);
-        targetInput.dispatchEvent(keyupEvent);
-        targetInput.dispatchEvent(pasteEvent);
-        targetInput.dispatchEvent(compositionEndEvent);
-        targetInput.dispatchEvent(blurEvent);
         
-        // Force focus back and trigger additional events
+        // Small delay then trigger change
         setTimeout(() => {
-          targetInput.focus();
-          targetInput.dispatchEvent(inputEvent);
           targetInput.dispatchEvent(changeEvent);
-        }, 100);
+        }, 50);
         
         console.log('Asocial Universal: Text replaced in input element');
         this.showNotification('Text replaced successfully!', 'success');
@@ -776,46 +849,11 @@ class AsocialUniversal {
    */
   replaceEncryptedMessage(textNode, decryptedMessage, originalText) {
     try {
-      // Create the replacement content
-      const container = document.createElement('div');
-      container.className = 'asocial-decrypted-message';
-      container.style.cssText = `
-        background: #000000; border: 2px solid #00ff00; border-radius: 4px;
-        padding: 8px; margin: 4px 0; color: #00ff00; font-family: monospace;
-        position: relative;
-      `;
+      // Simple text replacement - just replace the text content
+      const newText = `[ASOCIAL] ${decryptedMessage}`;
+      textNode.textContent = newText;
       
-      container.innerHTML = `
-        <div class="asocial-tag" style="
-          background: #00ff00; color: #000000; padding: 2px 6px; border-radius: 3px;
-          font-size: 11px; font-weight: bold; margin-bottom: 4px; display: inline-block;
-        ">🔒 DECRYPTED</div>
-        <div class="asocial-content" style="color: #00ff00; margin: 4px 0;">${decryptedMessage}</div>
-        <button class="asocial-toggle" style="
-          background: #000000; color: #00ff00; border: 1px solid #00ff00;
-          padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px;
-        ">Show Encrypted</button>
-        <div class="asocial-encrypted" style="display: none; color: #666; font-size: 10px; margin-top: 4px;">${originalText}</div>
-      `;
-      
-      // Replace the text node
-      textNode.parentNode.replaceChild(container, textNode);
-      
-      // Set up toggle functionality
-      const toggleBtn = container.querySelector('.asocial-toggle');
-      const encryptedDiv = container.querySelector('.asocial-encrypted');
-      
-      toggleBtn.addEventListener('click', () => {
-        if (encryptedDiv.style.display === 'none') {
-          encryptedDiv.style.display = 'block';
-          toggleBtn.textContent = 'Hide Encrypted';
-        } else {
-          encryptedDiv.style.display = 'none';
-          toggleBtn.textContent = 'Show Encrypted';
-        }
-      });
-      
-      console.log('Asocial Universal: Message replaced with decrypted content');
+      console.log('Asocial Universal: Message replaced with simple decrypted text');
     } catch (error) {
       console.error('Asocial Universal: Error replacing encrypted message:', error);
     }
@@ -826,25 +864,11 @@ class AsocialUniversal {
    */
   showEncryptedMessage(textNode, originalText) {
     try {
-      const container = document.createElement('div');
-      container.className = 'asocial-cannot-decrypt';
-      container.style.cssText = `
-        background: #000000; border: 2px solid #ff0000; border-radius: 4px;
-        padding: 8px; margin: 4px 0; color: #ff0000; font-family: monospace;
-      `;
+      // Simple text replacement - just add a prefix to show it's encrypted
+      const newText = `[ASOCIAL ENCRYPTED] ${originalText}`;
+      textNode.textContent = newText;
       
-      container.innerHTML = `
-        <div class="asocial-tag" style="
-          background: #ff0000; color: #000000; padding: 2px 6px; border-radius: 3px;
-          font-size: 11px; font-weight: bold; margin-bottom: 4px; display: inline-block;
-        ">🔒 ENCRYPTED</div>
-        <div class="asocial-status" style="color: #ff0000; font-size: 12px;">Cannot decrypt - missing key</div>
-        <div class="asocial-encrypted" style="color: #666; font-size: 10px; margin-top: 4px;">${originalText}</div>
-      `;
-      
-      textNode.parentNode.replaceChild(container, textNode);
-      
-      console.log('Asocial Universal: Message marked as encrypted (cannot decrypt)');
+      console.log('Asocial Universal: Message marked as encrypted (simple text)');
     } catch (error) {
       console.error('Asocial Universal: Error showing encrypted message:', error);
     }

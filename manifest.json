@@ -12,12 +12,7 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "https://www.linkedin.com/*",
-    "https://linkedin.com/*",
-    "https://www.facebook.com/*",
-    "https://facebook.com/*",
-    "https://twitter.com/*",
-    "https://x.com/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background/background.js"
