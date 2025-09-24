@@ -22,8 +22,12 @@ class AsocialKeyManager {
       const privateKeyBase64 = await this.crypto.exportKey(keyPair.privateKey, 'pkcs8');
       const publicKeyBase64 = await this.crypto.exportKey(keyPair.publicKey, 'spki');
       
-      // Generate unique key ID for this group
-      const keyId = this.generateKeyId();
+      // Get Asocial username
+      const asocialUsername = await this.getAsocialUsername();
+      
+      // Generate unique key ID based on multiple factors
+      const timestamp = new Date().toISOString();
+      const keyId = await this.generateKeyId(asocialUsername, groupName, privateKeyBase64, timestamp);
       
       // Create group data
       const groupData = {
@@ -32,8 +36,8 @@ class AsocialKeyManager {
         name: groupName,
         privateKey: privateKeyBase64,
         publicKey: publicKeyBase64,
-        createdAt: new Date().toISOString(),
-        contacts: []
+        asocialUsername: asocialUsername,
+        createdAt: timestamp,
       };
       
       // Store group
@@ -73,56 +77,6 @@ class AsocialKeyManager {
     }
   }
 
-  /**
-   * Add contact to key group (just name, no individual key needed)
-   */
-  async addContactToGroup(groupId, contactName) {
-    try {
-      const groups = await this.getStoredKeyGroups();
-      const group = groups.find(g => g.id === groupId);
-      
-      if (!group) {
-        throw new Error('Key group not found');
-      }
-      
-      const contact = {
-        id: this.generateContactId(),
-        name: contactName,
-        addedAt: new Date().toISOString()
-      };
-      
-      group.contacts.push(contact);
-      await this.storeKeyGroups(groups);
-      
-      console.log(`Contact "${contactName}" added to group "${group.name}"`);
-      return contact;
-    } catch (error) {
-      console.error('Failed to add contact to group:', error);
-      throw new Error(`Failed to add contact: ${error.message}`);
-    }
-  }
-
-  /**
-   * Remove contact from key group
-   */
-  async removeContactFromGroup(groupId, contactId) {
-    try {
-      const groups = await this.getStoredKeyGroups();
-      const group = groups.find(g => g.id === groupId);
-      
-      if (!group) {
-        throw new Error('Key group not found');
-      }
-      
-      group.contacts = group.contacts.filter(c => c.id !== contactId);
-      await this.storeKeyGroups(groups);
-      
-      console.log(`Contact removed from group "${group.name}"`);
-    } catch (error) {
-      console.error('Failed to remove contact from group:', error);
-      throw new Error(`Failed to remove contact: ${error.message}`);
-    }
-  }
 
   /**
    * Delete key group
@@ -141,6 +95,78 @@ class AsocialKeyManager {
   }
 
   /**
+   * Get Asocial username
+   */
+  async getAsocialUsername() {
+    try {
+      const storedUsername = await this.getStoredUsername();
+      if (storedUsername) {
+        console.log('Using stored Asocial username:', storedUsername);
+        return storedUsername;
+      }
+      
+      console.log('No Asocial username set, using fallback');
+      return 'Asocial User';
+    } catch (error) {
+      console.error('Failed to get Asocial username:', error);
+      return 'Asocial User';
+    }
+  }
+
+  /**
+   * Store Asocial username
+   */
+  async setAsocialUsername(username) {
+    try {
+      if (!username || username.trim().length === 0) {
+        throw new Error('Username cannot be empty');
+      }
+      
+      const cleanUsername = username.trim();
+      if (cleanUsername.length < 2) {
+        throw new Error('Username must be at least 2 characters long');
+      }
+      
+      if (cleanUsername.length > 50) {
+        throw new Error('Username must be less than 50 characters');
+      }
+      
+      await chrome.storage.local.set({ asocialUsername: cleanUsername });
+      console.log('Asocial username stored:', cleanUsername);
+      return cleanUsername;
+    } catch (error) {
+      console.error('Failed to store Asocial username:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get stored Asocial username
+   */
+  async getStoredUsername() {
+    try {
+      const result = await chrome.storage.local.get(['asocialUsername']);
+      return result.asocialUsername || null;
+    } catch (error) {
+      console.error('Failed to get stored username:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Check if username is set
+   */
+  async isUsernameSet() {
+    try {
+      const username = await this.getStoredUsername();
+      return username && username.trim().length > 0;
+    } catch (error) {
+      console.error('Failed to check if username is set:', error);
+      return false;
+    }
+  }
+
+  /**
    * Export the single shared public key for this group
    */
   async exportGroupPublicKey(groupId) {
@@ -150,16 +176,84 @@ class AsocialKeyManager {
         throw new Error('Key group not found');
       }
       
+      // Get Asocial username
+      const asocialUsername = await this.getAsocialUsername();
+      
       // Return the private key AND the key ID (the "magic")
       // Note: In a shared key system, we share the private key for decryption
       return {
         privateKey: group.privateKey,
         keyId: group.keyId,
-        groupName: group.name
+        groupName: group.name,
+        asocialUsername: asocialUsername,
+        createdAt: group.createdAt
       };
     } catch (error) {
       console.error('Failed to export public key:', error);
       throw new Error(`Failed to export public key: ${error.message}`);
+    }
+  }
+
+  /**
+   * Import reader key (other person's private key for decrypting their messages)
+   * This is independent of groups - you can import reader keys without having any groups
+   */
+  async importReaderKey(keyData) {
+    try {
+      console.log('Importing reader key');
+      console.log('Key data length:', keyData.length);
+      
+      let privateKey, keyId, senderName;
+      
+      // Try to parse as JSON first (for structured key data)
+      try {
+        const importData = JSON.parse(keyData);
+        console.log('Parsed JSON data:', importData);
+        
+        if (importData.privateKey) {
+          privateKey = importData.privateKey;
+          // Use Asocial username if available, otherwise fall back to group name
+          senderName = importData.asocialUsername || importData.groupName || importData.name || 'Unknown Sender';
+          keyId = importData.keyId;
+          if (keyId) {
+            keyId = keyId.toUpperCase();
+          }
+          console.log('Parsed as JSON format with keyId:', keyId);
+          console.log('Sender name from Asocial:', importData.asocialUsername);
+        } else {
+          throw new Error('Invalid JSON format - missing privateKey');
+        }
+      } catch (jsonError) {
+        // If JSON parsing fails, treat as raw base64 private key
+        console.log('Not JSON format, treating as raw base64 private key');
+        privateKey = keyData.trim();
+        senderName = 'Unknown Sender';
+        keyId = null; // No key ID for raw keys
+        console.log('Raw key length:', privateKey.length);
+      }
+      
+      // Validate the private key by trying to import it
+      console.log('Validating reader private key...');
+      await this.crypto.importKey(privateKey, 'private', ['decrypt']);
+      console.log('Reader private key validation successful');
+      
+      // Store the reader key independently
+      const readerKey = {
+        id: this.generateReaderKeyId(),
+        keyId: keyId,
+        privateKey: privateKey,
+        senderName: senderName,
+        asocialUsername: senderName, // Store the Asocial username for display
+        importedAt: new Date().toISOString()
+      };
+      
+      await this.storeReaderKey(readerKey);
+      
+      console.log(`Reader key imported successfully for ${senderName}`);
+      return readerKey;
+    } catch (error) {
+      console.error('Failed to import reader key:', error);
+      throw new Error(`Failed to import reader key: ${error.message}`);
     }
   }
 
@@ -359,22 +453,59 @@ class AsocialKeyManager {
   }
 
   /**
-   * Generate unique short key ID (8 characters)
+   * Generate a unique key ID for a group based on multiple factors
+   * Ensures 8+ billion combinations for uniqueness
    */
-  generateKeyId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+  async generateKeyId(asocialUsername, groupName, privateKey, timestamp) {
+    try {
+      // Create a comprehensive input string from all factors
+      const inputString = `${asocialUsername}|${groupName}|${privateKey.substring(0, 64)}|${timestamp}`;
+      
+      // Use Web Crypto API to create a hash
+      const encoder = new TextEncoder();
+      const data = encoder.encode(inputString);
+      
+      // Create SHA-256 hash
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      
+      // Convert to hex string
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      // Take first 12 characters for 16^12 = 281 trillion combinations (well over 8 billion)
+      // Convert to base36 for shorter, more readable format
+      const keyId = this.hexToBase36(hashHex.substring(0, 12));
+      
+      console.log('Generated key ID:', keyId, 'from factors:', { asocialUsername, groupName, timestamp });
+      return keyId;
+    } catch (error) {
+      console.error('Failed to generate key ID:', error);
+      // Fallback to random generation
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 12; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
     }
-    return result;
   }
 
   /**
-   * Generate unique contact ID
+   * Convert hex string to base36 for shorter, more readable key IDs
    */
-  generateContactId() {
-    return 'contact_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  hexToBase36(hexString) {
+    // Convert hex to decimal
+    const decimal = parseInt(hexString, 16);
+    // Convert decimal to base36
+    return decimal.toString(36).toUpperCase();
+  }
+
+
+  /**
+   * Generate unique reader key ID
+   */
+  generateReaderKeyId() {
+    return 'reader_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
 
   /**
@@ -392,19 +523,71 @@ class AsocialKeyManager {
     return { valid: true };
   }
 
+
   /**
-   * Validate contact name
+   * Store reader key in browser storage
    */
-  validateContactName(name) {
-    if (!name || name.trim().length === 0) {
-      return { valid: false, error: 'Contact name cannot be empty' };
+  async storeReaderKey(readerKey) {
+    try {
+      const readerKeys = await this.getStoredReaderKeys();
+      readerKeys.push(readerKey);
+      await chrome.storage.local.set({ asocial_reader_keys: readerKeys });
+    } catch (error) {
+      console.error('Failed to store reader key:', error);
+      throw new Error('Failed to store reader key');
     }
-    
-    if (name.length > 100) {
-      return { valid: false, error: 'Contact name too long (max 100 characters)' };
+  }
+
+  /**
+   * Get stored reader keys from browser storage
+   */
+  async getStoredReaderKeys() {
+    try {
+      const result = await chrome.storage.local.get(['asocial_reader_keys']);
+      return result.asocial_reader_keys || [];
+    } catch (error) {
+      console.error('Failed to get stored reader keys:', error);
+      return [];
     }
-    
-    return { valid: true };
+  }
+
+  /**
+   * Get all reader keys
+   */
+  async getReaderKeys() {
+    try {
+      return await this.getStoredReaderKeys();
+    } catch (error) {
+      console.error('Failed to get reader keys:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get reader key by key ID (for decryption)
+   */
+  async getReaderKeyByKeyId(keyId) {
+    try {
+      const readerKeys = await this.getStoredReaderKeys();
+      return readerKeys.find(key => key.keyId && key.keyId.toUpperCase() === keyId.toUpperCase());
+    } catch (error) {
+      console.error('Failed to get reader key by key ID:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Delete reader key
+   */
+  async deleteReaderKey(readerKeyId) {
+    try {
+      const readerKeys = await this.getStoredReaderKeys();
+      const filteredKeys = readerKeys.filter(key => key.id !== readerKeyId);
+      await chrome.storage.local.set({ asocial_reader_keys: filteredKeys });
+    } catch (error) {
+      console.error('Failed to delete reader key:', error);
+      throw new Error('Failed to delete reader key');
+    }
   }
 }
 
@@ -414,3 +597,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
   window.AsocialKeyManager = AsocialKeyManager;
 }
+

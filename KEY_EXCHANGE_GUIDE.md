@@ -1,8 +1,8 @@
-# How Contacts Know Which Key to Use
+# How People Know Which Key to Use
 
 ## The Problem You Identified
 
-You're absolutely right! This is a critical question: **How does a contact know which key to use to decrypt your message?**
+You're absolutely right! This is a critical question: **How does someone know which key to use to decrypt your message?**
 
 ## The Solution: Key ID-Based Direct Matching
 
@@ -10,7 +10,7 @@ You're absolutely right! This is a critical question: **How does a contact know 
 
 1. **You encrypt a message** for a specific group (e.g., "Family")
 2. **The encrypted message contains** a unique `keyId` in the tag: `[ASOCIAL ABC12345]`
-3. **Your contact's extension** looks up the key by ID
+3. **The recipient's extension** looks up the key by ID
 4. **Direct key matching** - no need to try all keys!
 
 ### **Step-by-Step Process:**
@@ -23,9 +23,9 @@ You're absolutely right! This is a critical question: **How does a contact know 
 4. Message becomes: [ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSJ9...
 ```
 
-#### **When Contact Decrypts:**
+#### **When Recipient Decrypts:**
 ```
-1. Contact sees: [ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSJ9...
+1. Recipient sees: [ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSJ9...
 2. Extension extracts keyId: "ABC12345"
 3. Extension looks up key by ID:
    - Finds "ABC12345" → SUCCESS! ✅
@@ -36,16 +36,16 @@ You're absolutely right! This is a critical question: **How does a contact know 
 ## **Key Exchange Process**
 
 ### **For You (The Sender):**
-1. **Create encryption groups** (Family, Work, Close Friends)
-2. **Share your public keys** with contacts:
-   - Export public key for "Family" group
+1. **Create writer key groups** (Family, Work, Close Friends)
+2. **Share your writer keys** with people:
+   - Export writer key for "Family" group
    - Send to family members via QR code, file, or copy/paste
 3. **Encrypt messages** by selecting the appropriate group
 
-### **For Your Contacts:**
-1. **Import your public keys** into their extension
-2. **Assign keys to groups** in their extension
-3. **Extension automatically tries** all keys when decrypting
+### **For Your Recipients:**
+1. **Import your writer keys as reader keys** into their extension
+2. **Extension automatically matches** keys by key ID when decrypting
+3. **No manual assignment needed** - key ID does the matching
 
 ## **Example Scenario**
 
@@ -76,30 +76,30 @@ You're absolutely right! This is a critical question: **How does a contact know 
 ## **Key Management Architecture**
 
 ### **Your Setup:**
-- **You have multiple private keys** (one per group)
-- **You share the same public key** with everyone in each group
-- **Family gets your "Family" public key** (same key for all family members)
-- **Work colleagues get your "Work" public key** (same key for all work colleagues)
+- **You have multiple writer keys** (one per group)
+- **You share the same writer key** with everyone in each group
+- **Family gets your "Family" writer key** (same key for all family members)
+- **Work colleagues get your "Work" writer key** (same key for all work colleagues)
 
-### **Contact's Setup:**
-- **Each contact imports your group's public key**
-- **They assign the key to the corresponding group** in their extension
+### **Recipient's Setup:**
+- **Each recipient imports your group's writer key as a reader key**
 - **Extension automatically matches** keys to messages using the key ID
+- **No manual assignment needed** - key ID does the matching
 
 ## **Visual Example**
 
 ```
-Your Groups:                    Contact's Imported Keys:
+Your Writer Key Groups:        Recipient's Reader Keys:
 ┌─────────────────┐            ┌─────────────────────┐
-│ Family Group    │            │ Your Family Key    │
-│ - Private Key   │            │ - Same Public Key  │
-│ - Public Key    │ ──────────→│   for ALL family   │
+│ Family Group     │            │ Your Family Reader │
+│ - Writer Key     │            │ - Same Writer Key  │
+│ - Key ID: ABC123 │ ──────────→│   for ALL family   │
 └─────────────────┘            │   members          │
                                └─────────────────────┘
 ┌─────────────────┐            ┌─────────────────────┐
-│ Work Group      │            │ Your Work Key       │
-│ - Private Key   │            │ - Same Public Key  │
-│ - Public Key    │ ──────────→│   for ALL work      │
+│ Work Group       │            │ Your Work Reader    │
+│ - Writer Key     │            │ - Same Writer Key  │
+│ - Key ID: XYZ789 │ ──────────→│   for ALL work      │
 └─────────────────┘            │   colleagues        │
                                └─────────────────────┘
 ```
@@ -119,4 +119,4 @@ Your Groups:                    Contact's Imported Keys:
 - **Group isolation** (Family can't decrypt Work messages)
 - **Forward secrecy** (if key is compromised, only future messages are affected)
 
-This architecture ensures that contacts automatically get the right decryption key without any manual intervention!
+This architecture ensures that recipients automatically get the right decryption key without any manual intervention!

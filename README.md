@@ -5,8 +5,8 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 ## Features
 
 - **High Security Encryption**: RSA-2048 and AES-256-GCM for strong security
-- **Group-Based Access Control**: Create encryption groups (Family, Work, Close Friends)
-- **Single Shared Key System**: One public key per group - simple and practical
+- **Group-Based Access Control**: Create writer key groups (Family, Work, Close Friends)
+- **Single Shared Key System**: One writer key per group - simple and practical
 - **LinkedIn Integration**: "Be Asocial" button for easy encryption
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
 - **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
@@ -36,18 +36,18 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 
 ## Usage
 
-### Creating Encryption Groups
+### Creating Writer Key Groups
 
 1. Click the Asocial extension icon
 2. Click "Create New Group"
 3. Enter a group name (e.g., "Family", "Work", "Close Friends")
-4. The extension will generate one RSA-2048 key pair for the group
+4. The extension will generate one RSA-2048 writer key pair for the group
 
-### Sharing Keys
+### Sharing Writer Keys
 
 1. In the extension popup, select a group
-2. Click "Export Public Key"
-3. Share the **same public key** with all contacts in the group via:
+2. Click "Export Writer Key"
+3. Share the **same writer key** with all people in the group via:
    - Export key (includes "magic" key ID for proper decryption)
    - Copy/paste JSON format
    - QR code (future feature)
@@ -62,8 +62,8 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 
 ### Decrypting Posts
 
-- Posts are automatically decrypted if you have the correct key
-- Users without the key see encrypted content with visual indicators
+- Posts are automatically decrypted if you have the correct reader key
+- Users without the reader key see encrypted content with visual indicators
 - Click "Show Encrypted" to view the original encrypted content
 - Click "Hide Encrypted" to return to decrypted view
 

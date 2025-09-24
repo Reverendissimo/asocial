@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=600, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Asocial - Encrypted Social Posts</title>
   <link rel="stylesheet" href="popup.css">
 </head>
@@ -23,25 +23,36 @@
     <!-- Simple Mode -->
     <div id="simple-mode-content" class="mode-content active">
       <div class="welcome-section">
-        <h2>BE ASOCIAL</h2>
+        <h2>Welcome to Asocial!</h2>
         <p>Encrypt your social media posts for specific groups using maximum security encryption.</p>
       </div>
 
       <div class="quick-actions">
         <button id="create-group-btn" class="primary-btn">
           <span class="btn-icon">➕</span>
-          Create New Group
+          Create New Writer Key
         </button>
         <button id="import-key-btn" class="secondary-btn">
           <span class="btn-icon">📥</span>
-          Import Public Key
+          Import Reader Key
+        </button>
+        <button id="set-username-btn" class="secondary-btn">
+          <span class="btn-icon">👤</span>
+          Set Asocial Username
         </button>
       </div>
 
       <div class="groups-section">
-        <h3>Your Encryption Groups</h3>
+        <h3>Your Writer Keys (For Encrypting Your Messages)</h3>
         <div id="groups-list" class="groups-list">
           <!-- Groups will be populated here -->
+        </div>
+      </div>
+
+      <div class="reader-keys-section">
+        <h3>Reader Keys (For Decrypting Others' Messages)</h3>
+        <div id="reader-keys-list" class="reader-keys-list">
+          <!-- Reader keys will be populated here -->
         </div>
       </div>
     </div>
@@ -101,22 +112,43 @@
     <div id="create-group-modal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Create New Encryption Group</h3>
+          <h3>Create New Writer Key</h3>
           <button class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label for="group-name">Group Name:</label>
+            <label for="group-name">Writer Key Name:</label>
             <input type="text" id="group-name" placeholder="e.g., Family, Work, Close Friends" maxlength="50">
           </div>
           <div class="form-group">
             <label for="group-description">Description (optional):</label>
-            <textarea id="group-description" placeholder="Describe this group..." maxlength="200"></textarea>
+            <textarea id="group-description" placeholder="Describe this writer key..." maxlength="200"></textarea>
           </div>
         </div>
         <div class="modal-footer">
           <button id="cancel-create" class="secondary-btn">Cancel</button>
-          <button id="create-group" class="primary-btn">Create Group</button>
+          <button id="create-group" class="primary-btn">Create Writer Key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Username Modal -->
+    <div id="username-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Set Your Asocial Username</h3>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Enter your Asocial username that will be shown when others import your writer keys:</p>
+          <div class="form-group">
+            <label for="asocial-username">Asocial Username:</label>
+            <input type="text" id="asocial-username" placeholder="Enter your Asocial username" maxlength="50" />
+          </div>
+          <div class="modal-actions">
+            <button id="save-username" class="primary-btn">Save Username</button>
+            <button class="close-modal secondary-btn" data-modal="username-modal">Cancel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -125,7 +157,7 @@
     <div id="import-key-modal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Import Public Key</h3>
+          <h3>Import Reader Key</h3>
           <button class="close-btn">&times;</button>
         </div>
         <div class="modal-body">
@@ -137,17 +169,8 @@
           
           <div id="paste-tab" class="tab-content active">
             <div class="form-group">
-              <label for="pasted-key">Public Key:</label>
-              <textarea id="pasted-key" placeholder="Paste the base64 public key here (starts with MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...)" rows="6"></textarea>
-              <small style="color: #00ff00; font-size: 12px;">
-                You can paste either:<br>
-                • Raw base64 public key (starts with MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...)<br>
-                • JSON format: {"publicKey":"MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...","groupName":"Group Name"}
-              </small>
-            </div>
-            <div class="form-group">
-              <label for="contact-name">Contact Name:</label>
-              <input type="text" id="contact-name" placeholder="Name of the person who owns this key">
+              <label for="pasted-key">Reader Key:</label>
+              <textarea id="pasted-key" placeholder="Paste the reader key here..." rows="6"></textarea>
             </div>
           </div>
           
@@ -190,22 +213,13 @@
               <span id="group-details-created"></span>
             </div>
             <div class="info-item">
-              <label>Contacts:</label>
-              <span id="group-details-contacts"></span>
             </div>
           </div>
           
-          <div class="contacts-section">
-            <h4>Contacts in this group:</h4>
-            <div id="contacts-list" class="contacts-list">
-              <!-- Contacts will be populated here -->
-            </div>
-          </div>
           
           <div class="group-actions">
-            <button id="export-group-key" class="secondary-btn">Export Public Key</button>
-            <button id="add-contact" class="secondary-btn">Add Contact</button>
-            <button id="delete-group" class="danger-btn">Delete Group</button>
+            <button id="export-group-key" class="secondary-btn">Export Writer Key</button>
+            <button id="delete-group" class="danger-btn">Delete Writer Key</button>
           </div>
         </div>
       </div>

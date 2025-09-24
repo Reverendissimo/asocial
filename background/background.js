@@ -208,7 +208,6 @@ class AsocialBackground {
         name: name.trim(),
         description: description || '',
         createdAt: new Date().toISOString(),
-        contacts: []
       };
       
       // Store group

@@ -8,7 +8,7 @@ class AsocialPopup {
     this.keyManager = new AsocialKeyManager();
     this.crypto = new AsocialCrypto();
     this.currentMode = 'simple';
-    this.currentGroupId = null;
+    this.currentWriterKeyId = null;
     this.init();
   }
 
@@ -26,7 +26,8 @@ class AsocialPopup {
       this.setupEventListeners();
       
       // Load initial data
-      await this.loadGroups();
+      await this.loadWriterKeys();
+      await this.loadReaderKeys();
       
       // Setup mode switching
       this.setupModeSwitching();
@@ -61,21 +62,38 @@ class AsocialPopup {
    * Setup event listeners
    */
   setupEventListeners() {
+    try {
     // Mode switching
-    document.getElementById('simple-mode').addEventListener('click', () => this.switchMode('simple'));
-    document.getElementById('advanced-mode').addEventListener('click', () => this.switchMode('advanced'));
+      const simpleMode = document.getElementById('simple-mode');
+      const advancedMode = document.getElementById('advanced-mode');
+      if (simpleMode) simpleMode.addEventListener('click', () => this.switchMode('simple'));
+      if (advancedMode) advancedMode.addEventListener('click', () => this.switchMode('advanced'));
     
     // Quick actions
-    document.getElementById('create-group-btn').addEventListener('click', () => this.showCreateGroupModal());
-    document.getElementById('import-key-btn').addEventListener('click', () => this.showImportKeyModal());
+      const createGroupBtn = document.getElementById('create-group-btn');
+      const importKeyBtn = document.getElementById('import-key-btn');
+      const setUsernameBtn = document.getElementById('set-username-btn');
+      if (createGroupBtn) createGroupBtn.addEventListener('click', () => this.showCreateWriterKeyModal());
+      if (importKeyBtn) importKeyBtn.addEventListener('click', () => this.showImportKeyModal());
+      if (setUsernameBtn) setUsernameBtn.addEventListener('click', () => this.showUsernameModal());
     
     // Create group modal
-    document.getElementById('create-group').addEventListener('click', () => this.createGroup());
-    document.getElementById('cancel-create').addEventListener('click', () => this.hideModal('create-group-modal'));
+      const createGroup = document.getElementById('create-group');
+      const cancelCreate = document.getElementById('cancel-create');
+      if (createGroup) createGroup.addEventListener('click', () => this.createWriterKey());
+      if (cancelCreate) cancelCreate.addEventListener('click', () => this.hideModal('create-group-modal'));
     
     // Import key modal
-    document.getElementById('import-key').addEventListener('click', () => this.importKey());
-    document.getElementById('cancel-import').addEventListener('click', () => this.hideModal('import-key-modal'));
+      const importKey = document.getElementById('import-key');
+      const cancelImport = document.getElementById('cancel-import');
+      if (importKey) importKey.addEventListener('click', () => this.importKey());
+      if (cancelImport) cancelImport.addEventListener('click', () => this.hideModal('import-key-modal'));
+      
+      // Username modal
+      const saveUsername = document.getElementById('save-username');
+      const cancelUsername = document.querySelector('[data-modal="username-modal"]');
+      if (saveUsername) saveUsername.addEventListener('click', () => this.saveUsername());
+      if (cancelUsername) cancelUsername.addEventListener('click', () => this.hideModal('username-modal'));
     
     // Import tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -91,10 +109,19 @@ class AsocialPopup {
     });
     
     // Advanced mode settings
-    document.getElementById('export-all-keys').addEventListener('click', () => this.exportAllKeys());
-    document.getElementById('import-keys').addEventListener('click', () => this.showImportKeyModal());
-    document.getElementById('backup-keys').addEventListener('click', () => this.backupKeys());
-    document.getElementById('restore-keys').addEventListener('click', () => this.restoreKeys());
+      const exportAllKeys = document.getElementById('export-all-keys');
+      const importKeys = document.getElementById('import-keys');
+      const backupKeys = document.getElementById('backup-keys');
+      const restoreKeys = document.getElementById('restore-keys');
+      if (exportAllKeys) exportAllKeys.addEventListener('click', () => this.exportAllKeys());
+      if (importKeys) importKeys.addEventListener('click', () => this.showImportKeyModal());
+      if (backupKeys) backupKeys.addEventListener('click', () => this.backupKeys());
+      if (restoreKeys) restoreKeys.addEventListener('click', () => this.restoreKeys());
+      
+      console.log('Event listeners setup successfully');
+    } catch (error) {
+      console.error('Failed to setup event listeners:', error);
+    }
   }
 
   /**
@@ -124,54 +151,110 @@ class AsocialPopup {
   }
 
   /**
-   * Load and display groups
+   * Load and display writer keys
    */
-  async loadGroups() {
+  async loadWriterKeys() {
     try {
-      const groups = await this.keyManager.getKeyGroups();
-      this.displayGroups(groups);
+      const writerKeys = await this.keyManager.getKeyGroups();
+      this.displayWriterKeys(writerKeys);
     } catch (error) {
-      console.error('Failed to load groups:', error);
-      this.showStatus('Failed to load groups', 'error');
+      console.error('Failed to load writer keys:', error);
+      this.showStatus('Failed to load writer keys', 'error');
     }
   }
 
   /**
-   * Display groups in the UI
+   * Load and display reader keys
    */
-  displayGroups(groups) {
-    const groupsList = document.getElementById('groups-list');
+  async loadReaderKeys() {
+    try {
+      const readerKeys = await this.keyManager.getReaderKeys();
+      this.displayReaderKeys(readerKeys);
+    } catch (error) {
+      console.error('Failed to load reader keys:', error);
+      this.showStatus('Failed to load reader keys', 'error');
+    }
+  }
+
+  /**
+   * Display writer keys in the UI
+   */
+  displayWriterKeys(writerKeys) {
+    const writerKeysList = document.getElementById('groups-list');
     
-    if (groups.length === 0) {
-      groupsList.innerHTML = `
+      if (writerKeys.length === 0) {
+        writerKeysList.innerHTML = `
         <div class="empty-state">
-          <p>No encryption groups yet.</p>
-          <p>Create your first group to start encrypting posts!</p>
+            <p>No writer keys yet.</p>
+            <p>Create your first writer key to start encrypting posts!</p>
         </div>
       `;
       return;
     }
     
-    groupsList.innerHTML = groups.map(group => `
-      <div class="group-item" data-group-id="${group.id}">
-        <div class="group-name">${group.name}</div>
-        <div class="group-meta">
-          <span class="group-contacts">${group.contacts.length} contacts</span>
-          <span class="group-created">${new Date(group.createdAt).toLocaleDateString()}</span>
+    writerKeysList.innerHTML = writerKeys.map(writerKey => `
+      <div class="writer-key-item" data-writer-key-id="${writerKey.id}">
+        <div class="writer-key-info">
+          <div class="writer-key-name">${writerKey.name}</div>
+          <div class="writer-key-asocial">Asocial: ${writerKey.asocialUsername || 'Unknown'}</div>
+        </div>
+        <div class="writer-key-meta">
+          <span class="writer-key-created">Created: ${new Date(writerKey.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
     `).join('');
     
-    // Add click handlers for group items
-    document.querySelectorAll('.group-item').forEach(item => {
-      item.addEventListener('click', () => this.showGroupDetails(item.dataset.groupId));
+    // Add click handlers for writer key items
+    document.querySelectorAll('.writer-key-item').forEach(item => {
+      item.addEventListener('click', () => this.showWriterKeyDetails(item.dataset.writerKeyId));
     });
   }
 
   /**
-   * Show create group modal
+   * Display reader keys in the UI
    */
-  showCreateGroupModal() {
+  displayReaderKeys(readerKeys) {
+    const readerKeysList = document.getElementById('reader-keys-list');
+    
+      if (readerKeys.length === 0) {
+        readerKeysList.innerHTML = `
+          <div class="empty-state">
+            <p>No reader keys imported yet.</p>
+            <p>Import someone's reader key to decrypt their messages!</p>
+          </div>
+        `;
+        return;
+      }
+    
+    readerKeysList.innerHTML = readerKeys.map(readerKey => `
+      <div class="reader-key-item" data-reader-key-id="${readerKey.id}">
+        <div class="reader-key-info">
+          <div class="reader-key-name">${readerKey.senderName}</div>
+          <div class="reader-key-asocial">Asocial: ${readerKey.asocialUsername || readerKey.senderName}</div>
+        </div>
+        <div class="reader-key-meta">
+          <span class="reader-key-id">Key ID: ${readerKey.keyId || 'Unknown'}</span>
+        </div>
+        <div class="reader-key-actions">
+          <button class="delete-reader-key" title="Delete reader key">🗑️</button>
+        </div>
+      </div>
+    `).join('');
+    
+    // Add click handlers for reader key items
+    document.querySelectorAll('.reader-key-item').forEach(item => {
+      const deleteBtn = item.querySelector('.delete-reader-key');
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.deleteReaderKey(item.dataset.readerKeyId);
+      });
+    });
+  }
+
+  /**
+   * Show create writer key modal
+   */
+  showCreateWriterKeyModal() {
     document.getElementById('create-group-modal').classList.add('active');
     document.getElementById('group-name').focus();
   }
@@ -184,68 +267,46 @@ class AsocialPopup {
   }
 
   /**
-   * Create new group
+   * Create new writer key
    */
-  async createGroup() {
+  async createWriterKey() {
     try {
-      const groupName = document.getElementById('group-name').value.trim();
+      const writerKeyName = document.getElementById('group-name').value.trim();
       const description = document.getElementById('group-description').value.trim();
       
-      // Validate group name
-      const validation = this.keyManager.validateGroupName(groupName);
+      // Validate writer key name
+      const validation = this.keyManager.validateGroupName(writerKeyName);
       if (!validation.valid) {
         this.showStatus(validation.error, 'error');
         return;
       }
       
-      // Create group
-      const group = await this.keyManager.createKeyGroup(groupName);
+      // Create writer key
+      const writerKey = await this.keyManager.createKeyGroup(writerKeyName);
       
       // Add description if provided
       if (description) {
-        group.description = description;
+        writerKey.description = description;
         await this.keyManager.storeKeyGroups(await this.keyManager.getKeyGroups());
       }
       
       
       this.hideModal('create-group-modal');
-      this.showStatus(`Group "${groupName}" created successfully!`, 'success');
+      this.showStatus(`Writer key "${writerKeyName}" created successfully!`, 'success');
       
       // Clear form
       document.getElementById('group-name').value = '';
       document.getElementById('group-description').value = '';
       
-      // Reload groups
-      await this.loadGroups();
+      // Reload writer keys
+      await this.loadWriterKeys();
       
     } catch (error) {
-      console.error('Failed to create group:', error);
-      this.showStatus(`Failed to create group: ${error.message}`, 'error');
+      console.error('Failed to create writer key:', error);
+      this.showStatus(`Failed to create writer key: ${error.message}`, 'error');
     }
   }
 
-  /**
-   * Auto-add sample contacts to group for testing
-   */
-  async autoAddLinkedInContacts(groupId) {
-    try {
-      // Add some sample contacts for testing
-      const sampleContacts = [
-        { name: 'Alice Johnson', publicKey: 'sample-key-alice' },
-        { name: 'Bob Smith', publicKey: 'sample-key-bob' },
-        { name: 'Carol Davis', publicKey: 'sample-key-carol' }
-      ];
-      
-      for (const contact of sampleContacts) {
-        await this.keyManager.addContactToGroup(groupId, contact.name, contact.publicKey);
-      }
-      
-      this.showStatus(`Added ${sampleContacts.length} sample contacts for testing!`, 'success');
-    } catch (error) {
-      console.error('Failed to add sample contacts:', error);
-      this.showStatus('Failed to add sample contacts', 'error');
-    }
-  }
 
   /**
    * Show import key modal
@@ -253,6 +314,60 @@ class AsocialPopup {
   showImportKeyModal() {
     document.getElementById('import-key-modal').classList.add('active');
     this.switchImportTab('paste');
+  }
+
+  /**
+   * Show username modal
+   */
+  showUsernameModal() {
+    document.getElementById('username-modal').classList.add('active');
+    this.loadCurrentUsername();
+  }
+
+  /**
+   * Load current username into modal
+   */
+  async loadCurrentUsername() {
+    try {
+      const username = await this.keyManager.getStoredUsername();
+      if (username) {
+        document.getElementById('asocial-username').value = username;
+      }
+    } catch (error) {
+      console.error('Failed to load current username:', error);
+    }
+  }
+
+  /**
+   * Save username
+   */
+  async saveUsername() {
+    try {
+      const username = document.getElementById('asocial-username').value.trim();
+      
+      if (!username) {
+        this.showStatus('Please enter a username', 'error');
+        return;
+      }
+      
+      if (username.length < 2) {
+        this.showStatus('Username must be at least 2 characters long', 'error');
+        return;
+      }
+      
+      if (username.length > 50) {
+        this.showStatus('Username must be less than 50 characters', 'error');
+        return;
+      }
+      
+      await this.keyManager.setAsocialUsername(username);
+      this.hideModal('username-modal');
+      this.showStatus(`Asocial username set to: ${username}`, 'success');
+      
+    } catch (error) {
+      console.error('Failed to save username:', error);
+      this.showStatus(`Failed to save username: ${error.message}`, 'error');
+    }
   }
 
   /**
@@ -279,12 +394,11 @@ class AsocialPopup {
     try {
       const activeTab = document.querySelector('.tab-btn.active').dataset.tab;
       
-      let keyData, contactName;
+      let keyData;
       
       switch (activeTab) {
         case 'paste':
           keyData = document.getElementById('pasted-key').value.trim();
-          contactName = document.getElementById('contact-name').value.trim();
           break;
           
         case 'qr':
@@ -300,7 +414,6 @@ class AsocialPopup {
           }
           const fileContent = await this.readFileAsText(fileInput.files[0]);
           keyData = fileContent;
-          contactName = fileInput.files[0].name.replace(/\.[^/.]+$/, '');
           break;
       }
       
@@ -309,49 +422,20 @@ class AsocialPopup {
         return;
       }
       
-      if (!contactName) {
-        this.showStatus('Please provide a contact name', 'error');
-        return;
-      }
-      
-      // Import the key (single shared key for the group)
-      const importData = await this.keyManager.importGroupPublicKey(keyData, contactName);
-      
-      // Get available groups
-      const groups = await this.keyManager.getKeyGroups();
-      if (groups.length === 0) {
-        this.showStatus('Please create a group first', 'error');
-        return;
-      }
-      
-      // For now, update the first group (in the future, we could show a group selection)
-      const groupId = groups[0].id;
-      const groupName = groups[0].name;
-      console.log(`Attempting to update group "${groupName}" (${groupId}) with imported key`);
-      
-      try {
-        await this.keyManager.updateGroupPublicKey(groupId, importData.publicKey, importData);
-        console.log('Successfully updated group private key');
-        this.showStatus(`Updated private key for group: ${groupName}`, 'success');
-      } catch (error) {
-        console.error('Failed to update group private key:', error);
-        this.showStatus(`Failed to update group "${groupName}": ${error.message}`, 'error');
-        return;
-      }
-      
-      // Add contact with just the name (no individual key needed)
-      await this.keyManager.addContactToGroup(groupId, contactName);
+      // Import the reader key (other person's private key for decrypting their messages)
+      // This is independent of groups - you can import reader keys without having any groups
+      const readerKey = await this.keyManager.importReaderKey(keyData);
       
       this.hideModal('import-key-modal');
-      this.showStatus(`Key imported for ${contactName}!`, 'success');
+      this.showStatus(`Reader key imported for ${readerKey.senderName}! You can now decrypt their messages.`, 'success');
       
       // Clear form
       document.getElementById('pasted-key').value = '';
-      document.getElementById('contact-name').value = '';
       document.getElementById('key-file').value = '';
       
-      // Reload groups
-      await this.loadGroups();
+      // Reload writer keys and reader keys
+      await this.loadWriterKeys();
+      await this.loadReaderKeys();
       
     } catch (error) {
       console.error('Failed to import key:', error);
@@ -372,122 +456,99 @@ class AsocialPopup {
   }
 
   /**
-   * Show group details
+   * Show writer key details
    */
-  async showGroupDetails(groupId) {
+  async showWriterKeyDetails(writerKeyId) {
     try {
-      const group = await this.keyManager.getKeyGroup(groupId);
-      if (!group) {
-        this.showStatus('Group not found', 'error');
+      const writerKey = await this.keyManager.getKeyGroup(writerKeyId);
+      if (!writerKey) {
+        this.showStatus('Writer key not found', 'error');
         return;
       }
       
-      // Populate group details
-      document.getElementById('group-details-title').textContent = group.name;
-      document.getElementById('group-details-name').textContent = group.name;
-      document.getElementById('group-details-created').textContent = new Date(group.createdAt).toLocaleString();
-      document.getElementById('group-details-contacts').textContent = group.contacts.length;
+      // Populate writer key details
+      document.getElementById('group-details-title').textContent = writerKey.name;
+      document.getElementById('group-details-name').textContent = writerKey.name;
+      document.getElementById('group-details-created').textContent = new Date(writerKey.createdAt).toLocaleString();
       
-      // Populate contacts list
-      const contactsList = document.getElementById('contacts-list');
-      if (group.contacts.length === 0) {
-        contactsList.innerHTML = '<div class="empty-state">No contacts in this group</div>';
-      } else {
-        contactsList.innerHTML = group.contacts.map(contact => `
-          <div class="contact-item">
-            <span class="contact-name">${contact.name}</span>
-            <div class="contact-actions">
-              <button onclick="popup.removeContact('${groupId}', '${contact.id}')" title="Remove contact">🗑️</button>
-            </div>
-          </div>
-        `).join('');
-      }
+      // Setup writer key actions
+      document.getElementById('export-group-key').onclick = () => this.exportWriterKey(writerKeyId);
+      document.getElementById('delete-group').onclick = () => this.deleteWriterKey(writerKeyId);
       
-      // Setup group actions
-      document.getElementById('export-group-key').onclick = () => this.exportGroupKey(groupId);
-      document.getElementById('add-contact').onclick = () => this.addContactToGroup(groupId);
-      document.getElementById('delete-group').onclick = () => this.deleteGroup(groupId);
-      
-      this.currentGroupId = groupId;
+      this.currentWriterKeyId = writerKeyId;
       document.getElementById('group-details-modal').classList.add('active');
       
     } catch (error) {
-      console.error('Failed to show group details:', error);
-      this.showStatus('Failed to load group details', 'error');
+      console.error('Failed to show writer key details:', error);
+      this.showStatus('Failed to load writer key details', 'error');
     }
   }
 
   /**
-   * Export group public key
+   * Export writer key
    */
-  async exportGroupKey(groupId) {
+  async exportWriterKey(writerKeyId) {
     try {
-      const keyData = await this.keyManager.exportGroupPublicKey(groupId);
+      // Check if username is set
+      const isUsernameSet = await this.keyManager.isUsernameSet();
+      if (!isUsernameSet) {
+        this.showStatus('Please set your Asocial username first!', 'error');
+        this.showUsernameModal();
+        return;
+      }
+      
+      const keyData = await this.keyManager.exportGroupPublicKey(writerKeyId);
       
       // Create JSON format with key ID for sharing
       const exportData = {
         privateKey: keyData.privateKey,
         keyId: keyData.keyId,
-        groupName: keyData.groupName
+        groupName: keyData.groupName,
+        asocialUsername: keyData.asocialUsername,
+        createdAt: keyData.createdAt
       };
       
       // Copy to clipboard as JSON
       await navigator.clipboard.writeText(JSON.stringify(exportData));
-      this.showStatus('Private key with key ID copied to clipboard!', 'success');
+      this.showStatus('Writer key with key ID copied to clipboard!', 'success');
       
     } catch (error) {
-      console.error('Failed to export group key:', error);
+      console.error('Failed to export writer key:', error);
       this.showStatus('Failed to export key', 'error');
     }
   }
 
-  /**
-   * Add contact to group (just name, no individual key needed)
-   */
-  async addContactToGroup(groupId) {
-    const contactName = prompt('Enter contact name:');
-    if (!contactName) return;
-    
-    try {
-      await this.keyManager.addContactToGroup(groupId, contactName);
-      this.showStatus(`Contact ${contactName} added!`, 'success');
-      this.showGroupDetails(groupId); // Refresh
-    } catch (error) {
-      console.error('Failed to add contact:', error);
-      this.showStatus('Failed to add contact', 'error');
-    }
-  }
 
   /**
-   * Remove contact from group
+   * Delete writer key
    */
-  async removeContact(groupId, contactId) {
-    if (!confirm('Remove this contact from the group?')) return;
+  async deleteWriterKey(writerKeyId) {
+    if (!confirm('Delete this writer key? This action cannot be undone.')) return;
     
     try {
-      await this.keyManager.removeContactFromGroup(groupId, contactId);
-      this.showStatus('Contact removed!', 'success');
-      this.showGroupDetails(groupId); // Refresh
-    } catch (error) {
-      console.error('Failed to remove contact:', error);
-      this.showStatus('Failed to remove contact', 'error');
-    }
-  }
-
-  /**
-   * Delete group
-   */
-  async deleteGroup(groupId) {
-    if (!confirm('Delete this group? This action cannot be undone.')) return;
-    
-    try {
-      await this.keyManager.deleteKeyGroup(groupId);
+      await this.keyManager.deleteKeyGroup(writerKeyId);
       this.hideModal('group-details-modal');
-      this.showStatus('Group deleted!', 'success');
-      await this.loadGroups(); // Refresh
+      this.showStatus('Writer key deleted!', 'success');
+      await this.loadWriterKeys(); // Refresh
     } catch (error) {
-      console.error('Failed to delete group:', error);
-      this.showStatus('Failed to delete group', 'error');
+      console.error('Failed to delete writer key:', error);
+      this.showStatus('Failed to delete writer key', 'error');
+    }
+  }
+
+  /**
+   * Delete reader key
+   */
+  async deleteReaderKey(readerKeyId) {
+    if (!confirm('Delete this reader key? You will no longer be able to decrypt messages from this sender.')) return;
+    
+    try {
+      await this.keyManager.deleteReaderKey(readerKeyId);
+      this.showStatus('Reader key deleted!', 'success');
+      await this.loadReaderKeys(); // Refresh
+    } catch (error) {
+      console.error('Failed to delete reader key:', error);
+      this.showStatus('Failed to delete reader key', 'error');
     }
   }
 
@@ -496,14 +557,13 @@ class AsocialPopup {
    */
   async exportAllKeys() {
     try {
-      const groups = await this.keyManager.getKeyGroups();
+      const writerKeys = await this.keyManager.getKeyGroups();
       const exportData = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
-        groups: groups.map(group => ({
-          name: group.name,
-          publicKey: group.publicKey,
-          contacts: group.contacts
+        writerKeys: writerKeys.map(writerKey => ({
+          name: writerKey.name,
+          publicKey: writerKey.publicKey,
         }))
       };
       

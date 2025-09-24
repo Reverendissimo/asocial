@@ -11,9 +11,9 @@
 ## 🔧 First Time Setup
 
 1. **Click the Asocial icon** in your Chrome toolbar
-2. **Create a group**: Click "Create Group" and give it a name (e.g., "Family", "Work")
-3. **Add contacts**: Add people to your group (just names, no keys needed)
-4. **Export your public key**: Click the group and copy the public key to share
+2. **Create a writer key group**: Click "Create Group" and give it a name (e.g., "Family", "Work")
+3. **Share your writer key**: Export and share your writer key with others
+4. **Export your writer key**: Click the group and copy the writer key to share
 
 ## 🔒 How to Use
 
@@ -25,9 +25,9 @@
 5. **Post normally** - only people with your key can decrypt it
 
 ### Decrypting Messages:
-1. **Encrypted messages auto-decrypt** if you have the right key
-2. **To get a key**: Ask the sender to share their group's public key
-3. **Import the key**: In the extension popup, click "Import Key" and paste the key
+1. **Encrypted messages auto-decrypt** if you have the right reader key
+2. **To get a reader key**: Ask the sender to share their group's writer key
+3. **Import the reader key**: In the extension popup, click "Import Reader Key" and paste the key
 
 ## 🎯 Key Features
 

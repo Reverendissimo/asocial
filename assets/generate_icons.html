@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Asocial Icons</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f0f0; }
+        .icon-container { margin: 20px 0; padding: 20px; background: white; border-radius: 8px; }
+        canvas { border: 2px solid #ddd; margin: 10px; }
+        button { padding: 10px 20px; margin: 5px; background: #0073b1; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005885; }
+    </style>
+</head>
+<body>
+    <h1>🔴 Asocial Extension Icons</h1>
+    <p>Generate and download PNG icons for the Chrome extension:</p>
+    
+    <div class="icon-container">
+        <h3>16x16 Icon (Toolbar)</h3>
+        <canvas id="icon16" width="16" height="16"></canvas>
+        <button onclick="downloadIcon('icon16', 'icon16.png')">Download 16x16</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>48x48 Icon (Extension)</h3>
+        <canvas id="icon48" width="48" height="48"></canvas>
+        <button onclick="downloadIcon('icon48', 'icon48.png')">Download 48x48</button>
+    </div>
+    
+    <div class="icon-container">
+        <h3>128x128 Icon (Store)</h3>
+        <canvas id="icon128" width="128" height="128"></canvas>
+        <button onclick="downloadIcon('icon128', 'icon128.png')">Download 128x128</button>
+    </div>
+    
+    <div class="icon-container">
+        <button onclick="downloadAll()" style="background: #28a745; font-size: 16px; padding: 15px 30px;">Download All Icons</button>
+    </div>
+    
+    <script>
+        function createAnarchyIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Black background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Red anarchy symbol
+            ctx.strokeStyle = '#FF0000';
+            ctx.fillStyle = '#FF0000';
+            ctx.lineWidth = Math.max(1, size / 12);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const radius = size * 0.35;
+            
+            // Draw circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Draw A
+            const aWidth = radius * 0.8;
+            const aHeight = radius * 1.2;
+            const aX = centerX - aWidth / 2;
+            const aY = centerY - aHeight / 2;
+            
+            ctx.beginPath();
+            // Left diagonal
+            ctx.moveTo(aX, aY + aHeight);
+            ctx.lineTo(aX + aWidth / 2, aY);
+            // Right diagonal  
+            ctx.moveTo(aX + aWidth / 2, aY);
+            ctx.lineTo(aX + aWidth, aY + aHeight);
+            // Horizontal bar
+            const barY = aY + aHeight * 0.6;
+            ctx.moveTo(aX + aWidth * 0.2, barY);
+            ctx.lineTo(aX + aWidth * 0.8, barY);
+            ctx.stroke();
+        }
+        
+        // Create all icons
+        createAnarchyIcon('icon16', 16);
+        createAnarchyIcon('icon48', 48);
+        createAnarchyIcon('icon128', 128);
+        
+        // Download function
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Download all icons
+        function downloadAll() {
+            setTimeout(() => downloadIcon('icon16', 'icon16.png'), 100);
+            setTimeout(() => downloadIcon('icon48', 'icon48.png'), 200);
+            setTimeout(() => downloadIcon('icon128', 'icon128.png'), 300);
+        }
+    </script>
+</body>
+</html>
+

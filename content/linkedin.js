@@ -395,7 +395,7 @@ class LinkedInAsocial {
         console.log('Found groups:', groups);
         
         if (groups.length === 0) {
-          this.showNotification('No encryption groups found. Please create one in the extension popup.', 'error');
+          this.showNotification('No writer keys found. Please create one in the extension popup.', 'error');
           resolve(null);
           return;
         }
@@ -405,7 +405,7 @@ class LinkedInAsocial {
         document.body.appendChild(modal);
       } catch (error) {
         console.error('Failed to get key groups:', error);
-        this.showNotification('Failed to load encryption groups. Please check the extension popup.', 'error');
+        this.showNotification('Failed to load writer keys. Please check the extension popup.', 'error');
         resolve(null);
       }
     });
@@ -441,7 +441,7 @@ class LinkedInAsocial {
     `;
     
     content.innerHTML = `
-      <h3 style="margin: 0 0 16px 0; color: #333;">Select Encryption Group</h3>
+      <h3 style="margin: 0 0 16px 0; color: #333;">Select Writer Key</h3>
       <div class="asocial-groups-list">
         ${groups.map(group => `
           <div class="asocial-group-item" data-group-id="${group.id}" style="
@@ -453,7 +453,6 @@ class LinkedInAsocial {
             transition: background-color 0.2s;
           ">
             <div style="font-weight: 600; color: #333;">${group.name}</div>
-            <div style="font-size: 12px; color: #666;">${group.contacts.length} contacts</div>
           </div>
         `).join('')}
       </div>
@@ -669,3 +668,155 @@ try {
 } catch (error) {
   console.error('Failed to initialize LinkedIn content script:', error);
 }
+
+// Add message listener for username requests
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'GET_LINKEDIN_USERNAME') {
+    try {
+      console.log('Received request for LinkedIn username');
+      
+      // Try multiple selectors to find the LinkedIn username
+      const usernameSelectors = [
+        // Navigation and profile elements
+        '.global-nav__me-photo[alt*="@"]', // Profile photo with alt text
+        '.global-nav__me .global-nav__primary-link', // Profile link
+        '.global-nav__me .global-nav__primary-link[href*="/in/"]', // Profile link with /in/
+        '[data-control-name="identity_profile_photo"]', // Profile photo
+        '.global-nav__me .global-nav__primary-link span', // Profile link text
+        '.global-nav__me .global-nav__primary-link strong', // Profile link strong text
+        
+        // Feed and post elements
+        '.feed-identity-module__actor-meta .feed-identity-module__name', // Actor name in feed
+        '.feed-shared-actor__name', // Shared actor name
+        '.feed-shared-actor__name .feed-shared-actor__name-link', // Actor name link
+        '.feed-shared-actor__name span', // Actor name span
+        '.feed-shared-actor__name strong', // Actor name strong
+        
+        // Profile page elements
+        '.pv-text-details__left-panel h1', // Profile name
+        '.pv-text-details__left-panel .text-heading-xlarge', // Profile name large text
+        '.pv-text-details__left-panel .text-body-medium', // Profile name medium text
+        '.pv-top-card--list-bullet li:first-child', // First bullet point (often name)
+        '.pv-top-card--list-bullet .text-body-small', // Profile details
+        
+        // Entity and company elements
+        '.pv-entity__summary-info h3', // Entity name
+        '.artdeco-entity-lockup__title', // Entity title
+        '.artdeco-entity-lockup__title .artdeco-entity-lockup__title-link', // Entity title link
+        
+        // Comment and message elements
+        '.comments-comment-item-content__main-content .comments-comment-item-content__name', // Comment author
+        '.comments-comment-item-content__main-content .comments-comment-item-content__name .comments-comment-item-content__name-link', // Comment author link
+        '.msg-s-message-list-content__name', // Message sender name
+        '.msg-s-message-list-content__name .msg-s-message-list-content__name-link', // Message sender link
+        '.conversation-composer__recipient-name', // Conversation recipient
+        '.conversation-composer__recipient-name .conversation-composer__recipient-name-link', // Conversation recipient link
+        '.conversation-composer__sender-name', // Conversation sender
+        '.conversation-composer__sender-name .conversation-composer__sender-name-link', // Conversation sender link
+        
+        // Additional modern LinkedIn selectors
+        '.global-nav__me .global-nav__primary-link[aria-label*="View profile"]', // Profile link with aria-label
+        '.global-nav__me .global-nav__primary-link[title*="View profile"]', // Profile link with title
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"]', // Profile photo control
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] span', // Profile photo control span
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] strong', // Profile photo control strong
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] em', // Profile photo control em
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] b', // Profile photo control b
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] i', // Profile photo control i
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] u', // Profile photo control u
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] mark', // Profile photo control mark
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] small', // Profile photo control small
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] sub', // Profile photo control sub
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] sup', // Profile photo control sup
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] del', // Profile photo control del
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] ins', // Profile photo control ins
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] kbd', // Profile photo control kbd
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] code', // Profile photo control code
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] samp', // Profile photo control samp
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] var', // Profile photo control var
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] cite', // Profile photo control cite
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] q', // Profile photo control q
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] abbr', // Profile photo control abbr
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] acronym', // Profile photo control acronym
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] address', // Profile photo control address
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] blockquote', // Profile photo control blockquote
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] dfn', // Profile photo control dfn
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] pre', // Profile photo control pre
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] tt', // Profile photo control tt
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] xmp', // Profile photo control xmp
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] plaintext', // Profile photo control plaintext
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] listing', // Profile photo control listing
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] font', // Profile photo control font
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] basefont', // Profile photo control basefont
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] big', // Profile photo control big
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] center', // Profile photo control center
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] dir', // Profile photo control dir
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] menu', // Profile photo control menu
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] noframes', // Profile photo control noframes
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] noscript', // Profile photo control noscript
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] strike', // Profile photo control strike
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] tt', // Profile photo control tt
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] u', // Profile photo control u
+        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] xmp' // Profile photo control xmp
+      ];
+      
+      console.log('Trying to find LinkedIn username with', usernameSelectors.length, 'selectors');
+      
+      for (const selector of usernameSelectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          let username = element.textContent?.trim() || element.getAttribute('alt') || element.getAttribute('title');
+          console.log(`Selector "${selector}" found element:`, element, 'with text:', username);
+          if (username) {
+            // Clean up the username (remove extra whitespace, @ symbols, etc.)
+            username = username.replace(/^@/, '').trim();
+            if (username.length > 0 && username.length < 100) {
+              console.log('Found LinkedIn username:', username);
+              sendResponse({ username: username });
+              return true;
+            }
+          }
+        }
+      }
+      
+      // Fallback: try to get from URL
+      const urlMatch = window.location.href.match(/linkedin\.com\/in\/([^\/\?]+)/);
+      if (urlMatch) {
+        const urlUsername = urlMatch[1].replace(/-/g, ' ').replace(/_/g, ' ');
+        console.log('Found LinkedIn username from URL:', urlUsername);
+        sendResponse({ username: urlUsername });
+        return true;
+      }
+      
+      // Additional fallback: try to get from page title
+      const pageTitle = document.title;
+      if (pageTitle && pageTitle.includes('|')) {
+        const titleUsername = pageTitle.split('|')[0].trim();
+        if (titleUsername.length > 0 && titleUsername.length < 100) {
+          console.log('Found LinkedIn username from page title:', titleUsername);
+          sendResponse({ username: titleUsername });
+          return true;
+        }
+      }
+      
+      // Additional fallback: try to get from any element with "profile" in the class
+      const profileElements = document.querySelectorAll('[class*="profile"], [class*="name"], [class*="user"]');
+      for (const element of profileElements) {
+        const text = element.textContent?.trim();
+        if (text && text.length > 0 && text.length < 100 && !text.includes('LinkedIn') && !text.includes('Sign in')) {
+          console.log('Found LinkedIn username from profile element:', text);
+          sendResponse({ username: text });
+          return true;
+        }
+      }
+      
+      console.log('Could not find LinkedIn username');
+      sendResponse({ username: 'LinkedIn User' });
+      return true;
+    } catch (error) {
+      console.error('Failed to get LinkedIn username:', error);
+      sendResponse({ username: 'LinkedIn User' });
+      return true;
+    }
+  }
+});

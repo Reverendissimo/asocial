@@ -98,19 +98,31 @@ class AsocialEncryptionEngine {
         throw new Error('Invalid encrypted message format');
       }
       
-      // Find the group with matching key ID (case-insensitive comparison)
-      const groups = await this.keyManager.getKeyGroups();
-      const matchingGroup = groups.find(group => group.keyId.toUpperCase() === keyId.toUpperCase());
+      // First try to find a reader key with matching key ID
+      const readerKey = await this.keyManager.getReaderKeyByKeyId(keyId);
       
-      if (!matchingGroup) {
-        throw new Error(`No key found for key ID: ${keyId}`);
+      let privateKey, keySource;
+      
+      if (readerKey) {
+        console.log(`Found matching reader key: ${readerKey.senderName} (${readerKey.keyId})`);
+        // Import the reader's private key
+        privateKey = await this.crypto.importKey(readerKey.privateKey, 'private', ['decrypt']);
+        keySource = { type: 'reader', name: readerKey.senderName, id: readerKey.id };
+      } else {
+        // Fall back to checking groups (for backward compatibility)
+        const groups = await this.keyManager.getKeyGroups();
+        const matchingGroup = groups.find(group => group.keyId.toUpperCase() === keyId.toUpperCase());
+        
+        if (!matchingGroup) {
+          throw new Error(`No key found for key ID: ${keyId}`);
+        }
+        
+        console.log(`Found matching group: ${matchingGroup.name} (${matchingGroup.keyId})`);
+        privateKey = await this.keyManager.getPrivateKeyForGroup(matchingGroup.id);
+        keySource = { type: 'group', name: matchingGroup.name, id: matchingGroup.id };
       }
       
-      console.log(`Found matching group: ${matchingGroup.name} (${matchingGroup.keyId})`);
-      
       try {
-        // Get private key for this group
-        const privateKey = await this.keyManager.getPrivateKeyForGroup(matchingGroup.id);
         
         // Decrypt symmetric key
         const encryptedSymmetricKeyBuffer = this.base64ToArrayBuffer(encryptedSymmetricKey);
@@ -126,12 +138,13 @@ class AsocialEncryptionEngine {
         );
         
         // Skip signature verification since we're not using signatures with RSA-OAEP
-        console.log(`✅ Message decrypted successfully with group: ${matchingGroup.name}`);
+        console.log(`✅ Message decrypted successfully with ${keySource.type}: ${keySource.name}`);
         return {
           message: decryptedMessage,
-          groupName: matchingGroup.name,
-          groupId: matchingGroup.id,
+          groupName: keySource.name,
+          groupId: keySource.id,
           keyId: keyId,
+          keyType: keySource.type,
           timestamp: payload.timestamp || new Date(payload.t).toISOString(),
           algorithm: payload.algorithm || 'RSA-2048/AES-256-GCM',
           sender: payload.sender || 'Unknown'

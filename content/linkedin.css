@@ -6,7 +6,7 @@
 /* Asocial Button Styles */
 .asocial-button {
   background: #0073b1 !important;
-  color: white !important;
+  color: #00ff00 !important;
   border: none !important;
   border-radius: 4px !important;
   padding: 8px 16px !important;
@@ -23,7 +23,7 @@
 }
 
 .asocial-button:disabled {
-  background: #ccc !important;
+  background: #000000 !important;
   cursor: not-allowed !important;
 }
 
@@ -115,11 +115,11 @@
   padding: 16px !important;
   margin: 8px 0 !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  color: #ff0000 !important;
+  color: #00ff00 !important;
 }
 
 .asocial-status {
-  color: #ff0000 !important;
+  color: #00ff00 !important;
   font-size: 12px !important;
   font-weight: 600 !important;
 }
@@ -163,12 +163,12 @@
 }
 
 .asocial-group-item:hover {
-  background: #f0f8ff !important;
-  border-color: #0073b1 !important;
+  background: #000000 !important;
+  border-color: #00ff00 !important;
 }
 
 .asocial-cancel {
-  background: #f5f5f5 !important;
+  background: #000000 !important;
   border: 1px solid #ddd !important;
   border-radius: 4px !important;
   padding: 8px 16px !important;
@@ -178,7 +178,7 @@
 }
 
 .asocial-cancel:hover {
-  background: #e9ecef !important;
+  background: #000000 !important;
 }
 
 /* Notification Styles */
@@ -192,20 +192,20 @@
   font-size: 14px !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-  color: white !important;
+  color: #00ff00 !important;
   font-weight: 500 !important;
 }
 
 .asocial-notification.asocial-success {
-  background: #28a745 !important;
+  background: #000000 !important;
 }
 
 .asocial-notification.asocial-error {
-  background: #dc3545 !important;
+  background: #000000 !important;
 }
 
 .asocial-notification.asocial-info {
-  background: #0073b1 !important;
+  background: #000000 !important;
 }
 
 /* Responsive Design */
@@ -280,18 +280,18 @@
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .asocial-decrypted-message {
-    background: #2d3748 !important;
-    border-color: #4a5568 !important;
-    color: #e2e8f0 !important;
+    background: #000000 !important;
+    border-color: #00ff00 !important;
+    color: #00ff00 !important;
   }
   
   .asocial-cannot-decrypt {
-    background: #744210 !important;
-    border-color: #d69e2e !important;
+    background: #000000 !important;
+    border-color: #00ff00 !important;
   }
   
   .asocial-modal > div {
-    background: #2d3748 !important;
-    color: #e2e8f0 !important;
+    background: #000000 !important;
+    color: #00ff00 !important;
   }
 }
