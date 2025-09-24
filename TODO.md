@@ -1,6 +1,6 @@
 # Chrome Extension for Multi-Recipient Encrypted Social Posts - TODO
 
-## 🎉 Current Status: v2.7 - UNIVERSAL CONTEXTUAL MENU
+## 🎉 Current Status: v2.7.1 - DECRYPTION FIX
 **Latest features implemented!**
 - ✅ Universal contextual menu approach
 - ✅ Cross-platform compatibility (LinkedIn, Facebook, Twitter, Gmail, etc.)
@@ -14,6 +14,7 @@
 - ✅ CSP compliance and proper event handling
 - ✅ **NEW**: No platform-specific DOM hacking - clean, maintainable code
 - ✅ **NEW**: Works on any website with text inputs
+- ✅ **FIXED**: Decryption no longer interferes with input fields - encrypted text stays in place
 
 ## Project Overview
 Build a Chrome extension that enables encrypted messaging on social media platforms (LinkedIn, Facebook, Twitter, etc.) using hybrid encryption for multiple recipients with encrypted local storage and multi-user support.

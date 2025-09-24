@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial_v2.7_final.zip` file
+1. **Download the extension**: Extract the `asocial_v2.7.1_final.zip` file
 2. **Open Chrome Extensions**: Go to `chrome://extensions/`
 3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
@@ -44,6 +44,7 @@
 - **Universal Compatibility**: Works on LinkedIn, Facebook, Twitter, Gmail, and any website
 - **Right-Click Encryption**: Select text → Right-click → "Encrypt with Asocial"
 - **Keyboard Shortcut**: Ctrl+Shift+E for quick encryption
+- **Smart Decryption**: Only decrypts displayed content, not input fields
 
 ## 🆘 Troubleshooting
 

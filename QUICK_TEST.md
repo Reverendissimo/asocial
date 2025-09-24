@@ -1,6 +1,6 @@
 # Quick Testing Guide
 
-## ✅ Latest Version: v2.7
+## ✅ Latest Version: v2.7.1
 All features are now working:
 - ✅ Icon loading (PNG format)
 - ✅ Popup sizing (600px width)
@@ -15,6 +15,7 @@ All features are now working:
 - ✅ Secure URL sharing
 - ✅ "Show Encrypted" toggle functionality
 - ✅ **No platform-specific DOM hacking** - Clean, maintainable code
+- ✅ **FIXED**: Decryption no longer interferes with input fields
 
 ## 🚀 Test the Extension Now!
 

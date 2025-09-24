@@ -123,6 +123,24 @@ class AsocialUniversal {
   }
 
   /**
+   * Check if a text node is inside an input field or contentEditable element
+   */
+  isTextInInputField(textNode) {
+    if (!textNode) return false;
+    
+    // Walk up the DOM tree to find if we're inside an input field
+    let parent = textNode.parentNode;
+    while (parent && parent !== document.body) {
+      if (this.isTextInputElement(parent)) {
+        return true;
+      }
+      parent = parent.parentNode;
+    }
+    
+    return false;
+  }
+
+  /**
    * Set up keyboard shortcuts
    */
   setupKeyboardShortcuts() {
@@ -606,6 +624,11 @@ class AsocialUniversal {
       let node;
       while (node = walker.nextNode()) {
         if (node.textContent && node.textContent.includes('[ASOCIAL')) {
+          // Skip text nodes inside input fields or contentEditable elements
+          if (this.isTextInInputField(node)) {
+            console.log('Asocial Universal: Skipping encrypted text in input field');
+            continue;
+          }
           textNodes.push(node);
         }
       }

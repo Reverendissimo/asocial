@@ -1,4 +1,4 @@
-# How People Know Which Key to Use (v2.7 - Universal Contextual Menu)
+# How People Know Which Key to Use (v2.7.1 - Decryption Fix)
 
 ## The Problem You Identified
 
@@ -121,9 +121,9 @@ Your Writer Key Groups:        Recipient's Reader Keys:
 
 This architecture ensures that recipients automatically get the right decryption key without any manual intervention!
 
-## ✅ v2.7 Update: Universal Contextual Menu
+## ✅ v2.7.1 Update: Decryption Fix
 
-**Latest Update:** Introduced universal contextual menu approach that works on any website:
+**Latest Update:** Fixed decryption interference with input fields:
 
 - ✅ **Cross-platform compatibility** - Works on LinkedIn, Facebook, Twitter, Gmail, etc.
 - ✅ **Right-click encryption** - Select text → Right-click → "Encrypt with Asocial"
@@ -131,3 +131,4 @@ This architecture ensures that recipients automatically get the right decryption
 - ✅ **No platform-specific code** - Clean, maintainable universal approach
 - ✅ **Automatic decryption** - Messages decrypt automatically when you have the right reader key
 - ✅ **Universal text replacement** - Works in any text input field
+- ✅ **FIXED**: Decryption no longer interferes with input fields - encrypted text stays in place
