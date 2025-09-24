@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial_v2.6.1_final.zip` file
+1. **Download the extension**: Extract the `asocial_v2.7_final.zip` file
 2. **Open Chrome Extensions**: Go to `chrome://extensions/`
 3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
@@ -41,21 +41,23 @@
 
 - **Maximum Security**: RSA-2048 + AES-256-GCM encryption
 - **Group-based**: One key per group, simple to manage
-- **LinkedIn Integration**: Works seamlessly with LinkedIn posts and messaging
-- **Easy Sharing**: Just share one public key per group
-- **Fixed Decryption**: Reader key storage integration now works properly
+- **Universal Compatibility**: Works on LinkedIn, Facebook, Twitter, Gmail, and any website
+- **Right-Click Encryption**: Select text → Right-click → "Encrypt with Asocial"
+- **Keyboard Shortcut**: Ctrl+Shift+E for quick encryption
 
 ## 🆘 Troubleshooting
 
-- **No buttons appearing?** Refresh the LinkedIn page
-- **Encryption not working?** Make sure you have a group created
+- **No right-click menu?** Check if extension is enabled
+- **Encryption not working?** Make sure you have a writer key created
 - **Can't decrypt messages?** Make sure you have the right public key imported
 
 ## 📱 Supported Platforms
 
 - ✅ LinkedIn (fully supported)
-- 🔄 Facebook (planned)
-- 🔄 Twitter/X (planned)
+- ✅ Facebook (fully supported)
+- ✅ Twitter/X (fully supported)
+- ✅ Gmail (fully supported)
+- ✅ Any website with text inputs (universal support)
 
 ---
 

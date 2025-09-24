@@ -1,4 +1,4 @@
-# How People Know Which Key to Use (v2.6.1 - Reader Key Storage Fixed)
+# How People Know Which Key to Use (v2.7 - Universal Contextual Menu)
 
 ## The Problem You Identified
 
@@ -121,11 +121,13 @@ Your Writer Key Groups:        Recipient's Reader Keys:
 
 This architecture ensures that recipients automatically get the right decryption key without any manual intervention!
 
-## ✅ v2.6.1 Fix: Reader Key Storage Integration
+## ✅ v2.7 Update: Universal Contextual Menu
 
-**Latest Update:** Fixed reader key storage system to use the new `asocial_temp_storage` system instead of the old `asocial_reader_keys` storage. This ensures that:
+**Latest Update:** Introduced universal contextual menu approach that works on any website:
 
-- ✅ **Reader keys are found correctly** - Keys are now stored in the proper location
-- ✅ **Key ID matching works** - The extension can find keys by their unique IDs
-- ✅ **Decryption works properly** - Messages decrypt successfully when you have the right reader key
-- ✅ **No more "No key found" errors** - The storage integration is now complete
+- ✅ **Cross-platform compatibility** - Works on LinkedIn, Facebook, Twitter, Gmail, etc.
+- ✅ **Right-click encryption** - Select text → Right-click → "Encrypt with Asocial"
+- ✅ **Keyboard shortcut** - Ctrl+Shift+E for quick encryption
+- ✅ **No platform-specific code** - Clean, maintainable universal approach
+- ✅ **Automatic decryption** - Messages decrypt automatically when you have the right reader key
+- ✅ **Universal text replacement** - Works in any text input field

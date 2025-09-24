@@ -13,9 +13,9 @@ class AsocialEncryptionEngine {
   /**
    * Encrypt message for specific key group
    */
-  async encryptMessage(message, groupId) {
+  async encryptMessage(message, writerKey) {
     try {
-      console.log(`Encrypting message for group: ${groupId}`);
+      console.log(`Encrypting message with writer key: ${writerKey.name}`);
       
       // Validate message size (LinkedIn limit: 3000 chars)
       if (message.length > 3000) {
@@ -28,8 +28,8 @@ class AsocialEncryptionEngine {
       // Encrypt message content with AES-256-GCM
       const { encryptedData, iv } = await this.crypto.encryptMessage(message, symmetricKey);
       
-      // Get public key for the group
-      const publicKey = await this.keyManager.getPublicKeyForGroup(groupId);
+      // Get public key from the writer key
+      const publicKey = await this.crypto.importKey(writerKey.publicKey, 'public', ['encrypt']);
       
       // Encrypt symmetric key with RSA-2048
       const encryptedSymmetricKey = await this.crypto.encryptSymmetricKey(symmetricKey, publicKey);
@@ -38,10 +38,8 @@ class AsocialEncryptionEngine {
       // In a production system, you'd use a separate RSA-PSS key pair for signing
       const signature = new ArrayBuffer(0); // Empty signature
       
-      // Get group info for sender identification
-      const group = await this.keyManager.getKeyGroup(groupId);
-      const groupName = group ? group.name : 'Unknown Group';
-      const keyId = group ? group.keyId.toUpperCase() : 'UNKNOWN';
+      // Get writer key info for sender identification
+      const keyId = writerKey.keyId ? writerKey.keyId.toUpperCase() : 'UNKNOWN';
       
       // Create compact payload (minimal metadata)
       const payload = {
