@@ -40,6 +40,7 @@ class AsocialLogin {
   async loadStorageFiles() {
     try {
       const storageFiles = await this.encryptedStorage.getStorageFiles();
+      console.log('Loaded storage files:', storageFiles);
       
       // Populate login dropdown
       const select = document.getElementById('login-storage-select');
@@ -48,11 +49,13 @@ class AsocialLogin {
         
         if (storageFiles.length === 0) {
           select.innerHTML = '<option value="">No storage files found</option>';
+          console.log('No storage files found');
         } else {
           storageFiles.forEach(file => {
+            console.log('Adding storage file to dropdown:', file);
             const option = document.createElement('option');
-            option.value = file.username;
-            option.textContent = `${file.username} (${file.filename})`;
+            option.value = file.storageName;
+            option.textContent = `${file.storageName} (${file.filename})`;
             select.appendChild(option);
           });
         }
@@ -66,7 +69,7 @@ class AsocialLogin {
         } else {
           filesList.innerHTML = storageFiles.map(file => `
             <div class="storage-file-item" data-filename="${file.filename}">
-              <div class="storage-file-name">${file.username}</div>
+              <div class="storage-file-name">${file.storageName}</div>
               <div class="storage-file-username">File: ${file.filename}</div>
               <div class="storage-file-created">Created: ${new Date(file.createdAt).toLocaleDateString()}</div>
             </div>
@@ -125,10 +128,10 @@ class AsocialLogin {
     try {
       const isLoggedIn = await this.encryptedStorage.isLoggedIn();
       if (isLoggedIn) {
-        const currentUser = await this.encryptedStorage.getCurrentUser();
-        console.log('Login page - User already logged in:', currentUser);
+        const currentStorageName = await this.encryptedStorage.getCurrentStorageName();
+        console.log('Login page - Storage already open:', currentStorageName);
         console.log('Login page - Current storage:', this.encryptedStorage.currentStorage);
-        this.showStatus(`Already logged in as: ${currentUser}`, 'info');
+        this.showStatus(`Storage already open: ${currentStorageName}`, 'info');
         // Auto-redirect to main interface
         setTimeout(() => {
           this.redirectToMain();
@@ -144,8 +147,11 @@ class AsocialLogin {
    */
   async handleLogin() {
     try {
+      console.log('=== LOGIN START ===');
       const username = document.getElementById('login-storage-select').value.trim();
       const password = document.getElementById('login-password').value;
+      
+      console.log('Login form data:', { username, passwordLength: password.length });
       
       if (!username || !password) {
         this.showStatus('Please select a storage file and enter password', 'error');
@@ -153,26 +159,28 @@ class AsocialLogin {
       }
       
       this.setLoading(true);
+      console.log('Opening storage for login...');
       
       // Open encrypted storage
       await this.encryptedStorage.openStorage(username, password);
+      console.log('Storage opened successfully');
       
-      // Set current user in session
-      await this.encryptedStorage.setCurrentUser(username);
+      // Set current storage name in session
+      await this.encryptedStorage.setCurrentStorageName(username);
       
       // Store storage data temporarily for main popup to restore
       await chrome.storage.local.set({
         'asocial_temp_storage': this.encryptedStorage.currentStorage,
-        'asocial_temp_user': this.encryptedStorage.currentUser
+        'asocial_temp_storage_name': this.encryptedStorage.currentStorageName
       });
       
       // Verify authentication state
       const isLoggedIn = await this.encryptedStorage.isLoggedIn();
       console.log('Login verification - isLoggedIn:', isLoggedIn);
-      console.log('Current user set to:', username);
+      console.log('Current storage name set to:', username);
       
       // Also check chrome storage directly
-      const chromeStorage = await chrome.storage.local.get(['asocial_current_user']);
+      const chromeStorage = await chrome.storage.local.get(['asocial_current_storage']);
       console.log('Login verification - chrome storage:', chromeStorage);
       
       this.showStatus('Login successful!', 'success');
@@ -195,9 +203,12 @@ class AsocialLogin {
    */
   async handleCreateAccount() {
     try {
+      console.log('=== CREATE ACCOUNT START ===');
       const username = document.getElementById('new-username').value.trim();
       const password = document.getElementById('new-password').value;
       const confirmPassword = document.getElementById('confirm-password').value;
+      
+      console.log('Form data:', { username, passwordLength: password.length, confirmPasswordLength: confirmPassword.length });
       
       if (!username || !password || !confirmPassword) {
         this.showStatus('Please fill in all fields', 'error');
@@ -210,31 +221,45 @@ class AsocialLogin {
       }
       
       this.setLoading(true);
+      console.log('Creating storage for:', username);
       
       // Create new encrypted storage
-      await this.encryptedStorage.createStorage(username, password);
+      const filename = await this.encryptedStorage.createStorage(username, password);
+      console.log('Storage created successfully, filename:', filename);
       
       // Auto-login after creation
+      console.log('Opening storage after creation...');
       await this.encryptedStorage.openStorage(username, password);
+      console.log('Storage opened successfully');
       
-      // Set current user in session
-      await this.encryptedStorage.setCurrentUser(username);
+      // Set current storage name in session
+      console.log('Setting current storage name...');
+      await this.encryptedStorage.setCurrentStorageName(username);
+      console.log('Current storage name set');
       
       // Verify storage is loaded
       console.log('Storage created and loaded:', this.encryptedStorage.currentStorage);
-      console.log('Current user set:', this.encryptedStorage.currentUser);
+      console.log('Current storage name set:', this.encryptedStorage.currentStorageName);
       
       // Store storage data temporarily for the main popup
+      console.log('Storing temporary data...');
       await chrome.storage.local.set({
         'asocial_temp_storage': this.encryptedStorage.currentStorage,
-        'asocial_temp_user': this.encryptedStorage.currentUser
+        'asocial_temp_storage_name': this.encryptedStorage.currentStorageName
       });
+      console.log('Temporary data stored');
       
       this.showStatus('Storage created successfully!', 'success');
       
       // Redirect to main interface
+      console.log('Redirecting to main interface...');
       setTimeout(async () => {
-        await this.redirectToMain();
+        try {
+          await this.redirectToMain();
+        } catch (redirectError) {
+          console.error('Redirect failed:', redirectError);
+          this.showStatus(`Redirect failed: ${redirectError.message}`, 'error');
+        }
       }, 1500);
       
     } catch (error) {
@@ -298,11 +323,20 @@ class AsocialLogin {
    * Clear form fields
    */
   clearForm() {
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-    document.getElementById('new-username').value = '';
-    document.getElementById('new-password').value = '';
-    document.getElementById('confirm-password').value = '';
+    // Clear login form
+    const loginPassword = document.getElementById('login-password');
+    if (loginPassword) loginPassword.value = '';
+    
+    // Clear create account form
+    const newUsername = document.getElementById('new-username');
+    if (newUsername) newUsername.value = '';
+    
+    const newPassword = document.getElementById('new-password');
+    if (newPassword) newPassword.value = '';
+    
+    const confirmPassword = document.getElementById('confirm-password');
+    if (confirmPassword) confirmPassword.value = '';
+    
     this.hideStatus();
   }
 
@@ -351,8 +385,9 @@ class AsocialLogin {
     console.log('Redirect verification - isLoggedIn:', isLoggedIn);
     
     if (isLoggedIn) {
-      // Close the login window and let the main popup handle the authentication
-      window.close();
+      console.log('Authentication successful, redirecting to main popup...');
+      // Instead of closing the window, redirect to the main popup
+      window.location.href = 'popup.html';
     } else {
       console.error('Authentication state not properly set, staying on login page');
       this.showStatus('Authentication failed, please try again', 'error');
@@ -362,5 +397,27 @@ class AsocialLogin {
 
 // Initialize login interface when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  new AsocialLogin();
+  try {
+    new AsocialLogin();
+  } catch (error) {
+    console.error('Failed to initialize login interface:', error);
+    document.body.innerHTML = `
+      <div style="padding: 20px; color: #ff0000; background: #000; text-align: center;">
+        <h2>Initialization Error</h2>
+        <p>Failed to initialize login interface: ${error.message}</p>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: #00ff00; color: #000; border: none; cursor: pointer;">Reload</button>
+      </div>
+    `;
+  }
+});
+
+// Global error handler
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+  console.error('Error details:', event);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  console.error('Promise rejection details:', event);
 });

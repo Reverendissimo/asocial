@@ -5,12 +5,31 @@
 
 class AsocialPopup {
   constructor() {
-    this.encryptedStorage = new AsocialEncryptedStorage();
-    this.keyManager = new AsocialKeyManager();
-    this.crypto = new AsocialCrypto();
-    this.currentMode = 'simple';
-    this.currentWriterKeyId = null;
-    this.init();
+    console.log('=== ASOCIAL POPUP CONSTRUCTOR START ===');
+    try {
+      console.log('Creating AsocialEncryptedStorage...');
+      this.encryptedStorage = new AsocialEncryptedStorage();
+      console.log('AsocialEncryptedStorage created successfully');
+      
+      console.log('Creating AsocialKeyManager...');
+      this.keyManager = new AsocialKeyManager();
+      console.log('AsocialKeyManager created successfully');
+      
+      console.log('Creating AsocialCrypto...');
+      this.crypto = new AsocialCrypto();
+      console.log('AsocialCrypto created successfully');
+      
+      this.currentMode = 'simple';
+      this.currentWriterKeyId = null;
+      
+      console.log('Calling init()...');
+      this.init();
+      console.log('=== ASOCIAL POPUP CONSTRUCTOR END ===');
+    } catch (error) {
+      console.error('Error in AsocialPopup constructor:', error);
+      console.error('Error stack:', error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -29,33 +48,44 @@ class AsocialPopup {
       
       if (isLoggedIn) {
         // Restore the session
-        const currentUser = await this.encryptedStorage.getCurrentUser();
-        console.log('Restoring session for user:', currentUser);
+        const currentStorageName = await this.encryptedStorage.getCurrentStorageName();
+        console.log('Restoring session for storage:', currentStorageName);
         
-        if (currentUser && !this.encryptedStorage.currentStorage) {
+        if (currentStorageName && !this.encryptedStorage.currentStorage) {
           try {
             // Try to restore the storage without password (since we're already logged in)
-            const filename = `asocial_storage_${currentUser}.ASoc`;
+            const filename = `asocial_storage_${currentStorageName}.ASoc`;
             console.log('Attempting to restore storage:', filename);
             
-            // For now, mark the user as authenticated but storage needs to be opened
-            this.encryptedStorage.currentUser = currentUser;
-            console.log('Session restored - currentUser:', this.encryptedStorage.currentUser);
+            // For now, mark the storage as authenticated but storage needs to be opened
+            this.encryptedStorage.currentStorageName = currentStorageName;
+            console.log('Session restored - currentStorageName:', this.encryptedStorage.currentStorageName);
           } catch (error) {
             console.error('Failed to restore storage:', error);
           }
         }
       }
       
-      console.log('After session restore - Current user:', this.encryptedStorage.currentUser);
+      console.log('After session restore - Current storage name:', this.encryptedStorage.currentStorageName);
       console.log('After session restore - Current storage:', this.encryptedStorage.currentStorage);
       
       // Also check chrome storage directly
-      const chromeStorage = await chrome.storage.local.get(['asocial_current_user']);
+      const chromeStorage = await chrome.storage.local.get(['asocial_current_storage']);
       console.log('Chrome storage check:', chromeStorage);
       
+      // Check for temporary storage data first
+      const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_storage_name']);
+      console.log('Checking for temporary storage data:', tempData);
+      
+      if (tempData.asocial_temp_storage && tempData.asocial_temp_storage_name) {
+        console.log('Found temporary storage data, restoring session...');
+        this.encryptedStorage.currentStorage = tempData.asocial_temp_storage;
+        this.encryptedStorage.currentStorageName = tempData.asocial_temp_storage_name;
+        console.log('Session restored from temporary data');
+      }
+      
       // Check again after session restore
-      const finalAuthCheck = isLoggedIn && this.encryptedStorage.currentUser;
+      const finalAuthCheck = isLoggedIn && this.encryptedStorage.currentStorageName;
       console.log('Final authentication check:', finalAuthCheck);
       
       if (!finalAuthCheck) {
@@ -80,24 +110,29 @@ class AsocialPopup {
       
       // Check if storage is actually open
       if (!this.encryptedStorage.currentStorage) {
+        console.log('Storage not open, checking for temporary data...');
         // Try to restore from temporary storage
-        const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_user']);
-        if (tempData.asocial_temp_storage && tempData.asocial_temp_user) {
+        const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_storage_name']);
+        console.log('Temporary data found:', tempData);
+        
+        if (tempData.asocial_temp_storage && tempData.asocial_temp_storage_name) {
           console.log('Restoring storage from temporary data');
           this.encryptedStorage.currentStorage = tempData.asocial_temp_storage;
-          this.encryptedStorage.currentUser = tempData.asocial_temp_user;
+          this.encryptedStorage.currentStorageName = tempData.asocial_temp_storage_name;
           
           // Don't clean up temporary data immediately - keep it for session persistence
           console.log('Storage restored successfully');
+          console.log('Restored storage:', this.encryptedStorage.currentStorage);
+          console.log('Restored storage name:', this.encryptedStorage.currentStorageName);
         } else {
           console.log('User is authenticated but storage is not open');
           console.log('This means the temporary storage data was lost');
           console.log('Checking if storage file exists...');
           
           // Check if storage file exists
-          const currentUser = this.encryptedStorage.currentUser;
-          if (currentUser) {
-            const filename = `asocial_storage_${currentUser}.ASoc`;
+          const currentStorageName = this.encryptedStorage.currentStorageName;
+          if (currentStorageName) {
+            const filename = `asocial_storage_${currentStorageName}.ASoc`;
             const storageData = await chrome.storage.local.get([filename]);
             if (storageData[filename]) {
               console.log('Storage file exists, but user needs to re-authenticate');
@@ -115,22 +150,32 @@ class AsocialPopup {
       // Ensure storage session is maintained
       console.log('Maintaining storage session...');
       console.log('Current storage:', this.encryptedStorage.currentStorage);
-      console.log('Current user:', this.encryptedStorage.currentUser);
+      console.log('Current storage name:', this.encryptedStorage.currentStorageName);
       
       console.log('Storage is open:', this.encryptedStorage.currentStorage);
       
       // Force popup size
+      console.log('Setting popup size...');
       this.forcePopupSize();
+      console.log('Popup size set');
       
       // Setup event listeners
+      console.log('Setting up event listeners...');
       this.setupEventListeners();
+      console.log('Event listeners set up');
       
       // Load initial data
+      console.log('Loading initial data...');
       await this.loadWriterKeys();
+      console.log('Initial data loaded');
+      console.log('Loading reader keys...');
       await this.loadReaderKeys();
+      console.log('Reader keys loaded');
       
       // Setup mode switching
+      console.log('Setting up mode switching...');
       this.setupModeSwitching();
+      console.log('Mode switching set up');
       
       console.log('Popup initialized successfully');
       
@@ -297,7 +342,7 @@ class AsocialPopup {
    */
   async loadWriterKeys() {
     try {
-      const writerKeys = await this.encryptedStorage.getWriterKeys();
+      const writerKeys = this.encryptedStorage.currentStorage?.writerKeys || [];
       this.displayWriterKeys(writerKeys);
     } catch (error) {
       console.error('Failed to load writer keys:', error);
@@ -310,7 +355,7 @@ class AsocialPopup {
    */
   async loadReaderKeys() {
     try {
-      const readerKeys = await this.encryptedStorage.getReaderKeys();
+      const readerKeys = this.encryptedStorage.currentStorage?.readerKeys || [];
       this.displayReaderKeys(readerKeys);
     } catch (error) {
       console.error('Failed to load reader keys:', error);
@@ -338,7 +383,7 @@ class AsocialPopup {
       <div class="writer-key-item" data-writer-key-id="${writerKey.id}">
         <div class="writer-key-info">
           <div class="writer-key-name">${writerKey.name}</div>
-          <div class="writer-key-storage">Storage: ${this.encryptedStorage.currentUser || 'Unknown'}</div>
+          <div class="writer-key-storage">Storage: ${this.encryptedStorage.currentStorageName || 'Unknown'}</div>
         </div>
         <div class="writer-key-meta">
           <span class="writer-key-created">Created: ${new Date(writerKey.createdAt).toLocaleDateString()}</span>
@@ -432,7 +477,16 @@ class AsocialPopup {
       }
       
       // Add to encrypted storage
-      await this.encryptedStorage.addWriterKey(writerKey);
+      if (!this.encryptedStorage.currentStorage) {
+        this.showStatus('No storage open!', 'error');
+        return;
+      }
+      
+      // Add writer key to current storage
+      if (!this.encryptedStorage.currentStorage.writerKeys) {
+        this.encryptedStorage.currentStorage.writerKeys = [];
+      }
+      this.encryptedStorage.currentStorage.writerKeys.push(writerKey);
       
       // Save the storage to persist the changes
       await this.encryptedStorage.saveStorage();
@@ -519,8 +573,20 @@ class AsocialPopup {
       // This is independent of groups - you can import reader keys without having any groups
       const readerKey = await this.keyManager.importReaderKey(keyData);
       
-      // Add to encrypted storage (this already saves the storage)
-      await this.encryptedStorage.addReaderKey(readerKey);
+      // Add to encrypted storage
+      if (!this.encryptedStorage.currentStorage) {
+        this.showStatus('No storage open!', 'error');
+        return;
+      }
+      
+      // Add reader key to current storage
+      if (!this.encryptedStorage.currentStorage.readerKeys) {
+        this.encryptedStorage.currentStorage.readerKeys = [];
+      }
+      this.encryptedStorage.currentStorage.readerKeys.push(readerKey);
+      
+      // Save the storage to persist the changes
+      await this.encryptedStorage.saveStorage();
       
       this.hideModal('import-key-modal');
       this.showStatus(`Reader key imported for ${readerKey.senderName}! You can now decrypt their messages.`, 'success');
@@ -568,7 +634,7 @@ class AsocialPopup {
       document.getElementById('group-details-created').textContent = new Date(writerKey.createdAt).toLocaleString();
       
       // Setup writer key actions
-      document.getElementById('export-group-key').onclick = () => this.exportWriterKey(writerKeyId);
+      document.getElementById('export-group-key').onclick = () => this.generateReaderKey(writerKeyId);
       document.getElementById('delete-group').onclick = () => this.deleteWriterKey(writerKeyId);
       
       this.currentWriterKeyId = writerKeyId;
@@ -581,19 +647,19 @@ class AsocialPopup {
   }
 
   /**
-   * Export writer key
+   * Generate reader key for sharing
    */
-  async exportWriterKey(writerKeyId) {
+  async generateReaderKey(writerKeyId) {
     try {
       // Get the current storage name (this is our identity)
-      const storageName = this.encryptedStorage.currentUser;
+      const storageName = this.encryptedStorage.currentStorageName;
       if (!storageName) {
         this.showStatus('No storage loaded!', 'error');
         return;
       }
       
       // Get the writer key from storage
-      const writerKeys = await this.encryptedStorage.getWriterKeys();
+      const writerKeys = this.encryptedStorage.currentStorage?.writerKeys || [];
       const writerKey = writerKeys.find(key => key.id === writerKeyId);
       
       if (!writerKey) {
@@ -612,11 +678,11 @@ class AsocialPopup {
       
       // Copy to clipboard as JSON
       await navigator.clipboard.writeText(JSON.stringify(exportData));
-      this.showStatus('Writer key with key ID copied to clipboard!', 'success');
+      this.showStatus('Reader key generated and copied to clipboard! Share this with others so they can decrypt your messages.', 'success');
       
     } catch (error) {
-      console.error('Failed to export writer key:', error);
-      this.showStatus('Failed to export key', 'error');
+      console.error('Failed to generate reader key:', error);
+      this.showStatus('Failed to generate reader key', 'error');
     }
   }
 
@@ -645,7 +711,11 @@ class AsocialPopup {
     if (!confirm('Delete this reader key? You will no longer be able to decrypt messages from this sender.')) return;
     
     try {
-      await this.encryptedStorage.deleteReaderKey(readerKeyId);
+      // Remove reader key from storage
+      if (this.encryptedStorage.currentStorage?.readerKeys) {
+        this.encryptedStorage.currentStorage.readerKeys = this.encryptedStorage.currentStorage.readerKeys.filter(key => key.id !== readerKeyId);
+        await this.encryptedStorage.saveStorage();
+      }
       this.showStatus('Reader key deleted!', 'success');
       await this.loadReaderKeys(); // Refresh
     } catch (error) {
@@ -714,5 +784,31 @@ class AsocialPopup {
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  window.popup = new AsocialPopup();
+  console.log('=== POPUP DOM LOADED ===');
+  try {
+    console.log('Creating AsocialPopup instance...');
+    window.popup = new AsocialPopup();
+    console.log('AsocialPopup instance created successfully');
+  } catch (error) {
+    console.error('Failed to initialize popup:', error);
+    console.error('Error stack:', error.stack);
+    document.body.innerHTML = `
+      <div style="padding: 20px; color: #ff0000; background: #000; text-align: center;">
+        <h2>Popup Initialization Error</h2>
+        <p>Failed to initialize popup: ${error.message}</p>
+        <button onclick="location.reload()" style="padding: 10px 20px; background: #00ff00; color: #000; border: none; cursor: pointer;">Reload</button>
+      </div>
+    `;
+  }
+});
+
+// Global error handler for popup
+window.addEventListener('error', (event) => {
+  console.error('Popup global error:', event.error);
+  console.error('Error details:', event);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Popup unhandled promise rejection:', event.reason);
+  console.error('Promise rejection details:', event);
 });

@@ -5,15 +5,15 @@
 
 class AsocialEncryptedStorage {
   constructor() {
-    this.currentStorageName = null;
+    this.currentUser = null;
     this.currentStorage = null;
     this.currentPassword = null; // Store password temporarily for saving
-    this.storageKey = 'asocial_current_storage';
+    this.storageKey = 'asocial_current_user';
     this.storageFilesKey = 'asocial_storage_files';
   }
 
   /**
-   * Check if storage is open
+   * Check if user is logged in
    */
   async isLoggedIn() {
     try {
@@ -21,32 +21,32 @@ class AsocialEncryptedStorage {
       const isLoggedIn = result[this.storageKey] !== null && result[this.storageKey] !== undefined;
       return isLoggedIn;
     } catch (error) {
-      console.error('Failed to check storage status:', error);
+      console.error('Failed to check login status:', error);
       return false;
     }
   }
 
   /**
-   * Get current storage name
+   * Get current user info
    */
-  async getCurrentStorageName() {
+  async getCurrentUser() {
     try {
       const result = await chrome.storage.local.get([this.storageKey]);
       return result[this.storageKey];
     } catch (error) {
-      console.error('Failed to get current storage name:', error);
+      console.error('Failed to get current user:', error);
       return null;
     }
   }
 
   /**
-   * Set current storage name
+   * Set current user
    */
-  async setCurrentStorageName(storageName) {
+  async setCurrentUser(username) {
     try {
-      await chrome.storage.local.set({ [this.storageKey]: storageName });
+      await chrome.storage.local.set({ [this.storageKey]: username });
     } catch (error) {
-      console.error('Failed to set current storage name:', error);
+      console.error('Failed to set current user:', error);
       throw error;
     }
   }
@@ -100,7 +100,7 @@ class AsocialEncryptedStorage {
       
       // Set current storage for immediate use
       this.currentStorage = storageData;
-      this.currentStorageName = storageName;
+      this.currentUser = storageName;
       this.currentPassword = password; // Store password for saving
       
       console.log(`Created storage: ${storageName}`);
@@ -118,7 +118,7 @@ class AsocialEncryptedStorage {
     try {
       // Find the correct filename from storage files list
       const files = await this.getStorageFiles();
-      const storageFile = files.find(f => f.storageName === storageName);
+      const storageFile = files.find(f => f.username === storageName);
       
       if (!storageFile) {
         throw new Error(`Storage file not found for user: ${storageName}`);
@@ -142,11 +142,11 @@ class AsocialEncryptedStorage {
       
       // Set current storage
       this.currentStorage = storageData;
-      this.currentStorageName = storageName;
+      this.currentUser = storageName;
       this.currentPassword = password; // Store password for saving
       
-      // Update current storage name
-      await this.setCurrentStorageName(storageName);
+      // Update current user
+      await this.setCurrentUser(storageName);
       
       console.log(`Opened storage: ${storageName}`);
       return storageData;
@@ -161,16 +161,16 @@ class AsocialEncryptedStorage {
    */
   async saveStorage() {
     try {
-      if (!this.currentStorage || !this.currentStorageName) {
+      if (!this.currentStorage || !this.currentUser) {
         throw new Error('No storage open');
       }
       
       // Find the correct filename from storage files list
       const files = await this.getStorageFiles();
-      const storageFile = files.find(f => f.storageName === this.currentStorageName);
+      const storageFile = files.find(f => f.username === this.currentUser);
       
       if (!storageFile) {
-        throw new Error(`Storage file not found for storage: ${this.currentStorageName}`);
+        throw new Error(`Storage file not found for user: ${this.currentUser}`);
       }
       
       const filename = storageFile.filename;
@@ -180,7 +180,7 @@ class AsocialEncryptedStorage {
       await chrome.storage.local.set({ [filename]: JSON.stringify(this.currentStorage) });
       console.log('Storage data saved directly as JSON');
       
-      console.log(`Saved storage for storage: ${this.currentStorageName} to file: ${filename}`);
+      console.log(`Saved storage for user: ${this.currentUser} to file: ${filename}`);
     } catch (error) {
       console.error('Failed to save storage:', error);
       throw error;
@@ -203,10 +203,10 @@ class AsocialEncryptedStorage {
   /**
    * Add storage file to list
    */
-  async addStorageFileToList(filename, storageName) {
+  async addStorageFileToList(filename, username) {
     try {
       const files = await this.getStorageFiles();
-      files.push({ filename, storageName, createdAt: new Date().toISOString() });
+      files.push({ filename, username, createdAt: new Date().toISOString() });
       await chrome.storage.local.set({ [this.storageFilesKey]: files });
     } catch (error) {
       console.error('Failed to add storage file to list:', error);
@@ -278,17 +278,17 @@ class AsocialEncryptedStorage {
   }
 
   /**
-   * Close current storage
+   * Logout current user
    */
   async logout() {
     try {
-      this.currentStorageName = null;
+      this.currentUser = null;
       this.currentStorage = null;
       this.currentPassword = null;
       await chrome.storage.local.remove([this.storageKey]);
-      console.log('Storage closed');
+      console.log('User logged out');
     } catch (error) {
-      console.error('Failed to close storage:', error);
+      console.error('Failed to logout:', error);
       throw error;
     }
   }
@@ -301,16 +301,16 @@ class AsocialEncryptedStorage {
   }
 
   /**
-   * Get current storage name
+   * Get current user
    */
-  getCurrentStorageName() {
-    return this.currentStorageName;
+  getCurrentUser() {
+    return this.currentUser;
   }
 
   /**
    * Check if storage is open
    */
   isStorageOpen() {
-    return this.currentStorage !== null && this.currentStorageName !== null;
+    return this.currentStorage !== null && this.currentUser !== null;
   }
 }

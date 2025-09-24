@@ -6,7 +6,6 @@
 class LinkedInAsocial {
   constructor() {
     this.encryptionEngine = new AsocialEncryptionEngine();
-    this.keyManager = new AsocialKeyManager();
     this.isInitialized = false;
     this.observer = null;
     this.injecting = false;
@@ -113,18 +112,18 @@ class LinkedInAsocial {
         }
       });
       
-      // Find LinkedIn post input areas
-      const postInputs = this.findLinkedInPostInputs();
+    // Find LinkedIn post input areas
+    const postInputs = this.findLinkedInPostInputs();
       console.log(`Found ${postInputs.length} input areas`);
       
       if (postInputs.length === 0) {
         console.log('No input areas found, will retry later');
         return;
       }
-      
-      for (const input of postInputs) {
+    
+    for (const input of postInputs) {
         console.log('Creating button for input:', input);
-        this.createAsocialButton(input);
+      this.createAsocialButton(input);
       }
       
       console.log('Button injection completed');
@@ -194,25 +193,31 @@ class LinkedInAsocial {
     
     // Style the button
     button.style.cssText = `
-      background: #0073b1;
-      color: white;
-      border: none;
+      background: #000000;
+      color: #00ff00;
+      border: 1px solid #00ff00;
       border-radius: 4px;
       padding: 8px 16px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s ease;
       margin-left: 8px;
-      transition: background-color 0.2s;
     `;
     
     // Add hover effect
     button.addEventListener('mouseenter', () => {
-      button.style.backgroundColor = '#005885';
+      button.style.backgroundColor = '#001100';
+      button.style.borderColor = '#00ff00';
+      button.style.transform = 'scale(1.05)';
+      button.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
     });
     
     button.addEventListener('mouseleave', () => {
-      button.style.backgroundColor = '#0073b1';
+      button.style.backgroundColor = '#000000';
+      button.style.borderColor = '#00ff00';
+      button.style.transform = 'scale(1)';
+      button.style.boxShadow = 'none';
     });
     
     // Add click handler
@@ -278,22 +283,19 @@ class LinkedInAsocial {
     try {
       console.log('Be Asocial button clicked');
       
-      // Get message content
-      const message = this.extractMessageContent(inputArea);
-      if (!message || message.trim().length === 0) {
-        this.showNotification('Please enter a message to encrypt', 'error');
-        return;
+      // Show the encryption modal
+      const result = await this.showEncryptionModal(inputArea);
+      if (!result) {
+        return; // User cancelled
       }
+      
+      const { message, selectedGroup } = result;
       
       // Check message length
       if (message.length > 3000) {
         this.showNotification('Message too long (max 3000 characters for LinkedIn)', 'error');
         return;
       }
-      
-      // Show key group selection
-      const selectedGroup = await this.showKeyGroupSelection();
-      if (!selectedGroup) return;
       
       // Show encryption progress
       button.disabled = true;
@@ -302,11 +304,8 @@ class LinkedInAsocial {
       // Encrypt message
       const encryptedMessage = await this.encryptionEngine.encryptMessage(message, selectedGroup.id);
       
-      // Store original content for potential restoration
-      const originalContent = this.extractMessageContent(inputArea);
-      
-      // Replace content in input area
-      this.replaceInputContent(inputArea, encryptedMessage);
+      // Use execCommand to insert text (preserves LinkedIn's state)
+      this.insertTextSafely(inputArea, encryptedMessage);
       
       // Simple approach: just ensure the content is set and LinkedIn knows about it
       setTimeout(() => {
@@ -356,31 +355,444 @@ class LinkedInAsocial {
   }
 
   /**
+   * Safely insert text using execCommand to preserve LinkedIn's state
+   */
+  insertTextSafely(inputArea, text) {
+    try {
+      console.log('Using execCommand to safely insert text');
+      
+      // Focus the input first
+      inputArea.focus();
+      
+      // Clear existing content by selecting all and deleting
+      if (inputArea.contentEditable === 'true') {
+        // For contenteditable, select all content
+        const range = document.createRange();
+        range.selectNodeContents(inputArea);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        
+        // Delete selected content
+        document.execCommand('delete', false);
+      } else {
+        // For textarea/input, select all and delete
+        inputArea.select();
+        document.execCommand('delete', false);
+      }
+      
+      // Use execCommand to insert the new text
+      const success = document.execCommand('insertText', false, text);
+      
+      if (success) {
+        console.log('Text inserted successfully with execCommand');
+      } else {
+        console.log('execCommand failed, using fallback');
+        // Fallback: set content directly
+        if (inputArea.contentEditable === 'true') {
+          inputArea.textContent = text;
+        } else {
+          inputArea.value = text;
+        }
+        
+        // Trigger events
+        const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+        const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+        inputArea.dispatchEvent(inputEvent);
+        inputArea.dispatchEvent(changeEvent);
+      }
+      
+      // Set cursor to end
+      if (inputArea.contentEditable === 'true') {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(inputArea);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      
+    } catch (error) {
+      console.error('Error with safe text insertion:', error);
+      // Final fallback
+      if (inputArea.contentEditable === 'true') {
+        inputArea.textContent = text;
+      } else {
+        inputArea.value = text;
+      }
+    }
+  }
+
+  /**
+   * Use execCommand with proper event triggering for LinkedIn
+   */
+  async simulateTyping(inputArea, text) {
+    try {
+      console.log('Using execCommand with proper event triggering for LinkedIn');
+      
+      // Focus the input first
+      inputArea.focus();
+      
+      // Clear existing content
+      if (inputArea.contentEditable === 'true') {
+        inputArea.innerHTML = '';
+      } else {
+        inputArea.value = '';
+      }
+      
+      // Use execCommand to insert text
+      const success = document.execCommand('insertText', false, text);
+      
+      if (success) {
+        console.log('Text inserted with execCommand');
+        
+        // Now trigger the specific events that LinkedIn's React components need
+        // Trigger input event with proper data
+        const inputEvent = new InputEvent('input', {
+          bubbles: true,
+          cancelable: true,
+          inputType: 'insertText',
+          data: text
+        });
+        
+        // Trigger change event
+        const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+        
+        // Trigger keyup event (LinkedIn might be listening for this)
+        const keyupEvent = new KeyboardEvent('keyup', {
+          bubbles: true,
+          cancelable: true,
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13
+        });
+        
+        // Trigger blur and focus to simulate user interaction
+        const blurEvent = new Event('blur', { bubbles: true, cancelable: true });
+        const focusEvent = new Event('focus', { bubbles: true, cancelable: true });
+        
+        // Dispatch events in sequence
+        inputArea.dispatchEvent(inputEvent);
+        inputArea.dispatchEvent(changeEvent);
+        inputArea.dispatchEvent(keyupEvent);
+        
+        // Small delay then blur/focus to trigger LinkedIn's state updates
+        setTimeout(() => {
+          inputArea.dispatchEvent(blurEvent);
+          setTimeout(() => {
+            inputArea.dispatchEvent(focusEvent);
+          }, 10);
+        }, 50);
+        
+      } else {
+        console.log('execCommand failed, using direct content setting');
+        // Fallback: set content directly
+        if (inputArea.contentEditable === 'true') {
+          inputArea.textContent = text;
+        } else {
+          inputArea.value = text;
+        }
+        
+        // Trigger events
+        const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+        const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+        inputArea.dispatchEvent(inputEvent);
+        inputArea.dispatchEvent(changeEvent);
+      }
+      
+      // Set cursor to end
+      if (inputArea.contentEditable === 'true') {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(inputArea);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      
+      console.log('Events dispatched successfully');
+      
+    } catch (error) {
+      console.error('Error with execCommand approach:', error);
+      // Final fallback to gentle replacement
+      this.replaceInputContentGentle(inputArea, text);
+    }
+  }
+
+  /**
+   * Gentle content replacement for messaging contexts
+   */
+  replaceInputContentGentle(inputArea, newContent) {
+    try {
+      console.log('Using gentle content replacement for messaging');
+      
+      // For messaging, we need to be very careful not to break LinkedIn's state
+      if (inputArea.contentEditable === 'true') {
+        // Instead of replacing, let's try appending to preserve LinkedIn's state
+        const currentContent = inputArea.textContent || inputArea.innerText || '';
+        
+        // If there's existing content, append with a space
+        if (currentContent.trim()) {
+          inputArea.textContent = currentContent + ' ' + newContent;
+        } else {
+          inputArea.textContent = newContent;
+        }
+        
+        // Set cursor position to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(inputArea);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        const currentValue = inputArea.value || '';
+        if (currentValue.trim()) {
+          inputArea.value = currentValue + ' ' + newContent;
+        } else {
+          inputArea.value = newContent;
+        }
+      }
+      
+      // Trigger events very gently
+      const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+      inputArea.dispatchEvent(inputEvent);
+      
+      // Small delay before change event
+      setTimeout(() => {
+        const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+        inputArea.dispatchEvent(changeEvent);
+      }, 50);
+      
+      // Focus
+      inputArea.focus();
+      
+    } catch (error) {
+      console.error('Error in gentle content replacement:', error);
+      // Fallback - just append
+      const currentContent = inputArea.textContent || inputArea.innerText || '';
+      inputArea.textContent = currentContent + ' ' + newContent;
+    }
+  }
+
+  /**
    * Replace content in input area
    */
   replaceInputContent(inputArea, newContent) {
+    try {
     if (inputArea.contentEditable === 'true') {
-      // For contenteditable, be gentle to avoid triggering LinkedIn's observers
-      inputArea.innerHTML = newContent;
-      
-      // Set cursor to end
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(inputArea);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-      
+        // For contenteditable, be very gentle to avoid triggering LinkedIn's observers
+        // Clear existing content first
+        inputArea.innerHTML = '';
+        
+        // Add the new content as a text node to avoid HTML parsing issues
+        const textNode = document.createTextNode(newContent);
+        inputArea.appendChild(textNode);
+        
+        // Set cursor to end
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(inputArea);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        
     } else if (inputArea.tagName === 'TEXTAREA') {
       inputArea.value = newContent;
     }
     
-    // Trigger minimal events to make LinkedIn aware without causing conflicts
-    const inputEvent = new Event('input', { bubbles: true });
-    inputArea.dispatchEvent(inputEvent);
-    
-    // Focus the input
-    inputArea.focus();
+      // Trigger events in the correct order to maintain LinkedIn's state
+      const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+      const changeEvent = new Event('change', { bubbles: true, cancelable: true });
+      
+      // Dispatch input first
+      inputArea.dispatchEvent(inputEvent);
+      
+      // Small delay before change event
+      setTimeout(() => {
+        inputArea.dispatchEvent(changeEvent);
+      }, 10);
+      
+      // Focus the input
+      inputArea.focus();
+      
+    } catch (error) {
+      console.error('Error replacing input content:', error);
+      // Fallback: just set the value directly
+      if (inputArea.contentEditable === 'true') {
+        inputArea.textContent = newContent;
+      } else {
+        inputArea.value = newContent;
+      }
+    }
+  }
+
+  /**
+   * Show encryption modal with message input and key selection
+   */
+  async showEncryptionModal(inputArea) {
+    return new Promise(async (resolve) => {
+      // Get current message content
+      const currentMessage = this.extractMessageContent(inputArea);
+      
+      // Create modal overlay
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+      
+      // Create modal content
+      const content = document.createElement('div');
+      content.style.cssText = `
+        background: #000000;
+        border: 2px solid #00ff00;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 4px 20px rgba(0, 255, 0, 0.3);
+      `;
+      
+      content.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; color: #00ff00; font-weight: bold;">Encrypt Message</h3>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; color: #00ff00; margin-bottom: 8px; font-weight: 600;">Message to encrypt:</label>
+          <textarea id="asocial-message-input" style="
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            background: #000000;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+          " placeholder="Enter your message here...">${currentMessage}</textarea>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; color: #00ff00; margin-bottom: 8px; font-weight: 600;">Select encryption key:</label>
+          <div id="asocial-key-list" style="max-height: 150px; overflow-y: auto; border: 1px solid #00ff00; border-radius: 4px; background: #000000;">
+            <!-- Keys will be loaded here -->
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button id="asocial-encrypt-cancel" style="
+            background: #000000;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+          ">Cancel</button>
+        </div>
+      `;
+      
+      overlay.appendChild(content);
+      document.body.appendChild(overlay);
+      
+      // Load writer keys
+      const result = await chrome.storage.local.get(['asocial_temp_storage']);
+      const tempStorage = result.asocial_temp_storage;
+      
+      if (!tempStorage || !tempStorage.writerKeys) {
+        this.showNotification('No writer keys found. Please create one in the extension popup.', 'error');
+        document.body.removeChild(overlay);
+        resolve(null);
+        return;
+      }
+      
+      const groups = tempStorage.writerKeys.map(group => ({
+        ...group,
+        storageName: tempStorage.storageName || 'Unknown'
+      }));
+      
+      const keyList = document.getElementById('asocial-key-list');
+      groups.forEach(group => {
+        const item = document.createElement('div');
+        item.className = 'asocial-group-item';
+        item.setAttribute('data-group-id', group.id);
+        item.style.cssText = `
+          padding: 6px 10px;
+          border-bottom: 1px solid #00ff00;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          background: #000000;
+          color: #00ff00;
+          font-size: 12px;
+        `;
+        item.innerHTML = `
+          <div style="font-weight: 600; color: #00ff00; margin-bottom: 2px;">${group.name}</div>
+          <div style="font-size: 11px; color: #00ff00; opacity: 0.8;">Storage: ${group.storageName || 'Unknown'}</div>
+        `;
+        
+        item.addEventListener('mouseenter', () => {
+          item.style.backgroundColor = '#001100';
+        });
+        
+        item.addEventListener('mouseleave', () => {
+          item.style.backgroundColor = '#000000';
+        });
+        
+        keyList.appendChild(item);
+      });
+      
+      let selectedGroup = null;
+      
+      // Handle key selection - auto-encrypt when key is selected
+      keyList.addEventListener('click', async (e) => {
+        const groupItem = e.target.closest('.asocial-group-item');
+        if (groupItem) {
+          // Remove previous selection
+          keyList.querySelectorAll('.asocial-group-item').forEach(item => {
+            item.style.backgroundColor = '#000000';
+            item.style.border = 'none';
+          });
+          
+          // Select this group
+          groupItem.style.backgroundColor = '#001100';
+          groupItem.style.border = '2px solid #00ff00';
+          selectedGroup = groups.find(g => g.id === groupItem.getAttribute('data-group-id'));
+          
+          // Get message and encrypt immediately
+          const messageInput = document.getElementById('asocial-message-input');
+          const message = messageInput.value.trim();
+          
+          if (!message) {
+            this.showNotification('Please enter a message to encrypt', 'error');
+            return;
+          }
+          
+          // Close modal and resolve with the result
+          document.body.removeChild(overlay);
+          resolve({ message, selectedGroup });
+        }
+      });
+      
+      // Handle Cancel button
+      document.getElementById('asocial-encrypt-cancel').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+        resolve(null);
+      });
+      
+      // Handle overlay click to close
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+          resolve(null);
+        }
+      });
+    });
   }
 
   /**
@@ -389,22 +801,34 @@ class LinkedInAsocial {
   async showKeyGroupSelection() {
     return new Promise(async (resolve) => {
       try {
-        console.log('Getting key groups...');
-        // Get available key groups
-        const groups = await this.keyManager.getKeyGroups();
-        console.log('Found groups:', groups);
+        console.log('Getting writer keys from new storage...');
+        // Get writer keys from the new encrypted storage
+        const result = await chrome.storage.local.get(['asocial_temp_storage']);
+        const tempStorage = result.asocial_temp_storage;
         
-        if (groups.length === 0) {
+        if (!tempStorage || !tempStorage.writerKeys) {
           this.showNotification('No writer keys found. Please create one in the extension popup.', 'error');
           resolve(null);
           return;
         }
         
-        // Create modal
-        const modal = this.createKeyGroupModal(groups, resolve);
-        document.body.appendChild(modal);
+        const groups = tempStorage.writerKeys.map(group => ({
+          ...group,
+          storageName: tempStorage.storageName || 'Unknown'
+        }));
+        console.log('Found writer keys:', groups);
+      
+      if (groups.length === 0) {
+          this.showNotification('No writer keys found. Please create one in the extension popup.', 'error');
+        resolve(null);
+        return;
+      }
+      
+      // Create modal
+      const modal = this.createKeyGroupModal(groups, resolve);
+      document.body.appendChild(modal);
       } catch (error) {
-        console.error('Failed to get key groups:', error);
+        console.error('Failed to get writer keys:', error);
         this.showNotification('Failed to load writer keys. Please check the extension popup.', 'error');
         resolve(null);
       }
@@ -432,33 +856,39 @@ class LinkedInAsocial {
     
     const content = document.createElement('div');
     content.style.cssText = `
-      background: white;
+      background: #000000;
+      border: 2px solid #00ff00;
       border-radius: 8px;
       padding: 24px;
       max-width: 400px;
       width: 90%;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 255, 0, 0.3);
     `;
     
     content.innerHTML = `
-      <h3 style="margin: 0 0 16px 0; color: #333;">Select Writer Key</h3>
+      <h3 style="margin: 0 0 16px 0; color: #00ff00; font-weight: bold;">Select Writer Key</h3>
       <div class="asocial-groups-list">
         ${groups.map(group => `
           <div class="asocial-group-item" data-group-id="${group.id}" style="
-            padding: 12px;
-            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border: 1px solid #00ff00;
             border-radius: 4px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             cursor: pointer;
             transition: background-color 0.2s;
+            background: #000000;
+            color: #00ff00;
+            font-size: 14px;
           ">
-            <div style="font-weight: 600; color: #333;">${group.name}</div>
+            <div style="font-weight: 600; color: #00ff00; margin-bottom: 2px;">${group.name}</div>
+            <div style="font-size: 11px; color: #00ff00; opacity: 0.8;">Storage: ${group.storageName || 'Unknown'}</div>
           </div>
         `).join('')}
       </div>
       <button class="asocial-cancel" style="
-        background: #f5f5f5;
-        border: 1px solid #ddd;
+        background: #000000;
+        border: 1px solid #00ff00;
+        color: #00ff00;
         border-radius: 4px;
         padding: 8px 16px;
         cursor: pointer;
@@ -476,11 +906,15 @@ class LinkedInAsocial {
       });
       
       item.addEventListener('mouseenter', () => {
-        item.style.backgroundColor = '#f0f8ff';
+        item.style.backgroundColor = '#001100';
+        item.style.borderColor = '#00ff00';
+        item.style.transform = 'scale(1.02)';
       });
       
       item.addEventListener('mouseleave', () => {
-        item.style.backgroundColor = 'white';
+        item.style.backgroundColor = '#000000';
+        item.style.borderColor = '#00ff00';
+        item.style.transform = 'scale(1)';
       });
     });
     
@@ -531,6 +965,10 @@ class LinkedInAsocial {
           console.log('Successfully decrypted message');
           await this.encryptionEngine.replaceEncryptedMessage(message.node, decrypted.message);
         } catch (error) {
+          if (error.message.includes('Not an Asocial encrypted message')) {
+            console.log('Skipping non-encrypted message');
+            continue;
+          }
           console.log('Cannot decrypt message:', error.message);
           this.encryptionEngine.showCannotDecryptMessage(message.node);
         }
@@ -570,10 +1008,10 @@ class LinkedInAsocial {
               }
               
               // Look for encrypted messages in feed posts
-              if (node.textContent && node.textContent.includes('[ASOCIAL')) {
+      if (node.textContent && node.textContent.includes('[ASOCIAL')) {
                 console.log('Mutation observer found encrypted message');
-                shouldUpdate = true;
-              }
+        shouldUpdate = true;
+      }
             }
           });
         }
@@ -587,7 +1025,7 @@ class LinkedInAsocial {
           this.injectAsocialButtons();
           // Only decrypt if we're not in the middle of encryption
           if (!this.injecting) {
-            this.decryptExistingMessages();
+          this.decryptExistingMessages();
           }
         }, 1000); // Reduced debounce time for better responsiveness
       }
@@ -657,9 +1095,9 @@ console.log('Document ready state:', document.readyState);
 console.log('Window location:', window.location.href);
 
 try {
-  const linkedinAsocial = new LinkedInAsocial();
+const linkedinAsocial = new LinkedInAsocial();
   console.log('LinkedIn content script instance created');
-  linkedinAsocial.init();
+linkedinAsocial.init();
   console.log('LinkedIn content script initialization called');
 
   // Expose for manual testing
@@ -670,141 +1108,3 @@ try {
 }
 
 // LinkedIn username detection removed - using storage name instead
-        '.global-nav__me .global-nav__primary-link span', // Profile link text
-        '.global-nav__me .global-nav__primary-link strong', // Profile link strong text
-        
-        // Feed and post elements
-        '.feed-identity-module__actor-meta .feed-identity-module__name', // Actor name in feed
-        '.feed-shared-actor__name', // Shared actor name
-        '.feed-shared-actor__name .feed-shared-actor__name-link', // Actor name link
-        '.feed-shared-actor__name span', // Actor name span
-        '.feed-shared-actor__name strong', // Actor name strong
-        
-        // Profile page elements
-        '.pv-text-details__left-panel h1', // Profile name
-        '.pv-text-details__left-panel .text-heading-xlarge', // Profile name large text
-        '.pv-text-details__left-panel .text-body-medium', // Profile name medium text
-        '.pv-top-card--list-bullet li:first-child', // First bullet point (often name)
-        '.pv-top-card--list-bullet .text-body-small', // Profile details
-        
-        // Entity and company elements
-        '.pv-entity__summary-info h3', // Entity name
-        '.artdeco-entity-lockup__title', // Entity title
-        '.artdeco-entity-lockup__title .artdeco-entity-lockup__title-link', // Entity title link
-        
-        // Comment and message elements
-        '.comments-comment-item-content__main-content .comments-comment-item-content__name', // Comment author
-        '.comments-comment-item-content__main-content .comments-comment-item-content__name .comments-comment-item-content__name-link', // Comment author link
-        '.msg-s-message-list-content__name', // Message sender name
-        '.msg-s-message-list-content__name .msg-s-message-list-content__name-link', // Message sender link
-        '.conversation-composer__recipient-name', // Conversation recipient
-        '.conversation-composer__recipient-name .conversation-composer__recipient-name-link', // Conversation recipient link
-        '.conversation-composer__sender-name', // Conversation sender
-        '.conversation-composer__sender-name .conversation-composer__sender-name-link', // Conversation sender link
-        
-        // Additional modern LinkedIn selectors
-        '.global-nav__me .global-nav__primary-link[aria-label*="View profile"]', // Profile link with aria-label
-        '.global-nav__me .global-nav__primary-link[title*="View profile"]', // Profile link with title
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"]', // Profile photo control
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] span', // Profile photo control span
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] strong', // Profile photo control strong
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] em', // Profile photo control em
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] b', // Profile photo control b
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] i', // Profile photo control i
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] u', // Profile photo control u
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] mark', // Profile photo control mark
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] small', // Profile photo control small
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] sub', // Profile photo control sub
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] sup', // Profile photo control sup
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] del', // Profile photo control del
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] ins', // Profile photo control ins
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] kbd', // Profile photo control kbd
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] code', // Profile photo control code
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] samp', // Profile photo control samp
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] var', // Profile photo control var
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] cite', // Profile photo control cite
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] q', // Profile photo control q
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] abbr', // Profile photo control abbr
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] acronym', // Profile photo control acronym
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] address', // Profile photo control address
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] blockquote', // Profile photo control blockquote
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] dfn', // Profile photo control dfn
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] pre', // Profile photo control pre
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] tt', // Profile photo control tt
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] xmp', // Profile photo control xmp
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] plaintext', // Profile photo control plaintext
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] listing', // Profile photo control listing
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] font', // Profile photo control font
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] basefont', // Profile photo control basefont
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] big', // Profile photo control big
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] center', // Profile photo control center
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] dir', // Profile photo control dir
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] menu', // Profile photo control menu
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] noframes', // Profile photo control noframes
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] noscript', // Profile photo control noscript
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] strike', // Profile photo control strike
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] tt', // Profile photo control tt
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] u', // Profile photo control u
-        '.global-nav__me .global-nav__primary-link[data-control-name="identity_profile_photo"] xmp' // Profile photo control xmp
-      ];
-      
-      console.log('Trying to find LinkedIn username with', usernameSelectors.length, 'selectors');
-      
-      for (const selector of usernameSelectors) {
-        const element = document.querySelector(selector);
-        if (element) {
-          let username = element.textContent?.trim() || element.getAttribute('alt') || element.getAttribute('title');
-          console.log(`Selector "${selector}" found element:`, element, 'with text:', username);
-          if (username) {
-            // Clean up the username (remove extra whitespace, @ symbols, etc.)
-            username = username.replace(/^@/, '').trim();
-            if (username.length > 0 && username.length < 100) {
-              console.log('Found LinkedIn username:', username);
-              sendResponse({ username: username });
-              return true;
-            }
-          }
-        }
-      }
-      
-      // Fallback: try to get from URL
-      const urlMatch = window.location.href.match(/linkedin\.com\/in\/([^\/\?]+)/);
-      if (urlMatch) {
-        const urlUsername = urlMatch[1].replace(/-/g, ' ').replace(/_/g, ' ');
-        console.log('Found LinkedIn username from URL:', urlUsername);
-        sendResponse({ username: urlUsername });
-        return true;
-      }
-      
-      // Additional fallback: try to get from page title
-      const pageTitle = document.title;
-      if (pageTitle && pageTitle.includes('|')) {
-        const titleUsername = pageTitle.split('|')[0].trim();
-        if (titleUsername.length > 0 && titleUsername.length < 100) {
-          console.log('Found LinkedIn username from page title:', titleUsername);
-          sendResponse({ username: titleUsername });
-          return true;
-        }
-      }
-      
-      // Additional fallback: try to get from any element with "profile" in the class
-      const profileElements = document.querySelectorAll('[class*="profile"], [class*="name"], [class*="user"]');
-      for (const element of profileElements) {
-        const text = element.textContent?.trim();
-        if (text && text.length > 0 && text.length < 100 && !text.includes('LinkedIn') && !text.includes('Sign in')) {
-          console.log('Found LinkedIn username from profile element:', text);
-          sendResponse({ username: text });
-          return true;
-        }
-      }
-      
-      console.log('Could not find LinkedIn username');
-      sendResponse({ username: 'LinkedIn User' });
-      return true;
-    } catch (error) {
-      console.error('Failed to get LinkedIn username:', error);
-      sendResponse({ username: 'LinkedIn User' });
-      return true;
-    }
-  }
-});

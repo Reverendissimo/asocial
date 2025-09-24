@@ -345,6 +345,10 @@ class AsocialKeyManager {
       const result = await chrome.storage.local.get([this.groupsKey]);
       return result[this.groupsKey] || [];
     } catch (error) {
+      if (error.message.includes('Extension context invalidated')) {
+        console.warn('Extension context invalidated, returning empty groups');
+        return [];
+      }
       console.error('Failed to get stored key groups:', error);
       return [];
     }

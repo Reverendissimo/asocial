@@ -184,6 +184,11 @@ class AsocialEncryptionEngine {
             continue;
           }
           
+          // Check if this is actually an encrypted message (starts with [ASOCIAL)
+          if (!element.textContent.trim().startsWith('[ASOCIAL')) {
+            continue;
+          }
+          
           messages.push({
             node: element,
             text: element.textContent,
