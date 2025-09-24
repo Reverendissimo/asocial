@@ -181,7 +181,16 @@ class AsocialEncryptionEngine {
       '.msg-s-message-list-item__text',
       '.msg-s-message-list-item__body-text',
       'p[class*="msg-s-event-listitem"]',
-      'p[class*="msg-s-message-list-item"]'
+      'p[class*="msg-s-message-list-item"]',
+      // Broader selectors for chat messages
+      'p[class*="msg-s-event"]',
+      'p[class*="msg-s-message"]',
+      'p[class*="t-14"]',
+      'p[class*="t-black"]',
+      // Fallback: check all p elements in message containers
+      '.msg-s-event-listitem p',
+      '.msg-s-message-list-item p',
+      '.msg-s-message-list p'
     ];
     
     for (const selector of postSelectors) {
@@ -229,6 +238,37 @@ class AsocialEncryptionEngine {
         messages.push({
           node: node,
           text: node.textContent,
+          isEncrypted: true
+        });
+      }
+    }
+    
+    // Final fallback: check ALL p elements on the page
+    console.log('Running final fallback: checking ALL p elements on page');
+    const allPElements = document.querySelectorAll('p');
+    console.log(`Found ${allPElements.length} total p elements on page`);
+    
+    for (const pElement of allPElements) {
+      if (pElement.textContent && pElement.textContent.includes(this.messageTagPrefix)) {
+        console.log(`FALLBACK: Found encrypted message in p element with classes: ${pElement.className}`);
+        console.log(`FALLBACK: Message content: ${pElement.textContent.substring(0, 100)}`);
+        
+        // Check if already processed
+        if (pElement.classList.contains('asocial-processed')) {
+          console.log('FALLBACK: Message already processed, skipping');
+          continue;
+        }
+        
+        // Check if this is actually an encrypted message (starts with [ASOCIAL)
+        if (!pElement.textContent.trim().startsWith('[ASOCIAL')) {
+          console.log('FALLBACK: Message does not start with [ASOCIAL, skipping');
+          continue;
+        }
+        
+        console.log('FALLBACK: Adding encrypted message to processing queue');
+        messages.push({
+          node: pElement,
+          text: pElement.textContent,
           isEncrypted: true
         });
       }
