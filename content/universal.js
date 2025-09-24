@@ -462,12 +462,25 @@ class AsocialUniversal {
           console.log('Asocial Universal: Text replaced using stored range');
         } else {
           console.log('Stored range is invalid, using fallback');
-          this.replaceTextInInput(encryptedText);
+          // Try LinkedIn chat-specific replacement first
+          if (this.replaceTextInLinkedInChat(encryptedText)) {
+            console.log('LinkedIn chat replacement successful');
+            this.showNotification('Text replaced successfully!', 'success');
+          } else {
+            // Fallback to general input replacement
+            this.replaceTextInInput(encryptedText);
+          }
         }
       } else {
         console.log('No selection found, using fallback method');
-        // Last resort: try to find the input element and replace content
-        this.replaceTextInInput(encryptedText);
+        // Try LinkedIn chat-specific replacement first
+        if (this.replaceTextInLinkedInChat(encryptedText)) {
+          console.log('LinkedIn chat replacement successful');
+          this.showNotification('Text replaced successfully!', 'success');
+        } else {
+          // Fallback to general input replacement
+          this.replaceTextInInput(encryptedText);
+        }
       }
     } catch (error) {
       console.error('Asocial Universal: Error replacing text:', error);
@@ -475,6 +488,59 @@ class AsocialUniversal {
     }
   }
   
+  /**
+   * LinkedIn-specific text replacement for chat inputs
+   */
+  replaceTextInLinkedInChat(encryptedText) {
+    try {
+      console.log('Asocial Universal: LinkedIn chat-specific replacement');
+      
+      // Find LinkedIn chat input specifically
+      const chatInputs = document.querySelectorAll('[data-test-id="msg-form-input"], [data-test-id="msg-form-text-input"], .msg-form__contenteditable, .msg-form__text-input');
+      console.log('Found LinkedIn chat inputs:', chatInputs.length);
+      
+      for (const input of chatInputs) {
+        console.log('Processing LinkedIn chat input:', input);
+        
+        if (input.contentEditable === 'true') {
+          // Clear and set content
+          input.innerHTML = '';
+          input.textContent = encryptedText;
+        } else {
+          input.value = encryptedText;
+        }
+        
+        // Trigger LinkedIn-specific events
+        const events = [
+          new Event('input', { bubbles: true, cancelable: true }),
+          new Event('change', { bubbles: true, cancelable: true }),
+          new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }),
+          new KeyboardEvent('keyup', { key: 'a', bubbles: true, cancelable: true }),
+          new ClipboardEvent('paste', { bubbles: true, cancelable: true }),
+          new CompositionEvent('compositionstart', { bubbles: true, cancelable: true }),
+          new CompositionEvent('compositionend', { bubbles: true, cancelable: true })
+        ];
+        
+        events.forEach(event => {
+          input.dispatchEvent(event);
+        });
+        
+        // Force focus and additional events
+        input.focus();
+        input.blur();
+        input.focus();
+        
+        console.log('LinkedIn chat input processed');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Asocial Universal: Error in LinkedIn chat replacement:', error);
+      return false;
+    }
+  }
+
   /**
    * Fallback method to replace text in input element
    */
@@ -539,14 +605,36 @@ class AsocialUniversal {
           targetInput.value = encryptedText;
         }
         
-        // Trigger events to notify the platform
+        // Trigger comprehensive events to notify the platform (especially LinkedIn chat)
         const inputEvent = new Event('input', { bubbles: true, cancelable: true });
         const changeEvent = new Event('change', { bubbles: true, cancelable: true });
         const keyupEvent = new KeyboardEvent('keyup', { bubbles: true, cancelable: true });
+        const keydownEvent = new KeyboardEvent('keydown', { bubbles: true, cancelable: true });
+        const keypressEvent = new KeyboardEvent('keypress', { bubbles: true, cancelable: true });
+        const pasteEvent = new ClipboardEvent('paste', { bubbles: true, cancelable: true });
+        const compositionStartEvent = new CompositionEvent('compositionstart', { bubbles: true, cancelable: true });
+        const compositionEndEvent = new CompositionEvent('compositionend', { bubbles: true, cancelable: true });
+        const focusEvent = new FocusEvent('focus', { bubbles: true, cancelable: true });
+        const blurEvent = new FocusEvent('blur', { bubbles: true, cancelable: true });
         
+        // Trigger all events in sequence
+        targetInput.dispatchEvent(focusEvent);
+        targetInput.dispatchEvent(compositionStartEvent);
+        targetInput.dispatchEvent(keydownEvent);
         targetInput.dispatchEvent(inputEvent);
         targetInput.dispatchEvent(changeEvent);
+        targetInput.dispatchEvent(keypressEvent);
         targetInput.dispatchEvent(keyupEvent);
+        targetInput.dispatchEvent(pasteEvent);
+        targetInput.dispatchEvent(compositionEndEvent);
+        targetInput.dispatchEvent(blurEvent);
+        
+        // Force focus back and trigger additional events
+        setTimeout(() => {
+          targetInput.focus();
+          targetInput.dispatchEvent(inputEvent);
+          targetInput.dispatchEvent(changeEvent);
+        }, 100);
         
         console.log('Asocial Universal: Text replaced in input element');
         this.showNotification('Text replaced successfully!', 'success');
