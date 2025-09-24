@@ -491,8 +491,15 @@ class AsocialKeyManager {
    */
   async getReaderKeyByKeyId(keyId) {
     try {
+      console.log(`Looking for reader key with key ID: ${keyId}`);
       const readerKeys = await this.getStoredReaderKeys();
-      return readerKeys.find(key => key.keyId && key.keyId.toUpperCase() === keyId.toUpperCase());
+      console.log('All stored reader keys:', readerKeys);
+      console.log('Reader key IDs:', readerKeys.map(key => key.keyId));
+      
+      const foundKey = readerKeys.find(key => key.keyId && key.keyId.toUpperCase() === keyId.toUpperCase());
+      console.log('Found key:', foundKey);
+      
+      return foundKey;
     } catch (error) {
       console.error('Failed to get reader key by key ID:', error);
       return null;

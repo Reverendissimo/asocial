@@ -116,6 +116,12 @@ class AsocialEncryptionEngine {
       
       // First try to find a reader key with matching key ID
       console.log(`Looking for reader key with key ID: ${keyId}`);
+      
+      // Debug: List all available reader keys
+      const allReaderKeys = await this.keyManager.getReaderKeys();
+      console.log('All available reader keys:', allReaderKeys);
+      console.log('Reader key IDs:', allReaderKeys.map(key => key.keyId));
+      
       const readerKey = await this.keyManager.getReaderKeyByKeyId(keyId);
       console.log('Reader key found:', readerKey);
       
