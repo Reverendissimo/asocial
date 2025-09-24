@@ -74,14 +74,30 @@ class AsocialEncryptionEngine {
   async decryptMessage(encryptedMessage) {
     try {
       console.log('Attempting to decrypt message');
+      console.log('Full message content:', encryptedMessage);
+      console.log('Message length:', encryptedMessage.length);
       
-      // Check if message has our tag and extract key ID
-      const tagMatch = encryptedMessage.match(/^\[ASOCIAL\s+([A-Z0-9]+)\]/);
-      if (!tagMatch) {
+      // Check if message has our tag and extract key ID (more flexible regex)
+      const tagMatch = encryptedMessage.match(/\[ASOCIAL\s+([A-Z0-9]+)\]/);
+      console.log('Tag match result:', tagMatch);
+      
+      // Also try alternative patterns
+      const altMatch1 = encryptedMessage.match(/\[ASOCIAL\s([A-Z0-9]+)\]/);
+      const altMatch2 = encryptedMessage.match(/\[ASOCIAL\s*([A-Z0-9]+)\]/);
+      console.log('Alternative match 1:', altMatch1);
+      console.log('Alternative match 2:', altMatch2);
+      
+      // Use the first successful match
+      const finalMatch = tagMatch || altMatch1 || altMatch2;
+      
+      if (!finalMatch) {
+        console.error('Message format not recognized. Expected format: [ASOCIAL KEYID] encrypted_content');
+        console.error('Actual message:', encryptedMessage);
+        console.error('Message starts with:', encryptedMessage.substring(0, 20));
         throw new Error('Not an Asocial encrypted message');
       }
       
-      const keyId = tagMatch[1];
+      const keyId = finalMatch[1];
       console.log(`Message encrypted with key ID: ${keyId}`);
       
       // Extract payload
@@ -99,7 +115,9 @@ class AsocialEncryptionEngine {
       }
       
       // First try to find a reader key with matching key ID
+      console.log(`Looking for reader key with key ID: ${keyId}`);
       const readerKey = await this.keyManager.getReaderKeyByKeyId(keyId);
+      console.log('Reader key found:', readerKey);
       
       let privateKey, keySource;
       
