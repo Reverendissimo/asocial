@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Asocial - Encrypted Social Posts",
+  "name": "Asocial - Cypher Squatting Tool",
   "version": "1.0.0",
-  "description": "Encrypt your social media posts for specific groups using maximum security encryption",
+  "description": "Encrypt your social media posts with encrypted local storage and multi-user support using maximum security encryption",
   "permissions": [
     "activeTab",
     "storage",
@@ -31,6 +31,7 @@
         "utils/crypto.js",
         "utils/keyManager.js", 
         "utils/encryptionEngine.js",
+        "utils/encryptedStorage.js",
         "content/linkedin.js"
       ],
       "css": ["content/linkedin.css"],
@@ -39,7 +40,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Asocial - Encrypted Social Posts"
+    "default_title": "Asocial - Cypher Squatting Tool"
   },
   "icons": {
     "16": "assets/icon16.png",

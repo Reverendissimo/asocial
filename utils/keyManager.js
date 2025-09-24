@@ -22,12 +22,9 @@ class AsocialKeyManager {
       const privateKeyBase64 = await this.crypto.exportKey(keyPair.privateKey, 'pkcs8');
       const publicKeyBase64 = await this.crypto.exportKey(keyPair.publicKey, 'spki');
       
-      // Get Asocial username
-      const asocialUsername = await this.getAsocialUsername();
-      
       // Generate unique key ID based on multiple factors
       const timestamp = new Date().toISOString();
-      const keyId = await this.generateKeyId(asocialUsername, groupName, privateKeyBase64, timestamp);
+      const keyId = await this.generateKeyId('Storage', groupName, privateKeyBase64, timestamp);
       
       // Create group data
       const groupData = {
@@ -36,7 +33,6 @@ class AsocialKeyManager {
         name: groupName,
         privateKey: privateKeyBase64,
         publicKey: publicKeyBase64,
-        asocialUsername: asocialUsername,
         createdAt: timestamp,
       };
       
@@ -94,77 +90,6 @@ class AsocialKeyManager {
     }
   }
 
-  /**
-   * Get Asocial username
-   */
-  async getAsocialUsername() {
-    try {
-      const storedUsername = await this.getStoredUsername();
-      if (storedUsername) {
-        console.log('Using stored Asocial username:', storedUsername);
-        return storedUsername;
-      }
-      
-      console.log('No Asocial username set, using fallback');
-      return 'Asocial User';
-    } catch (error) {
-      console.error('Failed to get Asocial username:', error);
-      return 'Asocial User';
-    }
-  }
-
-  /**
-   * Store Asocial username
-   */
-  async setAsocialUsername(username) {
-    try {
-      if (!username || username.trim().length === 0) {
-        throw new Error('Username cannot be empty');
-      }
-      
-      const cleanUsername = username.trim();
-      if (cleanUsername.length < 2) {
-        throw new Error('Username must be at least 2 characters long');
-      }
-      
-      if (cleanUsername.length > 50) {
-        throw new Error('Username must be less than 50 characters');
-      }
-      
-      await chrome.storage.local.set({ asocialUsername: cleanUsername });
-      console.log('Asocial username stored:', cleanUsername);
-      return cleanUsername;
-    } catch (error) {
-      console.error('Failed to store Asocial username:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get stored Asocial username
-   */
-  async getStoredUsername() {
-    try {
-      const result = await chrome.storage.local.get(['asocialUsername']);
-      return result.asocialUsername || null;
-    } catch (error) {
-      console.error('Failed to get stored username:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Check if username is set
-   */
-  async isUsernameSet() {
-    try {
-      const username = await this.getStoredUsername();
-      return username && username.trim().length > 0;
-    } catch (error) {
-      console.error('Failed to check if username is set:', error);
-      return false;
-    }
-  }
 
   /**
    * Export the single shared public key for this group
@@ -176,16 +101,12 @@ class AsocialKeyManager {
         throw new Error('Key group not found');
       }
       
-      // Get Asocial username
-      const asocialUsername = await this.getAsocialUsername();
-      
       // Return the private key AND the key ID (the "magic")
       // Note: In a shared key system, we share the private key for decryption
       return {
         privateKey: group.privateKey,
         keyId: group.keyId,
         groupName: group.name,
-        asocialUsername: asocialUsername,
         createdAt: group.createdAt
       };
     } catch (error) {
@@ -212,14 +133,14 @@ class AsocialKeyManager {
         
         if (importData.privateKey) {
           privateKey = importData.privateKey;
-          // Use Asocial username if available, otherwise fall back to group name
-          senderName = importData.asocialUsername || importData.groupName || importData.name || 'Unknown Sender';
+          // Use storage name if available, otherwise fall back to group name
+          senderName = importData.storageName || importData.groupName || importData.name || 'Unknown Sender';
           keyId = importData.keyId;
           if (keyId) {
             keyId = keyId.toUpperCase();
           }
           console.log('Parsed as JSON format with keyId:', keyId);
-          console.log('Sender name from Asocial:', importData.asocialUsername);
+          console.log('Sender name from storage:', importData.storageName);
         } else {
           throw new Error('Invalid JSON format - missing privateKey');
         }
@@ -243,11 +164,9 @@ class AsocialKeyManager {
         keyId: keyId,
         privateKey: privateKey,
         senderName: senderName,
-        asocialUsername: senderName, // Store the Asocial username for display
+        storageName: senderName, // Store the storage name for display
         importedAt: new Date().toISOString()
       };
-      
-      await this.storeReaderKey(readerKey);
       
       console.log(`Reader key imported successfully for ${senderName}`);
       return readerKey;
@@ -456,10 +375,10 @@ class AsocialKeyManager {
    * Generate a unique key ID for a group based on multiple factors
    * Ensures 8+ billion combinations for uniqueness
    */
-  async generateKeyId(asocialUsername, groupName, privateKey, timestamp) {
+  async generateKeyId(storageName, groupName, privateKey, timestamp) {
     try {
       // Create a comprehensive input string from all factors
-      const inputString = `${asocialUsername}|${groupName}|${privateKey.substring(0, 64)}|${timestamp}`;
+      const inputString = `${storageName}|${groupName}|${privateKey.substring(0, 64)}|${timestamp}`;
       
       // Use Web Crypto API to create a hash
       const encoder = new TextEncoder();
@@ -476,7 +395,7 @@ class AsocialKeyManager {
       // Convert to base36 for shorter, more readable format
       const keyId = this.hexToBase36(hashHex.substring(0, 12));
       
-      console.log('Generated key ID:', keyId, 'from factors:', { asocialUsername, groupName, timestamp });
+      console.log('Generated key ID:', keyId, 'from factors:', { storageName, groupName, timestamp });
       return keyId;
     } catch (error) {
       console.error('Failed to generate key ID:', error);

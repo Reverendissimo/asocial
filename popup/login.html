@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asocial - Login</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">
+        <h1>🔐 Asocial</h1>
+        <p>Cypher Squatting Tool</p>
+      </div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form" class="login-form active">
+      <h2>Welcome Back</h2>
+      <p>Enter your credentials to access your encrypted storage</p>
+      
+      <div class="form-group">
+        <label for="login-storage-select">Select Storage File:</label>
+        <select id="login-storage-select" required>
+          <option value="">Loading storage files...</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" placeholder="Enter your password" required>
+      </div>
+      
+      <div class="form-actions">
+        <button id="login-btn" class="primary-btn">Login</button>
+        <button id="switch-user-btn" class="secondary-btn">Switch User</button>
+      </div>
+      
+      <div class="login-footer">
+        <p>No key storage yet? <a href="#" id="create-account-link">Create new storage</a></p>
+      </div>
+    </div>
+
+    <!-- Create Account Form -->
+    <div id="create-account-form" class="login-form">
+      <h2>Create New Storage</h2>
+      <p>Set up your encrypted key storage with name and password</p>
+      
+      <div class="form-group">
+        <label for="new-username">Key Storage Name:</label>
+        <input type="text" id="new-username" placeholder="e.g., Family, Work, Personal" required>
+        <small>This will be your key storage identity</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="new-password">Password:</label>
+        <input type="password" id="new-password" placeholder="Create a strong password" required>
+        <small>Must be 8+ characters with uppercase, lowercase, numbers, and special characters</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirm-password">Confirm Password:</label>
+        <input type="password" id="confirm-password" placeholder="Confirm your password" required>
+      </div>
+      
+      <div class="form-actions">
+        <button id="create-account-btn" class="primary-btn">Create Storage</button>
+        <button id="back-to-login-btn" class="secondary-btn">Back to Login</button>
+      </div>
+    </div>
+
+    <!-- Switch User Form -->
+    <div id="switch-user-form" class="login-form">
+      <h2>Switch User</h2>
+      <p>Select a storage file to open</p>
+      
+      <div class="storage-files-list" id="storage-files-list">
+        <!-- Storage files will be populated here -->
+      </div>
+      
+      <div class="form-actions">
+        <button id="back-to-login-from-switch-btn" class="secondary-btn">Back to Login</button>
+      </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+  <script src="../utils/encryptedStorage.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

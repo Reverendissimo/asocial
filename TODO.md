@@ -1,17 +1,50 @@
 # Chrome Extension for Multi-Recipient Encrypted Social Posts - TODO
 
-## 🎉 Current Status: v2.4 - FULLY FUNCTIONAL
-**All core features are working!**
+## 🎉 Current Status: v2.7 - ENCRYPTED STORAGE ARCHITECTURE
+**Major security upgrade in progress!**
 - ✅ LinkedIn integration with "Be Asocial" button
-- ✅ RSA-2048 + AES-256-GCM encryption
-- ✅ Group-based key management
+- ✅ RSA-4096 + AES-256-GCM encryption
+- ✅ Writer key and reader key system
 - ✅ Key sharing with "magic" key IDs
 - ✅ Secure URL sharing (no encrypted content exposure)
 - ✅ "Show Encrypted" toggle functionality
 - ✅ CSP compliance and proper event handling
+- 🚧 **NEW**: Encrypted storage with .ASoc files (in progress)
+- 🚧 **NEW**: Multi-user support with password authentication (in progress)
 
 ## Project Overview
-Build a Chrome extension that enables encrypted messaging on social media platforms (LinkedIn, Facebook, Twitter, etc.) using hybrid encryption for multiple recipients.
+Build a Chrome extension that enables encrypted messaging on social media platforms (LinkedIn, Facebook, Twitter, etc.) using hybrid encryption for multiple recipients with encrypted local storage and multi-user support.
+
+## 🚧 Phase 4: Encrypted Storage Architecture (CURRENT)
+
+### 4.1 Encrypted Storage System
+- [ ] Implement `.ASoc` file format for encrypted storage
+- [ ] Create storage encryption using RSA-4096 + AES-256-GCM
+- [ ] Implement PBKDF2 key derivation from storage name+password
+- [ ] Add password requirements validation (8+ chars, complexity)
+- [ ] Create storage file manager for multiple users
+- [ ] Implement session-based authentication
+
+### 4.2 Multi-User Support
+- [ ] Add "Switch User" functionality
+- [ ] Implement storage file selection interface
+- [ ] Create user session management
+- [ ] Add storage file backup/export functionality
+- [ ] Implement storage file import functionality
+
+### 4.3 UI Updates for Encrypted Storage
+- [ ] Create login screen for storage name+password entry
+- [ ] Add "Switch User" button to main interface
+- [ ] Update all storage operations to use encrypted storage
+- [ ] Add storage file management interface
+- [ ] Update key management to work with encrypted storage
+
+### 4.4 Security Enhancements
+- [ ] Remove plain text storage completely
+- [ ] Implement secure key storage in encrypted vaults
+- [ ] Add session timeout functionality
+- [ ] Implement secure password handling
+- [ ] Add storage integrity verification
 
 ## Phase 1: Project Setup & Foundation
 

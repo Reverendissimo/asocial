@@ -669,19 +669,7 @@ try {
   console.error('Failed to initialize LinkedIn content script:', error);
 }
 
-// Add message listener for username requests
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'GET_LINKEDIN_USERNAME') {
-    try {
-      console.log('Received request for LinkedIn username');
-      
-      // Try multiple selectors to find the LinkedIn username
-      const usernameSelectors = [
-        // Navigation and profile elements
-        '.global-nav__me-photo[alt*="@"]', // Profile photo with alt text
-        '.global-nav__me .global-nav__primary-link', // Profile link
-        '.global-nav__me .global-nav__primary-link[href*="/in/"]', // Profile link with /in/
-        '[data-control-name="identity_profile_photo"]', // Profile photo
+// LinkedIn username detection removed - using storage name instead
         '.global-nav__me .global-nav__primary-link span', // Profile link text
         '.global-nav__me .global-nav__primary-link strong', // Profile link strong text
         

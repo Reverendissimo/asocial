@@ -24,7 +24,7 @@
     <div id="simple-mode-content" class="mode-content active">
       <div class="welcome-section">
         <h2>Welcome to Asocial!</h2>
-        <p>Encrypt your social media posts for specific groups using maximum security encryption.</p>
+        <p>Cypher squatting tool for encrypted social media posts with maximum security.</p>
       </div>
 
       <div class="quick-actions">
@@ -36,9 +36,9 @@
           <span class="btn-icon">📥</span>
           Import Reader Key
         </button>
-        <button id="set-username-btn" class="secondary-btn">
-          <span class="btn-icon">👤</span>
-          Set Asocial Username
+        <button id="switch-user-btn" class="secondary-btn">
+          <span class="btn-icon">🔄</span>
+          Switch User
         </button>
       </div>
 
@@ -132,26 +132,6 @@
       </div>
     </div>
 
-    <!-- Username Modal -->
-    <div id="username-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Set Your Asocial Username</h3>
-          <button class="close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p>Enter your Asocial username that will be shown when others import your writer keys:</p>
-          <div class="form-group">
-            <label for="asocial-username">Asocial Username:</label>
-            <input type="text" id="asocial-username" placeholder="Enter your Asocial username" maxlength="50" />
-          </div>
-          <div class="modal-actions">
-            <button id="save-username" class="primary-btn">Save Username</button>
-            <button class="close-modal secondary-btn" data-modal="username-modal">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Import Key Modal -->
     <div id="import-key-modal" class="modal">
@@ -231,6 +211,8 @@
 
   <script src="../utils/crypto.js"></script>
   <script src="../utils/keyManager.js"></script>
+  <script src="../utils/encryptionEngine.js"></script>
+  <script src="../utils/encryptedStorage.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

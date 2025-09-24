@@ -8,12 +8,14 @@
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
 5. **Pin the extension**: Click the puzzle piece icon in Chrome toolbar and pin "Asocial"
 
-## 🔧 First Time Setup
+## 🔧 First Time Setup (Encrypted Storage)
 
 1. **Click the Asocial icon** in your Chrome toolbar
-2. **Create a writer key group**: Click "Create Group" and give it a name (e.g., "Family", "Work")
-3. **Share your writer key**: Export and share your writer key with others
-4. **Export your writer key**: Click the group and copy the writer key to share
+2. **Set Key Storage Name**: Enter your key storage name (cannot be changed later)
+3. **Set Password**: Create a strong password for your encrypted storage
+4. **Storage Created**: Your encrypted `.ASoc` storage file is created
+5. **Create Writer Keys**: Click "Create New Writer Key" and give it a name (e.g., "Family", "Work")
+6. **Share Your Writer Keys**: Export and share your writer keys with others
 
 ## 🔒 How to Use
 

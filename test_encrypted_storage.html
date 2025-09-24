@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Encrypted Storage</title>
+    <style>
+        body { 
+            background: #000; 
+            color: #00ff00; 
+            font-family: monospace; 
+            padding: 20px; 
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #00ff00; 
+        }
+        button { 
+            background: #000; 
+            color: #00ff00; 
+            border: 1px solid #00ff00; 
+            padding: 10px; 
+            margin: 5px; 
+        }
+        button:hover { 
+            background: #00ff00; 
+            color: #000; 
+        }
+        .result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #111; 
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Asocial Cypher Squatting Tool - Storage Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Create Storage</h2>
+        <button onclick="testCreateStorage()">Create Test Storage</button>
+        <div id="create-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Open Storage</h2>
+        <button onclick="testOpenStorage()">Open Test Storage</button>
+        <div id="open-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Add Writer Key</h2>
+        <button onclick="testAddWriterKey()">Add Test Writer Key</button>
+        <div id="writer-key-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Add Reader Key</h2>
+        <button onclick="testAddReaderKey()">Add Test Reader Key</button>
+        <div id="reader-key-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 5: List Storage Files</h2>
+        <button onclick="testListStorageFiles()">List Storage Files</button>
+        <div id="list-result" class="result"></div>
+    </div>
+
+    <script src="utils/encryptedStorage.js"></script>
+    <script>
+        let storage = new AsocialEncryptedStorage();
+        
+        async function testCreateStorage() {
+            try {
+                const result = document.getElementById('create-result');
+                result.innerHTML = 'Creating storage...';
+                
+                await storage.createStorage('testuser', 'TestPass123!');
+                
+                result.innerHTML = '✅ Storage created successfully!';
+            } catch (error) {
+                document.getElementById('create-result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function testOpenStorage() {
+            try {
+                const result = document.getElementById('open-result');
+                result.innerHTML = 'Opening storage...';
+                
+                const data = await storage.openStorage('testuser', 'TestPass123!');
+                
+                result.innerHTML = `✅ Storage opened! Storage Name: ${data.storageName}, Writer Keys: ${data.writerKeys.length}, Reader Keys: ${data.readerKeys.length}`;
+            } catch (error) {
+                document.getElementById('open-result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function testAddWriterKey() {
+            try {
+                const result = document.getElementById('writer-key-result');
+                result.innerHTML = 'Adding writer key...';
+                
+                const writerKey = {
+                    id: 'test-writer-1',
+                    name: 'Test Writer Key',
+                    storageName: 'testuser',
+                    createdAt: new Date().toISOString()
+                };
+                
+                await storage.addWriterKey(writerKey);
+                
+                result.innerHTML = '✅ Writer key added successfully!';
+            } catch (error) {
+                document.getElementById('writer-key-result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function testAddReaderKey() {
+            try {
+                const result = document.getElementById('reader-key-result');
+                result.innerHTML = 'Adding reader key...';
+                
+                const readerKey = {
+                    id: 'test-reader-1',
+                    senderName: 'Test Sender',
+                    storageName: 'testsender',
+                    importedAt: new Date().toISOString()
+                };
+                
+                await storage.addReaderKey(readerKey);
+                
+                result.innerHTML = '✅ Reader key added successfully!';
+            } catch (error) {
+                document.getElementById('reader-key-result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function testListStorageFiles() {
+            try {
+                const result = document.getElementById('list-result');
+                result.innerHTML = 'Loading storage files...';
+                
+                const files = await storage.getStorageFiles();
+                
+                result.innerHTML = `✅ Found ${files.length} storage files:<br>` + 
+                    files.map(f => `- ${f.storageName} (${f.filename})`).join('<br>');
+            } catch (error) {
+                document.getElementById('list-result').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

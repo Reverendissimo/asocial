@@ -1,8 +1,8 @@
-# How People Know Which Key to Use
+# How People Know Which Key to Use (Encrypted Storage Edition)
 
 ## The Problem You Identified
 
-You're absolutely right! This is a critical question: **How does someone know which key to use to decrypt your message?**
+You're absolutely right! This is a critical question: **How does someone know which key to use to decrypt your message?** With encrypted storage, this becomes even more secure.
 
 ## The Solution: Key ID-Based Direct Matching
 

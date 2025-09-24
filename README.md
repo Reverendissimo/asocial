@@ -1,18 +1,20 @@
-# Asocial - Encrypted Social Posts
+# Asocial - Cypher Squatting Tool
 
-A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-2048, AES-256-GCM) with group-based access control.
+A Chrome extension that enables encrypted messaging on social media platforms using high security encryption (RSA-4096, AES-256-GCM) with encrypted local storage and multi-user support.
 
 ## Features
 
-- **High Security Encryption**: RSA-2048 and AES-256-GCM for strong security
-- **Group-Based Access Control**: Create writer key groups (Family, Work, Close Friends)
-- **Single Shared Key System**: One writer key per group - simple and practical
+- **High Security Encryption**: RSA-4096 and AES-256-GCM for maximum security
+- **Encrypted Local Storage**: All keys stored in password-protected `.ASoc` files
+- **Multi-User Support**: Separate encrypted vaults for different users
+- **Session Authentication**: Password required each time you open the extension
+- **Writer Key System**: Create writer keys (Family, Work, Close Friends) for encrypting your messages
+- **Reader Key System**: Import reader keys from others to decrypt their messages
 - **LinkedIn Integration**: "Be Asocial" button for easy encryption
 - **Automatic Decryption**: Messages are automatically decrypted for authorized users
 - **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
 - **Content Security**: No encrypted data exposure in share URLs
 - **Toggle Functionality**: "Show Encrypted" button to view original encrypted content
-- **Key Management**: Secure key storage with master passphrase protection
 - **Cross-Platform Support**: LinkedIn, Facebook, Twitter (LinkedIn implemented first)
 
 ## Installation
@@ -36,12 +38,19 @@ A Chrome extension that enables encrypted messaging on social media platforms us
 
 ## Usage
 
-### Creating Writer Key Groups
+### First Time Setup (Encrypted Storage)
+
+1. **Set Key Storage Name**: Enter your key storage name (cannot be changed)
+2. **Set Password**: Create a strong password for your encrypted storage
+3. **Storage Created**: Your encrypted `.ASoc` storage file is created
+4. **Session Authentication**: Password required each time you open the extension
+
+### Creating Writer Keys
 
 1. Click the Asocial extension icon
-2. Click "Create New Group"
-3. Enter a group name (e.g., "Family", "Work", "Close Friends")
-4. The extension will generate one RSA-2048 writer key pair for the group
+2. Click "Create New Writer Key"
+3. Enter a writer key name (e.g., "Family", "Work", "Close Friends")
+4. The extension will generate one RSA-4096 writer key pair for the group
 
 ### Sharing Writer Keys
 

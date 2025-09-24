@@ -5,6 +5,7 @@
 
 class AsocialPopup {
   constructor() {
+    this.encryptedStorage = new AsocialEncryptedStorage();
     this.keyManager = new AsocialKeyManager();
     this.crypto = new AsocialCrypto();
     this.currentMode = 'simple';
@@ -18,7 +19,106 @@ class AsocialPopup {
   async init() {
     console.log('Initializing Asocial popup');
     
+    // Wait for authentication state to be properly set
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
+      // First restore the session if user is logged in
+      const isLoggedIn = await this.encryptedStorage.isLoggedIn();
+      console.log('Authentication check - isLoggedIn:', isLoggedIn);
+      
+      if (isLoggedIn) {
+        // Restore the session
+        const currentUser = await this.encryptedStorage.getCurrentUser();
+        console.log('Restoring session for user:', currentUser);
+        
+        if (currentUser && !this.encryptedStorage.currentStorage) {
+          try {
+            // Try to restore the storage without password (since we're already logged in)
+            const filename = `asocial_storage_${currentUser}.ASoc`;
+            console.log('Attempting to restore storage:', filename);
+            
+            // For now, mark the user as authenticated but storage needs to be opened
+            this.encryptedStorage.currentUser = currentUser;
+            console.log('Session restored - currentUser:', this.encryptedStorage.currentUser);
+          } catch (error) {
+            console.error('Failed to restore storage:', error);
+          }
+        }
+      }
+      
+      console.log('After session restore - Current user:', this.encryptedStorage.currentUser);
+      console.log('After session restore - Current storage:', this.encryptedStorage.currentStorage);
+      
+      // Also check chrome storage directly
+      const chromeStorage = await chrome.storage.local.get(['asocial_current_user']);
+      console.log('Chrome storage check:', chromeStorage);
+      
+      // Check again after session restore
+      const finalAuthCheck = isLoggedIn && this.encryptedStorage.currentUser;
+      console.log('Final authentication check:', finalAuthCheck);
+      
+      if (!finalAuthCheck) {
+        console.log('User not authenticated, checking for existing storage files...');
+        
+        // Check if there are any existing storage files
+        const storageFiles = await this.encryptedStorage.getStorageFiles();
+        console.log('Existing storage files:', storageFiles);
+        
+        if (storageFiles.length > 0) {
+          console.log('Found existing storage files, redirecting to login to select one');
+        } else {
+          console.log('No storage files found, redirecting to login to create one');
+        }
+        
+        // Redirect to login
+        this.redirectToLogin();
+        return;
+      }
+      
+      console.log('User is authenticated, proceeding to main interface');
+      
+      // Check if storage is actually open
+      if (!this.encryptedStorage.currentStorage) {
+        // Try to restore from temporary storage
+        const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_user']);
+        if (tempData.asocial_temp_storage && tempData.asocial_temp_user) {
+          console.log('Restoring storage from temporary data');
+          this.encryptedStorage.currentStorage = tempData.asocial_temp_storage;
+          this.encryptedStorage.currentUser = tempData.asocial_temp_user;
+          
+          // Don't clean up temporary data immediately - keep it for session persistence
+          console.log('Storage restored successfully');
+        } else {
+          console.log('User is authenticated but storage is not open');
+          console.log('This means the temporary storage data was lost');
+          console.log('Checking if storage file exists...');
+          
+          // Check if storage file exists
+          const currentUser = this.encryptedStorage.currentUser;
+          if (currentUser) {
+            const filename = `asocial_storage_${currentUser}.ASoc`;
+            const storageData = await chrome.storage.local.get([filename]);
+            if (storageData[filename]) {
+              console.log('Storage file exists, but user needs to re-authenticate');
+              console.log('Redirecting to login to re-authenticate');
+            } else {
+              console.log('Storage file not found, redirecting to login');
+            }
+          }
+          
+          this.redirectToLogin();
+          return;
+        }
+      }
+      
+      // Ensure storage session is maintained
+      console.log('Maintaining storage session...');
+      console.log('Current storage:', this.encryptedStorage.currentStorage);
+      console.log('Current user:', this.encryptedStorage.currentUser);
+      
+      console.log('Storage is open:', this.encryptedStorage.currentStorage);
+      
       // Force popup size
       this.forcePopupSize();
       
@@ -33,9 +133,28 @@ class AsocialPopup {
       this.setupModeSwitching();
       
       console.log('Popup initialized successfully');
+      
+      // Add cleanup when popup is closed
+      window.addEventListener('beforeunload', () => {
+        this.cleanup();
+      });
+      
     } catch (error) {
       console.error('Failed to initialize popup:', error);
       this.showStatus('Failed to initialize popup', 'error');
+    }
+  }
+  
+  /**
+   * Cleanup when popup is closed
+   */
+  async cleanup() {
+    try {
+      // Only clean up if user is not actively using the extension
+      // This prevents the loop issue when switching windows
+      console.log('Popup cleanup - keeping session data for persistence');
+    } catch (error) {
+      console.error('Failed to cleanup:', error);
     }
   }
 
@@ -44,18 +163,18 @@ class AsocialPopup {
    */
   forcePopupSize() {
     // Set body and container size
-    document.body.style.width = '600px';
-    document.body.style.minWidth = '600px';
-    document.body.style.maxWidth = '600px';
+    document.body.style.width = '500px';
+    document.body.style.minWidth = '500px';
+    document.body.style.maxWidth = '500px';
     
     const container = document.querySelector('.popup-container');
     if (container) {
-      container.style.width = '600px';
-      container.style.minWidth = '600px';
-      container.style.maxWidth = '600px';
+      container.style.width = '500px';
+      container.style.minWidth = '500px';
+      container.style.maxWidth = '500px';
     }
     
-    console.log('Forced popup size to 600px');
+    console.log('Forced popup size to 500px');
   }
 
   /**
@@ -72,10 +191,10 @@ class AsocialPopup {
     // Quick actions
       const createGroupBtn = document.getElementById('create-group-btn');
       const importKeyBtn = document.getElementById('import-key-btn');
-      const setUsernameBtn = document.getElementById('set-username-btn');
+      const switchUserBtn = document.getElementById('switch-user-btn');
       if (createGroupBtn) createGroupBtn.addEventListener('click', () => this.showCreateWriterKeyModal());
       if (importKeyBtn) importKeyBtn.addEventListener('click', () => this.showImportKeyModal());
-      if (setUsernameBtn) setUsernameBtn.addEventListener('click', () => this.showUsernameModal());
+      if (switchUserBtn) switchUserBtn.addEventListener('click', () => this.switchUser());
     
     // Create group modal
       const createGroup = document.getElementById('create-group');
@@ -89,11 +208,6 @@ class AsocialPopup {
       if (importKey) importKey.addEventListener('click', () => this.importKey());
       if (cancelImport) cancelImport.addEventListener('click', () => this.hideModal('import-key-modal'));
       
-      // Username modal
-      const saveUsername = document.getElementById('save-username');
-      const cancelUsername = document.querySelector('[data-modal="username-modal"]');
-      if (saveUsername) saveUsername.addEventListener('click', () => this.saveUsername());
-      if (cancelUsername) cancelUsername.addEventListener('click', () => this.hideModal('username-modal'));
     
     // Import tabs
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -151,11 +265,39 @@ class AsocialPopup {
   }
 
   /**
+   * Redirect to login interface
+   */
+  redirectToLogin() {
+    // Redirect to login page
+    window.location.href = 'login.html';
+  }
+
+  /**
+   * Switch user
+   */
+  async switchUser() {
+    try {
+      // Logout current user
+      await this.encryptedStorage.logout();
+      
+      // Clean up temporary storage data
+      await chrome.storage.local.remove(['asocial_temp_storage', 'asocial_temp_user']);
+      console.log('Temporary storage data cleaned up');
+      
+      // Redirect to login
+      this.redirectToLogin();
+    } catch (error) {
+      console.error('Failed to switch user:', error);
+      this.showStatus('Failed to switch user', 'error');
+    }
+  }
+
+  /**
    * Load and display writer keys
    */
   async loadWriterKeys() {
     try {
-      const writerKeys = await this.keyManager.getKeyGroups();
+      const writerKeys = await this.encryptedStorage.getWriterKeys();
       this.displayWriterKeys(writerKeys);
     } catch (error) {
       console.error('Failed to load writer keys:', error);
@@ -168,7 +310,7 @@ class AsocialPopup {
    */
   async loadReaderKeys() {
     try {
-      const readerKeys = await this.keyManager.getReaderKeys();
+      const readerKeys = await this.encryptedStorage.getReaderKeys();
       this.displayReaderKeys(readerKeys);
     } catch (error) {
       console.error('Failed to load reader keys:', error);
@@ -196,7 +338,7 @@ class AsocialPopup {
       <div class="writer-key-item" data-writer-key-id="${writerKey.id}">
         <div class="writer-key-info">
           <div class="writer-key-name">${writerKey.name}</div>
-          <div class="writer-key-asocial">Asocial: ${writerKey.asocialUsername || 'Unknown'}</div>
+          <div class="writer-key-storage">Storage: ${this.encryptedStorage.currentUser || 'Unknown'}</div>
         </div>
         <div class="writer-key-meta">
           <span class="writer-key-created">Created: ${new Date(writerKey.createdAt).toLocaleDateString()}</span>
@@ -230,7 +372,7 @@ class AsocialPopup {
       <div class="reader-key-item" data-reader-key-id="${readerKey.id}">
         <div class="reader-key-info">
           <div class="reader-key-name">${readerKey.senderName}</div>
-          <div class="reader-key-asocial">Asocial: ${readerKey.asocialUsername || readerKey.senderName}</div>
+          <div class="reader-key-storage">Storage: ${readerKey.storageName || readerKey.senderName}</div>
         </div>
         <div class="reader-key-meta">
           <span class="reader-key-id">Key ID: ${readerKey.keyId || 'Unknown'}</span>
@@ -281,15 +423,19 @@ class AsocialPopup {
         return;
       }
       
-      // Create writer key
+      // Create writer key using the old keyManager for key generation
       const writerKey = await this.keyManager.createKeyGroup(writerKeyName);
       
       // Add description if provided
       if (description) {
         writerKey.description = description;
-        await this.keyManager.storeKeyGroups(await this.keyManager.getKeyGroups());
       }
       
+      // Add to encrypted storage
+      await this.encryptedStorage.addWriterKey(writerKey);
+      
+      // Save the storage to persist the changes
+      await this.encryptedStorage.saveStorage();
       
       this.hideModal('create-group-modal');
       this.showStatus(`Writer key "${writerKeyName}" created successfully!`, 'success');
@@ -316,59 +462,6 @@ class AsocialPopup {
     this.switchImportTab('paste');
   }
 
-  /**
-   * Show username modal
-   */
-  showUsernameModal() {
-    document.getElementById('username-modal').classList.add('active');
-    this.loadCurrentUsername();
-  }
-
-  /**
-   * Load current username into modal
-   */
-  async loadCurrentUsername() {
-    try {
-      const username = await this.keyManager.getStoredUsername();
-      if (username) {
-        document.getElementById('asocial-username').value = username;
-      }
-    } catch (error) {
-      console.error('Failed to load current username:', error);
-    }
-  }
-
-  /**
-   * Save username
-   */
-  async saveUsername() {
-    try {
-      const username = document.getElementById('asocial-username').value.trim();
-      
-      if (!username) {
-        this.showStatus('Please enter a username', 'error');
-        return;
-      }
-      
-      if (username.length < 2) {
-        this.showStatus('Username must be at least 2 characters long', 'error');
-        return;
-      }
-      
-      if (username.length > 50) {
-        this.showStatus('Username must be less than 50 characters', 'error');
-        return;
-      }
-      
-      await this.keyManager.setAsocialUsername(username);
-      this.hideModal('username-modal');
-      this.showStatus(`Asocial username set to: ${username}`, 'success');
-      
-    } catch (error) {
-      console.error('Failed to save username:', error);
-      this.showStatus(`Failed to save username: ${error.message}`, 'error');
-    }
-  }
 
   /**
    * Switch import tab
@@ -425,6 +518,9 @@ class AsocialPopup {
       // Import the reader key (other person's private key for decrypting their messages)
       // This is independent of groups - you can import reader keys without having any groups
       const readerKey = await this.keyManager.importReaderKey(keyData);
+      
+      // Add to encrypted storage (this already saves the storage)
+      await this.encryptedStorage.addReaderKey(readerKey);
       
       this.hideModal('import-key-modal');
       this.showStatus(`Reader key imported for ${readerKey.senderName}! You can now decrypt their messages.`, 'success');
@@ -489,23 +585,29 @@ class AsocialPopup {
    */
   async exportWriterKey(writerKeyId) {
     try {
-      // Check if username is set
-      const isUsernameSet = await this.keyManager.isUsernameSet();
-      if (!isUsernameSet) {
-        this.showStatus('Please set your Asocial username first!', 'error');
-        this.showUsernameModal();
+      // Get the current storage name (this is our identity)
+      const storageName = this.encryptedStorage.currentUser;
+      if (!storageName) {
+        this.showStatus('No storage loaded!', 'error');
         return;
       }
       
-      const keyData = await this.keyManager.exportGroupPublicKey(writerKeyId);
+      // Get the writer key from storage
+      const writerKeys = await this.encryptedStorage.getWriterKeys();
+      const writerKey = writerKeys.find(key => key.id === writerKeyId);
+      
+      if (!writerKey) {
+        this.showStatus('Writer key not found!', 'error');
+        return;
+      }
       
       // Create JSON format with key ID for sharing
       const exportData = {
-        privateKey: keyData.privateKey,
-        keyId: keyData.keyId,
-        groupName: keyData.groupName,
-        asocialUsername: keyData.asocialUsername,
-        createdAt: keyData.createdAt
+        privateKey: writerKey.privateKey,
+        keyId: writerKey.keyId,
+        groupName: writerKey.name,
+        storageName: storageName,
+        createdAt: writerKey.createdAt
       };
       
       // Copy to clipboard as JSON
@@ -543,7 +645,7 @@ class AsocialPopup {
     if (!confirm('Delete this reader key? You will no longer be able to decrypt messages from this sender.')) return;
     
     try {
-      await this.keyManager.deleteReaderKey(readerKeyId);
+      await this.encryptedStorage.deleteReaderKey(readerKeyId);
       this.showStatus('Reader key deleted!', 'success');
       await this.loadReaderKeys(); // Refresh
     } catch (error) {
