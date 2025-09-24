@@ -1,6 +1,6 @@
 # Chrome Extension for Multi-Recipient Encrypted Social Posts - TODO
 
-## 🎉 Current Status: v2.6 - ENCRYPTION MODAL & CHAT SUPPORT
+## 🎉 Current Status: v2.6.1 - READER KEY STORAGE FIX
 **Latest features implemented!**
 - ✅ LinkedIn integration with "Be Asocial" button
 - ✅ RSA-2048 + AES-256-GCM encryption
@@ -13,6 +13,7 @@
 - ✅ **NEW**: LinkedIn messaging support with chat message detection
 - ✅ **NEW**: Black and lime green theme throughout
 - ✅ **NEW**: Safe text insertion using execCommand
+- ✅ **FIXED**: Reader key storage integration - decryption now works properly
 
 ## Project Overview
 Build a Chrome extension that enables encrypted messaging on social media platforms (LinkedIn, Facebook, Twitter, etc.) using hybrid encryption for multiple recipients with encrypted local storage and multi-user support.

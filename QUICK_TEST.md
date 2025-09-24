@@ -1,6 +1,6 @@
 # Quick Testing Guide
 
-## ✅ Latest Version: v2.6
+## ✅ Latest Version: v2.6.1
 All features are now working:
 - ✅ Icon loading (PNG format)
 - ✅ Popup sizing (600px width)
@@ -12,6 +12,7 @@ All features are now working:
 - ✅ Key import with "magic" key IDs
 - ✅ Secure URL sharing
 - ✅ "Show Encrypted" toggle functionality
+- ✅ **Reader key storage integration fixed** - Decryption now works properly
 
 ## 🚀 Test the Extension Now!
 

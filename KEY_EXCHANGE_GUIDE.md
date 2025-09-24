@@ -1,4 +1,4 @@
-# How People Know Which Key to Use (Encrypted Storage Edition)
+# How People Know Which Key to Use (v2.6.1 - Reader Key Storage Fixed)
 
 ## The Problem You Identified
 
@@ -120,3 +120,12 @@ Your Writer Key Groups:        Recipient's Reader Keys:
 - **Forward secrecy** (if key is compromised, only future messages are affected)
 
 This architecture ensures that recipients automatically get the right decryption key without any manual intervention!
+
+## ✅ v2.6.1 Fix: Reader Key Storage Integration
+
+**Latest Update:** Fixed reader key storage system to use the new `asocial_temp_storage` system instead of the old `asocial_reader_keys` storage. This ensures that:
+
+- ✅ **Reader keys are found correctly** - Keys are now stored in the proper location
+- ✅ **Key ID matching works** - The extension can find keys by their unique IDs
+- ✅ **Decryption works properly** - Messages decrypt successfully when you have the right reader key
+- ✅ **No more "No key found" errors** - The storage integration is now complete

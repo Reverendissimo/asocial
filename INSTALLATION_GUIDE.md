@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial_v2.6_final.zip` file
+1. **Download the extension**: Extract the `asocial_v2.6.1_final.zip` file
 2. **Open Chrome Extensions**: Go to `chrome://extensions/`
 3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
 4. **Load the extension**: Click "Load unpacked" and select the extracted folder
@@ -39,10 +39,11 @@
 
 ## 🎯 Key Features
 
-- **Maximum Security**: RSA-4096 + AES-256-GCM encryption
+- **Maximum Security**: RSA-2048 + AES-256-GCM encryption
 - **Group-based**: One key per group, simple to manage
-- **LinkedIn Integration**: Works seamlessly with LinkedIn posts
+- **LinkedIn Integration**: Works seamlessly with LinkedIn posts and messaging
 - **Easy Sharing**: Just share one public key per group
+- **Fixed Decryption**: Reader key storage integration now works properly
 
 ## 🆘 Troubleshooting
 
