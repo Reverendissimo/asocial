@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Asocial - Cypher Squatting Tool",
+  "version": "1.0.0",
+  "description": "Encrypt your social media posts with encrypted local storage and multi-user support using maximum security encryption",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "clipboardWrite",
+    "clipboardRead",
+    "scripting",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "utils/debug.js",
+        "utils/crypto.js",
+        "utils/keyManager.js", 
+        "utils/encryptionEngine.js",
+        "utils/encryptedStorage.js",
+        "content/universal.js"
+      ],
+      "css": ["content/universal.css"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Asocial - Cypher Squatting Tool"
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "utils/*", "content/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

@@ -1,134 +1,264 @@
-# How People Know Which Key to Use (v2.8 - Universal Clipboard Approach)
+# Asocial Key Exchange Guide
 
-## The Problem You Identified
+## 🔑 Understanding Keys
 
-You're absolutely right! This is a critical question: **How does someone know which key to use to decrypt your message?** With encrypted storage, this becomes even more secure.
+### Key Types
 
-## The Solution: Key ID-Based Direct Matching
+**Writer Keys (Public Keys)**
+- Used to encrypt messages you send
+- Safe to share with anyone
+- Can be posted publicly
+- Multiple people can use the same writer key
 
-### **How It Works:**
+**Reader Keys (Private Keys)**
+- Used to decrypt messages you receive
+- Must be kept private and secure
+- Never share these keys
+- Each person has their own unique reader key
 
-1. **You encrypt a message** for a specific group (e.g., "Family")
-2. **The encrypted message contains** a unique `keyId` in the tag: `[ASOCIAL ABC12345]`
-3. **The recipient's extension** looks up the key by ID
-4. **Direct key matching** - no need to try all keys!
+### Key Pairs
 
-### **Step-by-Step Process:**
+- Each person has a **key pair**: one writer key and one reader key
+- The writer key encrypts messages that only the corresponding reader key can decrypt
+- Think of it like a mailbox: the writer key is the address (public), the reader key is the key to open it (private)
 
-#### **When You Encrypt:**
-```
-1. You select "Family" group (keyId: "ABC12345")
-2. Extension gets the "Family" group's private key
-3. Message is encrypted with that key
-4. Message becomes: [ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSJ9...
-```
+## 🤝 How to Exchange Keys
 
-#### **When Recipient Decrypts:**
-```
-1. Recipient sees: [ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSJ9...
-2. Extension extracts keyId: "ABC12345"
-3. Extension looks up key by ID:
-   - Finds "ABC12345" → SUCCESS! ✅
-   - If not found → "Cannot decrypt - missing key"
-4. Message is decrypted and displayed
-```
+### Method 1: Direct Sharing (Recommended)
 
-## **Key Exchange Process**
+#### Step 1: Export Your Reader Key
 
-### **For You (The Sender):**
-1. **Create writer key groups** (Family, Work, Close Friends)
-2. **Share your writer keys** with people:
-   - Export writer key for "Family" group
-   - Send to family members via QR code, file, or copy/paste
-3. **Encrypt messages** by selecting the appropriate group
+1. **Open Asocial Extension**
+   - Click the Asocial icon in your browser
+   - Make sure you're in the Key Management panel
 
-### **For Your Recipients:**
-1. **Import your writer keys as reader keys** into their extension
-2. **Extension automatically matches** keys by key ID when decrypting
-3. **No manual assignment needed** - key ID does the matching
+2. **Find Your Writer Key**
+   - Look in the "Writer Keys" section
+   - Find the key you want to share
 
-## **Example Scenario**
+3. **Copy Reader Key**
+   - Click "Copy Reader Key" button next to your writer key
+   - This exports a complete JSON with name, private key, and magic code
+   - The JSON is copied to your clipboard
 
-### **You want to send a family message:**
+4. **Share the JSON**
+   - Send the copied JSON to the person you want to communicate with
+   - You can share via email, messaging, or any secure method
 
-1. **You write:** "Happy birthday Mom! 🎂"
-2. **You click "Be Asocial"** and select "Family" group (keyId: "ABC12345")
-3. **Message becomes:** `[ASOCIAL ABC12345] eyJ2ZXJzaW9uIjoiMS4wIiwiZ3JvdXBJZCI6Imdyb3VwX2ZhbWlseV8xMjM0NSIsImVuY3J5cHRlZERhdGEiOiIuLi4ifQ==`
-4. **You post it** on LinkedIn
+#### Step 2: They Import Your Key
 
-### **Your family members see it:**
+1. **They Open Their Extension**
+   - They click the Asocial icon in their browser
+   - Go to the Key Management panel
 
-1. **Mom's extension** detects the encrypted message
-2. **Extension extracts keyId:** "ABC12345"
-3. **Extension looks up key by ID:**
-   - Finds "ABC12345" → SUCCESS! ✅
-4. **Mom sees:** "Happy birthday Mom! 🎂" (decrypted)
-5. **Shows:** "🔒 Decrypted Message from Family group"
+2. **Add Your Reader Key**
+   - In the "Reader Keys" section, click "+ Add Reader Key"
+   - Paste the complete JSON you sent them
+   - The system automatically extracts name, private key, and magic code
+   - Click "Add Key"
 
-### **Your work colleagues see it:**
+3. **Key Added Successfully**
+   - Your reader key is now in their reader keys list
+   - They can now decrypt messages you send them
 
-1. **Colleague's extension** detects the encrypted message
-2. **Extension extracts keyId:** "ABC12345"
-3. **Extension looks up key by ID:**
-   - Doesn't find "ABC12345" → "Cannot decrypt (missing key)"
-4. **Colleague sees:** "🔒 Encrypted Message - Cannot decrypt (missing key)"
+#### Step 3: Get Their Reader Key
 
-## **Key Management Architecture**
+1. **Ask Them to Export Their Reader Key**
+   - They follow the same process as Step 1
+   - They send you their complete JSON
 
-### **Your Setup:**
-- **You have multiple writer keys** (one per group)
-- **You share the same writer key** with everyone in each group
-- **Family gets your "Family" writer key** (same key for all family members)
-- **Work colleagues get your "Work" writer key** (same key for all work colleagues)
+2. **Import Their Key**
+   - In your extension, go to Reader Keys section
+   - Click "+ Add Reader Key" and paste their JSON
+   - The system automatically imports with proper name and magic code
+   - Click "Add Key"
 
-### **Recipient's Setup:**
-- **Each recipient imports your group's writer key as a reader key**
-- **Extension automatically matches** keys to messages using the key ID
-- **No manual assignment needed** - key ID does the matching
+3. **You Can Now Communicate**
+   - You can encrypt messages with their writer key
+   - They can decrypt your messages with your reader key
+   - Two-way encrypted communication is now possible!
 
-## **Visual Example**
+### Method 2: Group Key Sharing
 
-```
-Your Writer Key Groups:        Recipient's Reader Keys:
-┌─────────────────┐            ┌─────────────────────┐
-│ Family Group     │            │ Your Family Reader │
-│ - Writer Key     │            │ - Same Writer Key  │
-│ - Key ID: ABC123 │ ──────────→│   for ALL family   │
-└─────────────────┘            │   members          │
-                               └─────────────────────┘
-┌─────────────────┐            ┌─────────────────────┐
-│ Work Group       │            │ Your Work Reader    │
-│ - Writer Key     │            │ - Same Writer Key  │
-│ - Key ID: XYZ789 │ ──────────→│   for ALL work      │
-└─────────────────┘            │   colleagues        │
-                               └─────────────────────┘
-```
+#### For Family/Friends Groups
 
-## **Why This Works**
+1. **One Person Creates a Writer Key**
+   - Create a writer key with a group name (e.g., "Family Chat")
+   - Click "Copy Reader Key" to export the complete JSON
 
-1. **Direct Key Lookup:** Extension finds the exact key by ID
-2. **Fast Decryption:** No need to try multiple keys
-3. **Clear Error Messages:** "Missing key ABC12345" vs generic "cannot decrypt"
-4. **User-Friendly:** Contacts don't need to know which key to use
-5. **Efficient:** O(1) key lookup instead of O(n) key trying
+2. **Share with Group Members**
+   - Send the JSON to all family/friends
+   - Each person imports it as a reader key
 
-## **Security Benefits**
+3. **Everyone Can Communicate**
+   - Anyone in the group can encrypt messages with the shared writer key
+   - All group members can decrypt the messages
 
-- **Only intended recipients** can decrypt (they have the right key)
-- **Automatic key rotation** (change keys, old messages become undecryptable)
-- **Group isolation** (Family can't decrypt Work messages)
-- **Forward secrecy** (if key is compromised, only future messages are affected)
+#### For Work Teams
 
-This architecture ensures that recipients automatically get the right decryption key without any manual intervention!
+1. **Team Lead Creates Writer Key**
+   - Create a writer key for the team (e.g., "Marketing Team")
+   - Export the complete JSON and share with all team members
 
-## ✅ v2.7.1 Update: Decryption Fix
+2. **Team Members Import the Key**
+   - Each team member imports the JSON as a reader key
+   - Now the whole team can communicate securely
 
-**Latest Update:** Fixed decryption interference with input fields:
+### Method 3: Public Key Sharing
 
-- ✅ **Cross-platform compatibility** - Works on LinkedIn, Facebook, Twitter, Gmail, etc.
-- ✅ **Right-click encryption** - Select text → Right-click → "Encrypt with Asocial"
-- ✅ **Keyboard shortcut** - Ctrl+Shift+E for quick encryption
-- ✅ **No platform-specific code** - Clean, maintainable universal approach
-- ✅ **Automatic decryption** - Messages decrypt automatically when you have the right reader key
-- ✅ **Universal text replacement** - Works in any text input field
-- ✅ **FIXED**: Decryption no longer interferes with input fields - encrypted text stays in place
+#### For Public Communication
+
+1. **Create a Public Writer Key**
+   - Create a writer key with a public name (e.g., "Public Contact")
+   - Click "Copy Reader Key" to export the complete JSON
+
+2. **Share Publicly**
+   - Post the JSON on your social media
+   - Add it to your email signature
+   - Include it in your profile
+
+3. **Anyone Can Send You Encrypted Messages**
+   - People can import your JSON as a reader key
+   - They can then send you encrypted messages
+   - Only you can decrypt them with your private reader key
+
+## 🔐 Security Best Practices
+
+### Key Storage
+
+- **Backup Your Keys**: Export your keys and store them safely
+- **Use Strong Passwords**: Protect your KeyStore with a strong password
+- **Don't Share Private Keys**: Never share your reader keys with anyone
+- **Rotate Keys Regularly**: Create new key pairs periodically
+
+### Key Exchange Security
+
+- **Verify Key Sources**: Make sure you're getting keys from the right person
+- **Use Secure Channels**: Share keys through encrypted channels when possible
+- **Check Key Integrity**: Verify keys haven't been tampered with
+- **Revoke Compromised Keys**: If a key is compromised, create a new one
+
+### Communication Security
+
+- **Verify Recipients**: Make sure you're encrypting for the right person
+- **Check Message Integrity**: Verify decrypted messages make sense
+- **Report Suspicious Activity**: If something seems wrong, investigate
+- **Use Multiple Keys**: Don't rely on a single key for all communication
+
+## 🚨 Common Mistakes
+
+### ❌ Don't Do This
+
+- **Don't share your reader key** - This defeats the purpose of encryption
+- **Don't use the same key for everything** - Create separate keys for different purposes
+- **Don't forget to backup your keys** - You might lose access to encrypted messages
+- **Don't share keys over insecure channels** - Use encrypted communication when possible
+
+### ✅ Do This Instead
+
+- **Only share writer keys** - These are safe to share publicly
+- **Create separate keys for different groups** - Family, work, friends, etc.
+- **Backup your keys regularly** - Store them in a secure location
+- **Use secure channels for key exchange** - Encrypted email, secure messaging, etc.
+
+## 🔄 Key Rotation
+
+### When to Rotate Keys
+
+- **Suspected Compromise**: If you think a key might be compromised
+- **Regular Intervals**: Every 6-12 months for high-security communication
+- **Person Leaves Group**: When someone leaves a group, rotate the group key
+- **Security Breach**: If there's a security incident, rotate all keys
+
+### How to Rotate Keys
+
+1. **Create New Key Pair**
+   - Generate a new writer/reader key pair
+   - Give it a new name (e.g., "Family Chat v2")
+
+2. **Share New Writer Key**
+   - Export and share the new writer key
+   - Ask everyone to add it to their reader keys
+
+3. **Remove Old Key**
+   - Once everyone has the new key, remove the old one
+   - Delete the old key from your KeyStore
+
+## 📱 Mobile Considerations
+
+### Cross-Platform Communication
+
+- **Desktop to Mobile**: Keys work across all platforms
+- **Mobile Apps**: Keys can be used in mobile browsers
+- **Synchronization**: Keys are stored locally, not synced across devices
+- **Backup Strategy**: Export keys on each device you use
+
+### Mobile Key Management
+
+- **Export Keys**: Use the same export process on mobile
+- **Secure Storage**: Store exported keys in a secure password manager
+- **Device Security**: Keep your mobile device secure
+- **Regular Backups**: Export keys regularly on mobile devices
+
+## 🎯 Quick Start Checklist
+
+### For New Users
+
+- [ ] Install Asocial extension
+- [ ] Create your first KeyStore
+- [ ] Create a writer key
+- [ ] Export your writer key
+- [ ] Share your writer key with someone
+- [ ] Get their writer key and add it to your reader keys
+- [ ] Test encrypted communication
+
+### For Groups
+
+- [ ] One person creates a group writer key
+- [ ] Share the writer key with all group members
+- [ ] Each member adds the writer key to their reader keys
+- [ ] Test group encrypted communication
+- [ ] Set up regular key rotation schedule
+
+### For Public Communication
+
+- [ ] Create a public writer key
+- [ ] Share it on your social media/profiles
+- [ ] Monitor for encrypted messages
+- [ ] Respond with encrypted messages when appropriate
+
+## 🆘 Troubleshooting Key Exchange
+
+### "Key Not Working"
+
+1. **Check Key Format**: Make sure the key is complete and not truncated
+2. **Verify Source**: Confirm you got the key from the right person
+3. **Try Again**: Sometimes keys need to be re-exported and re-imported
+4. **Check Key Type**: Make sure you're using writer keys, not reader keys
+
+### "Can't Decrypt Messages"
+
+1. **Check Reader Keys**: Make sure you have the sender's writer key in your reader keys
+2. **Verify Key Name**: Make sure the key name matches the sender
+3. **Try Different Key**: The sender might have multiple keys
+4. **Contact Sender**: Ask them to verify which key they used
+
+### "Encryption Not Working"
+
+1. **Check Writer Keys**: Make sure you have writer keys available
+2. **Verify Recipient**: Make sure you're using the right writer key for the recipient
+3. **Test with Simple Message**: Try encrypting a simple test message first
+4. **Check Extension**: Make sure the extension is working properly
+
+## 🎉 You're Ready!
+
+With proper key exchange, you can now communicate securely with anyone who has Asocial installed. Remember:
+
+- **Writer keys are for encrypting** (what you send)
+- **Reader keys are for decrypting** (what you receive)
+- **Only share writer keys** (never reader keys)
+- **Keep your KeyStore password safe**
+- **Backup your keys regularly**
+
+Happy encrypted communicating! 🔒
+

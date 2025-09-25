@@ -1,68 +1,213 @@
-# Asocial Extension - Installation Guide
+# Asocial Chrome Extension - Installation Guide
 
 ## 🚀 Quick Installation
 
-1. **Download the extension**: Extract the `asocial_v2.8_final.zip` file
-2. **Open Chrome Extensions**: Go to `chrome://extensions/`
-3. **Enable Developer Mode**: Toggle the "Developer mode" switch in the top right
-4. **Load the extension**: Click "Load unpacked" and select the extracted folder
-5. **Pin the extension**: Click the puzzle piece icon in Chrome toolbar and pin "Asocial"
+### Method 1: Load Unpacked Extension (Development)
 
-## 🔧 First Time Setup (Encrypted Storage)
+1. **Download the Extension**
+   - Clone or download the Asocial extension files
+   - Extract to a folder on your computer
 
-1. **Click the Asocial icon** in your Chrome toolbar
-2. **Set Key Storage Name**: Enter your key storage name (cannot be changed later)
-3. **Set Password**: Create a strong password for your encrypted storage
-4. **Storage Created**: Your encrypted `.ASoc` storage file is created
-5. **Create Writer Keys**: Click "Create New Writer Key" and give it a name (e.g., "Family", "Work")
-6. **Share Your Writer Keys**: Export and share your writer keys with others
+2. **Open Chrome Extensions Page**
+   - Open Google Chrome
+   - Go to `chrome://extensions/`
+   - Enable "Developer mode" (toggle in top-right corner)
 
-## 🔒 How to Use
+3. **Load the Extension**
+   - Click "Load unpacked"
+   - Select the folder containing the extension files
+   - The extension should now appear in your extensions list
 
-### Encrypting Messages (Any Website):
-**Method 1: Keyboard Shortcut (Recommended)**
-1. **Click in any text input field** (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, etc.)
-2. **Press Ctrl+Shift+E** - automatically selects all text and shows encryption modal
-3. **Choose writer key** from the modal
-4. **Text is encrypted and pasted automatically**
+4. **Pin the Extension**
+   - Click the puzzle piece icon in Chrome toolbar
+   - Find "Asocial - Encrypted Social Posts"
+   - Click the pin icon to keep it visible
 
-**Method 2: Right-Click Menu**
-1. **Select any text** in any input field
-2. **Right-click** → "Encrypt with Asocial"
-3. **Choose writer key** from the modal
-4. **Text is encrypted and pasted automatically**
+### Method 2: Install from Chrome Web Store (Future)
 
-### Decrypting Messages:
-1. **Decrypted messages** show as `[ASOCIAL] decrypted text`
-2. **Encrypted messages** show as `[ASOCIAL ENCRYPTED] encrypted text`
-3. **Automatic decryption** if you have the right reader key
-4. **To get a reader key**: Ask the sender to share their group's writer key
-5. **Import the reader key**: In the extension popup, click "Import Reader Key" and paste the key
+*Coming soon - the extension will be available on the Chrome Web Store*
 
-## 🎯 Key Features
+## 🔧 Initial Setup
 
-- **Maximum Security**: RSA-2048 + AES-256-GCM encryption
-- **Group-based**: One key per group, simple to manage
-- **Universal Compatibility**: Works on LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, and ANY website
-- **Right-Click Encryption**: Select text → Right-click → "Encrypt with Asocial"
-- **Keyboard Shortcut**: Ctrl+Shift+E with automatic text selection and pasting
-- **Simple Text Display**: Decrypted messages show as `[ASOCIAL] decrypted text`
-- **No DOM Breaking**: Simple text replacement that doesn't break websites
+### 1. Create Your First KeyStore
 
-## 🆘 Troubleshooting
+1. **Open the Extension**
+   - Click the Asocial icon in your browser toolbar
+   - You'll see the KeyStore selection panel
 
-- **No right-click menu?** Check if extension is enabled
-- **Encryption not working?** Make sure you have a writer key created
-- **Can't decrypt messages?** Make sure you have the right public key imported
+2. **Create New KeyStore**
+   - Click "Create KeyStore"
+   - Enter a name (e.g., "Personal", "Work", "Family")
+   - Add an optional description
+   - Set a strong password (minimum 8 characters)
+   - Click "Create KeyStore"
 
-## 📱 Supported Platforms
+3. **KeyStore Created Successfully**
+   - You'll be automatically taken to the key management interface
+   - Your KeyStore is now active and ready to use
 
-- ✅ LinkedIn (fully supported)
-- ✅ Facebook (fully supported)
-- ✅ Twitter/X (fully supported)
-- ✅ Gmail (fully supported)
-- ✅ Any website with text inputs (universal support)
+### 2. Create Your Keys
 
----
+#### Create a Writer Key (for encrypting messages you send)
 
-**BE ASOCIAL!** 🔒
+1. **In the Key Management Panel**
+   - Find the "Writer Keys" section
+   - Click "+ Create Writer Key" button
+   - Enter a name (e.g., "Public", "Friends", "Work")
+   - Click "Create Key"
+
+2. **Writer Key Created**
+   - The key appears in your Writer Keys list
+   - A corresponding reader key is automatically created
+   - Click "Copy Reader Key" to export the complete JSON
+   - Share this JSON with people you want to send encrypted messages to
+
+#### Add a Reader Key (for decrypting messages you receive)
+
+1. **In the Key Management Panel**
+   - Find the "Reader Keys" section
+   - Click "+ Add Reader Key" button
+   - Paste the complete JSON from someone else
+   - The system automatically extracts name, private key, and magic code
+   - Click "Add Key"
+
+2. **Reader Key Added**
+   - The key appears in your Reader Keys list
+   - This key is used to decrypt messages sent to you
+
+## 🎯 How to Use
+
+### Encrypting Messages
+
+1. **On Any Website**
+   - Type your message in any text input (Twitter, LinkedIn, Facebook, etc.)
+   - Select the text you want to encrypt
+   - Press `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
+
+2. **Select Writer Key**
+   - A popup will appear showing your available writer keys
+   - Click on the key you want to use
+   - The message will be encrypted and pasted automatically
+
+3. **Send Your Message**
+   - The encrypted message is now in your text input
+   - Send it as normal - only people with the matching reader key can decrypt it
+
+### Decrypting Messages
+
+1. **Automatic Decryption**
+   - When you visit a page with encrypted messages, they're automatically decrypted
+   - Decrypted messages appear with `[ASOCIAL]` prefix and green styling
+   - Only messages you can decrypt (with matching reader keys) will be shown
+
+2. **Manual Decryption**
+   - If automatic decryption fails, the message shows as `[ASOCIAL ENCRYPTED]`
+   - This means you don't have the matching reader key
+
+## 🔄 Key Exchange Process
+
+### Sharing Your Writer Key
+
+1. **Export Your Reader Key**
+   - In the extension popup, find your writer key
+   - Click "Copy Reader Key" button
+   - This exports a complete JSON with name, private key, and magic code
+   - Share this JSON with people you want to send encrypted messages to
+
+2. **They Import Your Key**
+   - They paste the JSON in their extension's "Add Reader Key" section
+   - The system automatically extracts name, private key, and magic code
+   - Now they can decrypt messages you send them
+
+### Receiving Their Reader Key
+
+1. **Get Their Reader Key**
+   - Ask them to export their reader key (JSON format)
+   - They should share the complete JSON with you
+
+2. **Import Their Key**
+   - In your extension, go to Reader Keys section
+   - Click "+ Add Reader Key" and paste the JSON
+   - The system automatically imports with proper name and magic code
+   - Now you can decrypt messages they send you
+
+## 🛠️ Troubleshooting
+
+### Extension Not Working
+
+1. **Check Extension is Enabled**
+   - Go to `chrome://extensions/`
+   - Make sure Asocial is enabled
+   - Check for any error messages
+
+2. **Reload the Extension**
+   - Click the reload button on the extension
+   - Try again
+
+### Encryption Not Working
+
+1. **Check You Have Writer Keys**
+   - Open the extension popup
+   - Make sure you have at least one writer key
+   - Create one if needed
+
+2. **Check Keyboard Shortcut**
+   - Make sure you're pressing `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
+   - Try selecting text first, then pressing the shortcut
+
+### Decryption Not Working
+
+1. **Check You Have Reader Keys**
+   - Open the extension popup
+   - Make sure you have reader keys for the messages you're trying to decrypt
+   - Add the sender's reader key if needed
+
+2. **Check Message Format**
+   - Encrypted messages should start with `[ASOCIAL MAGIC_CODE]`
+   - If the format is wrong, decryption won't work
+
+### KeyStore Issues
+
+1. **Forgot Password**
+   - Unfortunately, KeyStore passwords cannot be recovered
+   - You'll need to create a new KeyStore and re-add your keys
+
+2. **KeyStore Not Loading**
+   - Try closing and reopening the extension
+   - Check if you're entering the correct password
+
+## 🔒 Security Notes
+
+- **Keep Your Passwords Safe**: KeyStore passwords cannot be recovered
+- **Backup Your Keys**: Export your keys and store them safely
+- **Use Strong Passwords**: At least 8 characters with mixed case, numbers, and symbols
+- **Don't Share Private Keys**: Only share writer keys (public keys) with others
+
+## 📞 Support
+
+If you encounter issues:
+
+1. **Check the Console**
+   - Press F12 to open Developer Tools
+   - Look for error messages in the Console tab
+   - Take a screenshot of any errors
+
+2. **Test on Simple Page**
+   - Try the included `test_extension.html` file
+   - This helps isolate if the issue is with the extension or the website
+
+3. **Report Issues**
+   - Include your Chrome version
+   - Include the website where the issue occurred
+   - Include any error messages from the console
+
+## 🎉 You're Ready!
+
+Your Asocial extension is now installed and configured. Start encrypting your social media posts and keep your conversations private!
+
+Remember:
+- Use `Ctrl+Shift+E` to encrypt messages
+- Share your writer keys with people you want to communicate with
+- Add their reader keys to decrypt their messages
+- Keep your KeyStore password safe!
+

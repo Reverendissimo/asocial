@@ -87,7 +87,6 @@ class AsocialExtension {
       this.showKeyCreationModal('writer');
     });
 
-
     document.getElementById('add-reader-key').addEventListener('click', () => {
       this.showKeyCreationModal('reader');
     });
@@ -250,14 +249,9 @@ class AsocialExtension {
                 <div class="keystore-description">${keystore.description || 'No description'}</div>
                 <div class="keystore-date">Created: ${new Date(keystore.createdAt).toLocaleDateString()}</div>
               </div>
-              <div class="keystore-actions">
-                <button class="btn btn-primary keystore-open-btn" data-keystore-id="${keystore.id}">
-                  Open
-                </button>
-                <button class="btn btn-danger keystore-delete-btn" data-keystore-id="${keystore.id}">
-                  Delete
-                </button>
-              </div>
+              <button class="btn btn-primary keystore-open-btn" data-keystore-id="${keystore.id}">
+                Open
+              </button>
             </div>
           `).join('')}
         </div>
@@ -275,17 +269,6 @@ class AsocialExtension {
         const keystoreId = e.target.getAttribute('data-keystore-id');
         console.log('Asocial Extension: Button clicked, KeyStore ID:', keystoreId);
         this.openKeyStore(keystoreId);
-      });
-    });
-
-    // Add event listeners for delete buttons
-    const deleteButtons = container.querySelectorAll('.keystore-delete-btn');
-    console.log('Asocial Extension: Found delete buttons:', deleteButtons.length);
-    deleteButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        const keystoreId = e.target.getAttribute('data-keystore-id');
-        console.log('Asocial Extension: Delete button clicked, KeyStore ID:', keystoreId);
-        this.deleteKeyStore(keystoreId);
       });
     });
   }
@@ -342,36 +325,6 @@ class AsocialExtension {
       
       // Add event listeners for this specific KeyStore
       this.setupPasswordInputListeners(keystoreId);
-    }
-  }
-
-  /**
-   * Delete a KeyStore with confirmation
-   */
-  async deleteKeyStore(keystoreId) {
-    console.log('Asocial Extension: Deleting KeyStore with ID:', keystoreId);
-    
-    // Show confirmation dialog
-    const confirmed = confirm('Are you sure you want to delete this KeyStore? This action cannot be undone.');
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      const result = await chrome.runtime.sendMessage({
-        action: 'deleteKeyStore',
-        keystoreId: keystoreId
-      });
-
-      if (result.success) {
-        this.showNotification('KeyStore deleted successfully', 'success');
-        this.loadKeyStoreList(); // Refresh the list
-      } else {
-        this.showNotification('Failed to delete KeyStore: ' + result.error, 'error');
-      }
-    } catch (error) {
-      console.error('Asocial Extension: Error deleting KeyStore:', error);
-      this.showNotification('Error deleting KeyStore', 'error');
     }
   }
 
@@ -613,18 +566,12 @@ class AsocialExtension {
     keys.forEach(key => {
       const keyItem = document.createElement('div');
       keyItem.className = 'key-item';
-      
-      // Add Copy Private Key button for writer keys
-      const copyButton = type === 'writer' ? 
-        `<button class="btn btn-secondary copy-private-key-btn" data-key-id="${key.id}">Copy Reader Key</button>` : '';
-      
       keyItem.innerHTML = `
         <div class="key-info">
           <h4>${key.name}</h4>
           <p>Created: ${new Date(key.createdAt).toLocaleDateString()}</p>
         </div>
         <div class="key-actions">
-          ${copyButton}
           <button class="btn-delete key-delete-btn" data-key-id="${key.id}">Delete</button>
         </div>
       `;
@@ -639,17 +586,6 @@ class AsocialExtension {
         this.deleteKey(keyId);
       });
     });
-
-    // Add event listeners for copy private key buttons (writer keys only)
-    if (type === 'writer') {
-      const copyButtons = container.querySelectorAll('.copy-private-key-btn');
-      copyButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-          const keyId = e.target.getAttribute('data-key-id');
-          this.copyPrivateKey(keyId);
-        });
-      });
-    }
   }
 
   /**
@@ -669,51 +605,11 @@ class AsocialExtension {
       title.textContent = 'Add Reader Key';
       readerKeyInput.style.display = 'block';
       privateKeyInput.required = true;
-      
-      // Hide the key name input for reader keys since it comes from JSON
-      const keyNameInput = document.getElementById('key-name');
-      keyNameInput.style.display = 'none';
-      keyNameInput.required = false;
     }
 
     // Store the key type for form submission
     modal.dataset.keyType = type;
     this.showModal('key-creation-modal');
-  }
-
-
-  /**
-   * Copy private key for a specific writer key
-   */
-  async copyPrivateKey(writerKeyId) {
-    try {
-      console.log('Asocial Extension: Copying private key for writer key:', writerKeyId);
-      
-      // Get the private key for this writer key
-      const getPrivateKeyResult = await chrome.runtime.sendMessage({
-        action: 'getWriterKeyPrivateKey',
-        writerKeyId: writerKeyId
-      });
-
-        if (getPrivateKeyResult.success) {
-          // Copy the export data as JSON to clipboard
-          const exportData = getPrivateKeyResult.exportData;
-          const jsonString = JSON.stringify(exportData, null, 2);
-          
-          try {
-            await navigator.clipboard.writeText(jsonString);
-            this.showNotification('Reader key exported to clipboard! Share this JSON with people who need to decrypt your messages.', 'success');
-          } catch (clipboardError) {
-            // Fallback: show the JSON in a prompt if clipboard fails
-            prompt(`Reader Key Export (JSON):\n\n${jsonString}\n\nCopy this JSON and give it to people who need to decrypt your messages.`);
-          }
-        } else {
-          this.showNotification('Failed to get private key: ' + getPrivateKeyResult.error, 'error');
-        }
-    } catch (error) {
-      console.error('Asocial Extension: Error copying private key:', error);
-      this.showNotification('Error copying private key', 'error');
-    }
   }
 
   /**
@@ -725,7 +621,7 @@ class AsocialExtension {
       const keyType = modal.dataset.keyType;
       const name = document.getElementById('key-name').value;
 
-      if (keyType === 'writer' && !name.trim()) {
+      if (!name.trim()) {
         this.showNotification('Key name is required', 'error');
         return;
       }
@@ -753,30 +649,10 @@ class AsocialExtension {
           return;
         }
 
-        // Check if it's JSON format (exported reader key)
-        let importName = 'Imported Reader Key'; // Default name
-        let importData = privateKey.trim();
-        
-        try {
-          const jsonData = JSON.parse(privateKey.trim());
-          if (jsonData.name && jsonData.privateKey) {
-            // It's a JSON export, use the name from it
-            importName = jsonData.name;
-            importData = privateKey.trim(); // Use the full JSON
-            console.log('Asocial Extension: Importing from JSON export');
-          } else {
-            throw new Error('Invalid JSON format');
-          }
-        } catch (jsonError) {
-          // Not JSON, use default name and raw private key
-          console.log('Asocial Extension: Importing as raw private key');
-          importData = privateKey.trim(); // Use raw private key
-        }
-
         const result = await chrome.runtime.sendMessage({
           action: 'addReaderKey',
-          name: importName,
-          privateKey: importData
+          name: name.trim(),
+          privateKey: privateKey.trim()
         });
 
         if (result.success) {

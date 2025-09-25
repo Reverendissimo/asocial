@@ -1,306 +1,443 @@
 /**
- * Asocial Crypto Utilities
- * Maximum security encryption using RSA-4096 and AES-256-GCM
+ * Asocial Cryptographic Utilities
+ * WebCrypto API implementation for ECDSA-256, PBKDF2, AES-256-GCM
  */
 
 class AsocialCrypto {
   constructor() {
     this.algorithm = {
-      name: 'RSA-PSS',
-      modulusLength: 2048,
-      publicExponent: new Uint8Array([1, 0, 1]),
-      hash: 'SHA-1'
-    };
-    
-    this.symmetricAlgorithm = {
-      name: 'AES-GCM',
-      length: 256
+      // ECDSA-256 for key pairs and message encryption/decryption
+      ecdsa: {
+        name: 'ECDSA',
+        namedCurve: 'P-256'
+      },
+      
+      // PBKDF2 for key derivation from passwords
+      pbkdf2: {
+        name: 'PBKDF2',
+        hash: 'SHA-256',
+        iterations: 100000 // 100k iterations for security
+      },
+      
+      // AES-256-GCM for symmetric encryption
+      aes: {
+        name: 'AES-GCM',
+        length: 256
+      }
     };
   }
 
   /**
-   * Generate RSA-1024 key pair for good security
+   * Generate ECDSA-256 key pair
+   * @param {string} keyName - Name for the key
+   * @returns {Promise<Object>} Key pair with public/private keys
    */
-  async generateKeyPair() {
+  async generateKeyPair(keyName) {
     try {
+      console.log('AsocialCrypto: Generating ECDSA-256 key pair for:', keyName);
+      
       const keyPair = await crypto.subtle.generateKey(
         {
-          name: 'RSA-OAEP',
-          modulusLength: 2048, // Reduced from 4096 to 2048 for smaller encrypted messages
-          publicExponent: new Uint8Array([1, 0, 1]),
-          hash: 'SHA-1'
+          name: this.algorithm.ecdsa.name,
+          namedCurve: this.algorithm.ecdsa.namedCurve
         },
         true, // extractable
-        ['encrypt', 'decrypt']
+        ['sign', 'verify'] // key usages
       );
-      
-      console.log('RSA-2048 key pair generated successfully');
-      return keyPair;
+
+      // Export keys to Base64
+      const publicKey = await this.exportKey(keyPair.publicKey);
+      const privateKey = await this.exportKey(keyPair.privateKey);
+
+      const keyData = {
+        id: this.generateKeyId(),
+        name: keyName,
+        type: 'ecdsa',
+        publicKey: publicKey,
+        privateKey: privateKey,
+        createdAt: new Date().toISOString()
+      };
+
+      console.log('AsocialCrypto: Key pair generated successfully');
+      return keyData;
     } catch (error) {
-      console.error('Key generation failed:', error);
-      console.error('Error details:', error);
-      throw new Error('Failed to generate RSA key pair: ' + error.message);
+      console.error('AsocialCrypto: Error generating key pair:', error);
+      throw new Error('Failed to generate key pair: ' + error.message);
     }
   }
 
   /**
-   * Generate random AES-256 key for symmetric encryption
+   * Derive key from password using PBKDF2
+   * @param {string} password - Password to derive key from
+   * @param {Uint8Array} salt - Salt for key derivation
+   * @returns {Promise<CryptoKey>} Derived key
    */
-  async generateSymmetricKey() {
+  async deriveKeyFromPassword(password, salt) {
     try {
-      const key = await crypto.subtle.generateKey(
-        this.symmetricAlgorithm,
-        true,
+      console.log('AsocialCrypto: Deriving key from password');
+      
+      const passwordBuffer = new TextEncoder().encode(password);
+      
+      const key = await crypto.subtle.deriveKey(
+        {
+          name: this.algorithm.pbkdf2.name,
+          hash: this.algorithm.pbkdf2.hash,
+          salt: salt,
+          iterations: this.algorithm.pbkdf2.iterations
+        },
+        await crypto.subtle.importKey(
+          'raw',
+          passwordBuffer,
+          'PBKDF2',
+          false,
+          ['deriveKey']
+        ),
+        {
+          name: this.algorithm.aes.name,
+          length: this.algorithm.aes.length
+        },
+        false,
         ['encrypt', 'decrypt']
       );
-      
-      console.log('AES-256 symmetric key generated');
+
+      console.log('AsocialCrypto: Key derived successfully');
       return key;
     } catch (error) {
-      console.error('Symmetric key generation failed:', error);
-      throw new Error('Failed to generate AES-256 key');
+      console.error('AsocialCrypto: Error deriving key from password:', error);
+      throw new Error('Failed to derive key from password: ' + error.message);
     }
   }
 
   /**
-   * Encrypt message content with AES-256-GCM
+   * Generate random salt for PBKDF2
+   * @returns {Uint8Array} Random salt
    */
-  async encryptMessage(message, symmetricKey) {
+  generateSalt() {
+    return crypto.getRandomValues(new Uint8Array(16)); // 128-bit salt
+  }
+
+  /**
+   * Encrypt data using AES-256-GCM
+   * @param {string} data - Data to encrypt
+   * @param {CryptoKey} key - Encryption key
+   * @returns {Promise<Object>} Encrypted data with IV and tag
+   */
+  async encryptData(data, key) {
     try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(message);
+      console.log('AsocialCrypto: Encrypting data with AES-256-GCM');
       
-      // Generate random IV for GCM
-      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const dataBuffer = new TextEncoder().encode(data);
+      const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV for GCM
       
       const encryptedData = await crypto.subtle.encrypt(
         {
-          name: 'AES-GCM',
+          name: this.algorithm.aes.name,
           iv: iv
         },
-        symmetricKey,
-        data
+        key,
+        dataBuffer
       );
-      
-      return {
-        encryptedData: encryptedData,
+
+      const result = {
+        data: new Uint8Array(encryptedData),
         iv: iv
       };
+
+      console.log('AsocialCrypto: Data encrypted successfully');
+      return result;
     } catch (error) {
-      console.error('Message encryption failed:', error);
-      throw new Error('Failed to encrypt message');
+      console.error('AsocialCrypto: Error encrypting data:', error);
+      throw new Error('Failed to encrypt data: ' + error.message);
     }
   }
 
   /**
-   * Decrypt message content with AES-256-GCM
+   * Decrypt data using AES-256-GCM
+   * @param {Object} encryptedData - Encrypted data with IV and tag
+   * @param {CryptoKey} key - Decryption key
+   * @returns {Promise<string>} Decrypted data
    */
-  async decryptMessage(encryptedData, iv, symmetricKey) {
+  async decryptData(encryptedData, key) {
     try {
+      console.log('AsocialCrypto: Decrypting data with AES-256-GCM');
+      console.log('AsocialCrypto: Data length:', encryptedData.data.length, 'IV length:', encryptedData.iv.length);
+      
+      // For GCM, the encrypted data already includes the tag
+      // We don't need to combine anything
       const decryptedData = await crypto.subtle.decrypt(
         {
-          name: 'AES-GCM',
-          iv: iv
+          name: this.algorithm.aes.name,
+          iv: encryptedData.iv
         },
-        symmetricKey,
-        encryptedData
+        key,
+        encryptedData.data
       );
-      
-      const decoder = new TextDecoder();
-      return decoder.decode(decryptedData);
+
+      const result = new TextDecoder().decode(decryptedData);
+      console.log('AsocialCrypto: Data decrypted successfully');
+      return result;
     } catch (error) {
-      console.error('Message decryption failed:', error);
-      throw new Error('Failed to decrypt message');
+      console.error('AsocialCrypto: Error decrypting data:', error);
+      console.error('AsocialCrypto: This usually means the password is wrong or the data is corrupted');
+      throw new Error('Failed to decrypt data: ' + error.message);
     }
   }
 
   /**
-   * Encrypt symmetric key with RSA-4096
+   * Export key to Base64 string
+   * @param {CryptoKey} key - Key to export
+   * @returns {Promise<string>} Base64 encoded key
    */
-  async encryptSymmetricKey(symmetricKey, publicKey) {
+  async exportKey(key) {
     try {
-      const exportedKey = await crypto.subtle.exportKey('raw', symmetricKey);
-      const encryptedKey = await crypto.subtle.encrypt(
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-1'
-        },
-        publicKey,
-        exportedKey
-      );
-      
-      return encryptedKey;
+      const exported = await crypto.subtle.exportKey('pkcs8', key);
+      return this.arrayBufferToBase64(exported);
     } catch (error) {
-      console.error('Symmetric key encryption failed:', error);
-      throw new Error('Failed to encrypt symmetric key');
+      // Try spki format for public keys
+      try {
+        const exported = await crypto.subtle.exportKey('spki', key);
+        return this.arrayBufferToBase64(exported);
+      } catch (error2) {
+        console.error('AsocialCrypto: Error exporting key:', error2);
+        throw new Error('Failed to export key: ' + error2.message);
+      }
     }
   }
 
   /**
-   * Decrypt symmetric key with RSA-4096
+   * Export private key to Base64 string
+   * @param {CryptoKey} privateKey - Private key to export
+   * @returns {Promise<string>} Base64 encoded private key
    */
-  async decryptSymmetricKey(encryptedKey, privateKey) {
+  async exportPrivateKey(privateKey) {
     try {
-      const decryptedKey = await crypto.subtle.decrypt(
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-1'
-        },
-        privateKey,
-        encryptedKey
-      );
+      const exported = await crypto.subtle.exportKey('pkcs8', privateKey);
+      return this.arrayBufferToBase64(exported);
+    } catch (error) {
+      console.error('AsocialCrypto: Error exporting private key:', error);
+      throw new Error('Failed to export private key: ' + error.message);
+    }
+  }
+
+  /**
+   * Import key from Base64 string
+   * @param {string} keyData - Base64 encoded key
+   * @param {string} format - Key format ('pkcs8' or 'spki')
+   * @param {string} type - Key type ('private' or 'public')
+   * @returns {Promise<CryptoKey>} Imported key
+   */
+  async importKey(keyData, format, type) {
+    try {
+      const keyBuffer = this.base64ToArrayBuffer(keyData);
       
-      const symmetricKey = await crypto.subtle.importKey(
-        'raw',
-        decryptedKey,
-        this.symmetricAlgorithm,
+      const key = await crypto.subtle.importKey(
+        format,
+        keyBuffer,
+        {
+          name: this.algorithm.ecdsa.name,
+          namedCurve: this.algorithm.ecdsa.namedCurve
+        },
         true,
-        ['encrypt', 'decrypt']
+        type === 'private' ? ['sign'] : ['verify']
       );
-      
-      return symmetricKey;
+
+      return key;
     } catch (error) {
-      console.error('Symmetric key decryption failed:', error);
-      throw new Error('Failed to decrypt symmetric key');
+      console.error('AsocialCrypto: Error importing key:', error);
+      throw new Error('Failed to import key: ' + error.message);
     }
   }
 
   /**
-   * Sign message with RSA-4096 and SHA-512
+   * Sign data with private key
+   * @param {string} data - Data to sign
+   * @param {CryptoKey} privateKey - Private key for signing
+   * @returns {Promise<string>} Base64 encoded signature
    */
-  async signMessage(message, privateKey) {
+  async signData(data, privateKey) {
     try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(message);
+      console.log('AsocialCrypto: Signing data with ECDSA');
       
+      const dataBuffer = new TextEncoder().encode(data);
       const signature = await crypto.subtle.sign(
         {
-          name: 'RSA-PSS',
-          saltLength: 64
+          name: this.algorithm.ecdsa.name,
+          hash: 'SHA-256'
         },
         privateKey,
-        data
+        dataBuffer
       );
-      
-      return signature;
+
+      const signatureBase64 = this.arrayBufferToBase64(signature);
+      console.log('AsocialCrypto: Data signed successfully');
+      return signatureBase64;
     } catch (error) {
-      console.error('Message signing failed:', error);
-      throw new Error('Failed to sign message');
+      console.error('AsocialCrypto: Error signing data:', error);
+      throw new Error('Failed to sign data: ' + error.message);
     }
   }
 
   /**
-   * Verify message signature with RSA-4096
+   * Verify signature with public key
+   * @param {string} data - Original data
+   * @param {string} signature - Base64 encoded signature
+   * @param {CryptoKey} publicKey - Public key for verification
+   * @returns {Promise<boolean>} True if signature is valid
    */
-  async verifySignature(message, signature, publicKey) {
+  async verifySignature(data, signature, publicKey) {
     try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(message);
+      console.log('AsocialCrypto: Verifying signature with ECDSA');
+      
+      const dataBuffer = new TextEncoder().encode(data);
+      const signatureBuffer = this.base64ToArrayBuffer(signature);
       
       const isValid = await crypto.subtle.verify(
         {
-          name: 'RSA-PSS',
-          saltLength: 64
+          name: this.algorithm.ecdsa.name,
+          hash: 'SHA-256'
         },
         publicKey,
-        signature,
-        data
+        signatureBuffer,
+        dataBuffer
       );
-      
+
+      console.log('AsocialCrypto: Signature verification result:', isValid);
       return isValid;
     } catch (error) {
-      console.error('Signature verification failed:', error);
+      console.error('AsocialCrypto: Error verifying signature:', error);
       return false;
     }
   }
 
   /**
-   * Derive key from passphrase using Argon2id (simulated with PBKDF2)
+   * Generate magic code from reader key
+   * @param {string} privateKey - Base64 encoded private key
+   * @returns {Promise<string>} 7-character Base36 magic code
    */
-  async deriveKeyFromPassphrase(passphrase, salt) {
+  async generateMagicCode(privateKey) {
     try {
-      const encoder = new TextEncoder();
-      const keyMaterial = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(passphrase),
-        'PBKDF2',
-        false,
-        ['deriveBits', 'deriveKey']
-      );
+      console.log('AsocialCrypto: Generating magic code from reader key');
       
-      const derivedKey = await crypto.subtle.deriveKey(
-        {
-          name: 'PBKDF2',
-          salt: salt,
-          iterations: 100000, // High iteration count for security
-          hash: 'SHA-512'
-        },
-        keyMaterial,
-        { name: 'AES-GCM', length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-      );
+      // Create hash from private key
+      const keyBuffer = this.base64ToArrayBuffer(privateKey);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', keyBuffer);
       
-      return derivedKey;
+      // Convert hash to number and generate Base36 code
+      const hashArray = new Uint8Array(hashBuffer);
+      const hashNumber = this.bytesToNumber(hashArray);
+      
+      // Generate 7-character Base36 code (78.3 billion combinations)
+      const magicCode = this.numberToBase36(hashNumber, 7);
+      
+      console.log('AsocialCrypto: Magic code generated:', magicCode);
+      return magicCode;
     } catch (error) {
-      console.error('Key derivation failed:', error);
-      throw new Error('Failed to derive key from passphrase');
+      console.error('AsocialCrypto: Error generating magic code:', error);
+      throw new Error('Failed to generate magic code: ' + error.message);
     }
   }
 
   /**
-   * Export key to base64 string
+   * Convert ArrayBuffer to Base64
+   * @param {ArrayBuffer} buffer - ArrayBuffer to convert
+   * @returns {string} Base64 encoded string
    */
-  async exportKey(key, format = 'pkcs8') {
-    try {
-      const exported = await crypto.subtle.exportKey(format, key);
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(exported)));
-      return base64;
-    } catch (error) {
-      console.error('Key export failed:', error);
-      throw new Error('Failed to export key');
+  arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
+    return btoa(binary);
   }
 
   /**
-   * Import key from base64 string
+   * Convert Base64 to ArrayBuffer
+   * @param {string} base64 - Base64 encoded string
+   * @returns {ArrayBuffer} ArrayBuffer
    */
-  async importKey(base64Key, keyType, keyUsages) {
+  base64ToArrayBuffer(base64) {
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  /**
+   * Convert bytes to number
+   * @param {Uint8Array} bytes - Byte array
+   * @returns {number} Number representation
+   */
+  bytesToNumber(bytes) {
+    let result = 0;
+    for (let i = 0; i < bytes.length; i++) {
+      result = (result * 256) + bytes[i];
+    }
+    return result;
+  }
+
+  /**
+   * Convert number to Base36
+   * @param {number} number - Number to convert
+   * @param {number} length - Desired length of result
+   * @returns {string} Base36 encoded string
+   */
+  numberToBase36(number, length) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    
+    while (number > 0) {
+      result = chars[number % 36] + result;
+      number = Math.floor(number / 36);
+    }
+    
+    // Pad with zeros to desired length
+    while (result.length < length) {
+      result = '0' + result;
+    }
+    
+    // Truncate if too long
+    if (result.length > length) {
+      result = result.slice(-length);
+    }
+    
+    return result;
+  }
+
+  /**
+   * Generate unique key ID
+   * @returns {string} Unique key ID
+   */
+  generateKeyId() {
+    const timestamp = Date.now().toString(36);
+    const random = Math.random().toString(36).substring(2, 8);
+    return `key_${timestamp}_${random}`;
+  }
+
+  /**
+   * Generate random bytes
+   * @param {number} length - Number of bytes to generate
+   * @returns {Uint8Array} Random bytes
+   */
+  generateRandomBytes(length) {
+    return crypto.getRandomValues(new Uint8Array(length));
+  }
+
+  /**
+   * Hash data using SHA-256
+   * @param {string} data - Data to hash
+   * @returns {Promise<string>} Base64 encoded hash
+   */
+  async hashData(data) {
     try {
-      console.log(`Importing ${keyType} key with usages:`, keyUsages);
-      console.log('Base64 key length:', base64Key.length);
-      console.log('Key starts with:', base64Key.substring(0, 20));
-      
-      const binaryString = atob(base64Key);
-      console.log('Binary string length:', binaryString.length);
-      
-      const keyData = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        keyData[i] = binaryString.charCodeAt(i);
-      }
-      
-      console.log('Key data array length:', keyData.length);
-      console.log('First 10 bytes:', Array.from(keyData.slice(0, 10)));
-      
-      const key = await crypto.subtle.importKey(
-        keyType === 'private' ? 'pkcs8' : 'spki',
-        keyData,
-        {
-          name: 'RSA-OAEP',
-          hash: 'SHA-1'
-        },
-        true,
-        keyUsages
-      );
-      
-      console.log('Key import successful');
-      return key;
+      const dataBuffer = new TextEncoder().encode(data);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+      return this.arrayBufferToBase64(hashBuffer);
     } catch (error) {
-      console.error('Key import failed:', error);
-      console.error('Error details:', error);
-      console.error('Key type:', keyType);
-      console.error('Key usages:', keyUsages);
-      throw new Error('Failed to import key: ' + error.message);
+      console.error('AsocialCrypto: Error hashing data:', error);
+      throw new Error('Failed to hash data: ' + error.message);
     }
   }
 }
@@ -308,6 +445,8 @@ class AsocialCrypto {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = AsocialCrypto;
-} else {
+} else if (typeof window !== 'undefined') {
   window.AsocialCrypto = AsocialCrypto;
+} else if (typeof self !== 'undefined') {
+  self.AsocialCrypto = AsocialCrypto;
 }

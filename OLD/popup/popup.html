@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asocial - Encrypted Social Posts</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="logo">
+        <span class="logo-icon">🔒</span>
+        <h1>Asocial</h1>
+      </div>
+      <div class="mode-toggle">
+        <button id="simple-mode" class="mode-btn active">Simple</button>
+        <button id="advanced-mode" class="mode-btn">Advanced</button>
+      </div>
+    </header>
+
+    <!-- Simple Mode -->
+    <div id="simple-mode-content" class="mode-content active">
+      <div class="welcome-section">
+        <h2>Welcome to Asocial!</h2>
+        <p>Cypher squatting tool for encrypted social media posts with maximum security.</p>
+      </div>
+
+      <div class="quick-actions">
+        <button id="create-group-btn" class="primary-btn">
+          <span class="btn-icon">➕</span>
+          Create New Writer Key
+        </button>
+        <button id="import-key-btn" class="secondary-btn">
+          <span class="btn-icon">📥</span>
+          Import Reader Key
+        </button>
+        <button id="switch-user-btn" class="secondary-btn">
+          <span class="btn-icon">🔄</span>
+          Switch KeyStore
+        </button>
+      </div>
+
+      <div class="groups-section">
+        <h3>Your Writer Keys (For Encrypting Your Messages)</h3>
+        <div id="groups-list" class="groups-list">
+          <!-- Groups will be populated here -->
+        </div>
+      </div>
+
+      <div class="reader-keys-section">
+        <h3>Reader Keys (For Decrypting Others' Messages)</h3>
+        <div id="reader-keys-list" class="reader-keys-list">
+          <!-- Reader keys will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Mode -->
+    <div id="advanced-mode-content" class="mode-content">
+      <div class="advanced-section">
+        <h2>Advanced Settings</h2>
+        
+        <div class="settings-group">
+          <h3>Encryption Settings</h3>
+          <div class="setting-item">
+            <label>Key Algorithm:</label>
+            <select id="algorithm-select">
+              <option value="RSA-4096">RSA-4096 (Maximum Security)</option>
+              <option value="ECC-521">ECC-521 (High Security)</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Hash Algorithm:</label>
+            <select id="hash-select">
+              <option value="SHA-512">SHA-512 (Maximum Security)</option>
+              <option value="SHA-256">SHA-256 (High Security)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Key Management</h3>
+          <div class="setting-item">
+            <button id="export-all-keys" class="secondary-btn">Export All Keys</button>
+            <button id="import-keys" class="secondary-btn">Import Keys</button>
+          </div>
+          <div class="setting-item">
+            <button id="backup-keys" class="secondary-btn">Backup Keys</button>
+            <button id="restore-keys" class="secondary-btn">Restore Keys</button>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>Security Settings</h3>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="auto-lock"> Auto-lock after 5 minutes
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="clear-clipboard"> Clear clipboard after key operations
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div id="create-group-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create New Writer Key</h3>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="group-name">Writer Key Name:</label>
+            <input type="text" id="group-name" placeholder="e.g., Family, Work, Close Friends" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label for="group-description">Description (optional):</label>
+            <textarea id="group-description" placeholder="Describe this writer key..." maxlength="200"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancel-create" class="secondary-btn">Cancel</button>
+          <button id="create-group" class="primary-btn">Create Writer Key</button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Import Key Modal -->
+    <div id="import-key-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Import Reader Key</h3>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="import-tabs">
+            <button class="tab-btn active" data-tab="paste">Paste Key</button>
+            <button class="tab-btn" data-tab="qr">QR Code</button>
+            <button class="tab-btn" data-tab="file">File</button>
+          </div>
+          
+          <div id="paste-tab" class="tab-content active">
+            <div class="form-group">
+              <label for="pasted-key">Reader Key:</label>
+              <textarea id="pasted-key" placeholder="Paste the reader key here..." rows="6"></textarea>
+            </div>
+          </div>
+          
+          <div id="qr-tab" class="tab-content">
+            <div class="qr-scanner">
+              <video id="qr-video" width="300" height="200"></video>
+              <div id="qr-result"></div>
+            </div>
+          </div>
+          
+          <div id="file-tab" class="tab-content">
+            <div class="file-upload">
+              <input type="file" id="key-file" accept=".pem,.json,.txt">
+              <label for="key-file" class="file-label">Choose Key File</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancel-import" class="secondary-btn">Cancel</button>
+          <button id="import-key" class="primary-btn">Import Key</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Details Modal -->
+    <div id="group-details-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="group-details-title">Group Details</h3>
+          <button class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="group-info">
+            <div class="info-item">
+              <label>Group Name:</label>
+              <span id="group-details-name"></span>
+            </div>
+            <div class="info-item">
+              <label>Created:</label>
+              <span id="group-details-created"></span>
+            </div>
+            <div class="info-item">
+            </div>
+          </div>
+          
+          
+          <div class="group-actions">
+            <button id="export-group-key" class="secondary-btn">Generate Reader Key</button>
+            <button id="delete-group" class="danger-btn">Delete Writer Key</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Messages -->
+    <div id="status-message" class="status-message"></div>
+  </div>
+
+  <script src="../utils/crypto.js"></script>
+  <script src="../utils/keyManager.js"></script>
+  <script src="../utils/encryptionEngine.js"></script>
+  <script src="../utils/encryptedStorage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

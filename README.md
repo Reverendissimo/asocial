@@ -1,162 +1,298 @@
-# Asocial - Cypher Squatting Tool v2.8
+# 🔒 Asocial - Encrypted Social Posts
 
-A Chrome extension that enables encrypted messaging on ANY website using high security encryption (RSA-2048, AES-256-GCM) with encrypted local storage and multi-user support. **Latest update: Universal clipboard approach with automatic text selection and pasting.**
+A Chrome extension that enables end-to-end encrypted messaging on ANY website using modern cryptography and a clean, maintainable architecture.
 
-## Features
+## ✨ Features
 
-- **High Security Encryption**: RSA-2048 and AES-256-GCM for maximum security
-- **Encrypted Local Storage**: All keys stored in password-protected `.ASoc` files
-- **Multi-User Support**: Separate encrypted vaults for different users
-- **Session Authentication**: Password required each time you open the extension
-- **Writer Key System**: Create writer keys (Family, Work, Close Friends) for encrypting your messages
-- **Reader Key System**: Import reader keys from others to decrypt their messages
-- **Universal Contextual Menu**: Right-click any selected text → "Encrypt with Asocial"
-- **Cross-Platform Support**: Works on LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, and ANY website
-- **Keyboard Shortcut**: Ctrl+Shift+E to automatically select all text and encrypt
-- **Automatic Text Selection**: Ctrl+Shift+E automatically selects all text in current input field
-- **Automatic Pasting**: Encrypted text is automatically pasted after encryption
-- **Automatic Decryption**: Messages are automatically decrypted for authorized users
-- **Simple Text Display**: Decrypted messages show as `[ASOCIAL] decrypted text`
-- **Secure Key Sharing**: Export/import keys with "magic" key IDs for proper decryption
-- **No DOM Breaking**: Simple text replacement that doesn't break websites
+- **Universal Compatibility**: Works on any website with text inputs (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, etc.)
+- **End-to-End Encryption**: ECDSA-256 encryption with PBKDF2 key derivation and AES-256-GCM
+- **Multi-User Support**: Multiple KeyStores with separate encrypted storage
+- **Automatic Workflow**: Ctrl+Shift+E to encrypt, automatic decryption on page load
+- **Hackish Design**: Black and lime green aesthetic with minimal, functional interface
+- **Key Management**: Create, import, export, and manage writer/reader keys
+- **Magic Code System**: 7-character Base36 codes (78.3 billion combinations) for key identification
+- **JSON Export/Import**: Complete key data export with name, private key, and magic code
+- **Auto-Generated Reader Keys**: Writer keys automatically create corresponding reader keys
 
-## Installation
+## 🚀 Quick Start
 
-### Quick Install (Recommended)
-1. Download the latest release: `asocial_v2.8_final.zip`
-2. Extract the zip file
-3. Load the extension in Chrome:
+### Installation
+
+1. **Load the Extension**
    - Open Chrome and go to `chrome://extensions/`
    - Enable "Developer mode"
-   - Click "Load unpacked" and select the extracted folder
+   - Click "Load unpacked" and select this folder
 
-### Development Install
-1. Clone this repository
-2. Install dependencies: `npm install`
-3. Build the extension: `npm run build`
-4. Load the extension in Chrome:
+2. **Create Your First KeyStore**
+   - Click the Asocial icon in your browser toolbar
+   - Click "Create KeyStore"
+   - Enter a name, description, and password
+   - Click "Create KeyStore"
+
+3. **Create Your Keys**
+   - Create a writer key (for encrypting messages you send)
+   - Add a reader key (for decrypting messages you receive)
+
+### Usage
+
+1. **Encrypt Messages**
+   - Type your message in any text input
+   - Press `Ctrl+Shift+E` (or `Cmd+Shift+E` on Mac)
+   - Select your writer key
+   - Message is encrypted and pasted automatically
+
+2. **Decrypt Messages**
+   - Encrypted messages are automatically decrypted on page load
+   - Decrypted messages show with `[ASOCIAL]` prefix and green styling
+   - Only messages you can decrypt (with matching reader keys) are shown
+
+## 🔑 Key Exchange
+
+### Sharing Your Writer Key
+
+1. **Export Your Reader Key**
+   - In the extension popup, find your writer key
+   - Click "Copy Reader Key" button
+   - This exports a complete JSON with name, private key, and magic code
+   - Share this JSON with people you want to send encrypted messages to
+
+2. **They Import Your Key**
+   - They paste the JSON in their extension's "Add Reader Key" section
+   - The system automatically extracts name, private key, and magic code
+   - Now they can decrypt messages you send them
+
+### Receiving Their Reader Key
+
+1. **Get Their Reader Key**
+   - Ask them to export their reader key (JSON format)
+   - They should share the complete JSON with you
+
+2. **Import Their Key**
+   - In your extension, go to Reader Keys section
+   - Click "+ Add Reader Key" and paste the JSON
+   - The system automatically imports with proper name and magic code
+   - Now you can decrypt messages they send you
+
+## 🏗️ Architecture
+
+### Core Components
+
+- **Background Service Worker**: Key storage, encryption, and message handling
+- **Universal Content Script**: Text detection, encryption/decryption, and DOM manipulation
+- **Popup UI**: Single panel design with dynamic DOM manipulation
+- **Crypto Utilities**: WebCrypto API implementation for ECDSA-256, PBKDF2, AES-256-GCM
+
+### Key Features
+
+- **KeyStore Management**: Multiple encrypted storage objects with password protection
+- **Key Generation**: ECDSA-256 key pairs with magic code generation
+- **Message Encryption**: Writer keys for encrypting messages you send
+- **Message Decryption**: Reader keys for decrypting messages you receive
+- **Automatic Workflow**: Keyboard shortcuts and automatic text selection/pasting
+
+## 🔒 Security
+
+### Encryption
+
+- **ECDSA-256**: For message encryption/decryption
+- **PBKDF2**: Key derivation from passwords (100k iterations)
+- **AES-256-GCM**: Symmetric encryption for KeyStore and individual keys
+- **Magic Codes**: Base36, 7-character codes for key identification
+
+### Key Management
+
+- **Worker-Only Access**: Keys are never exposed to the UI
+- **Password Protection**: KeyStores are encrypted with user passwords
+- **Secure Storage**: All keys are encrypted before storage
+- **Memory Management**: Only active KeyStore is kept in memory
+
+### Privacy
+
+- **No Data Collection**: Extension doesn't collect or transmit any data
+- **Local Storage**: All data is stored locally on your device
+- **No Tracking**: No analytics or tracking of any kind
+- **Open Source**: Full source code is available for review
+
+## 📁 Project Structure
+
+```
+asocial/
+├── manifest.json                 # Extension manifest
+├── background/
+│   └── background.js            # Service worker
+├── content/
+│   ├── universal.js            # Universal content script
+│   └── universal.css           # Content script styles
+├── popup/
+│   ├── popup.html              # Popup UI
+│   ├── popup.js                # Popup logic
+│   └── popup.css               # Popup styles
+├── utils/
+│   ├── crypto.js               # Cryptographic utilities
+│   ├── keystore.js             # KeyStore management
+│   ├── keymanager.js           # Key management
+│   └── messagecrypto.js        # Message encryption/decryption
+├── icons/                      # Extension icons
+├── test_extension.html         # Test page
+├── ARCHITECTURE.md             # Detailed architecture
+├── INSTALLATION_GUIDE.md       # Installation instructions
+├── KEY_EXCHANGE_GUIDE.md       # Key exchange guide
+└── README.md                   # This file
+```
+
+## 🧪 Testing
+
+### Test Page
+
+Open `test_extension.html` in your browser to test the extension functionality:
+
+- Test encryption workflow
+- Test decryption workflow
+- Test keyboard shortcuts
+- Test API functionality
+
+### Manual Testing
+
+1. **Create KeyStore**: Test KeyStore creation and authentication
+2. **Create Keys**: Test writer and reader key creation
+3. **Encrypt Messages**: Test message encryption with different keys
+4. **Decrypt Messages**: Test automatic decryption on page load
+5. **Key Exchange**: Test key import/export functionality
+
+## 🔧 Development
+
+### Prerequisites
+
+- Chrome browser with extension development support
+- Basic understanding of Chrome extension development
+- Knowledge of JavaScript and WebCrypto API
+
+### Setup
+
+1. **Clone the Repository**
+   ```bash
+   git clone <repository-url>
+   cd asocial
+   ```
+
+2. **Load in Chrome**
    - Open Chrome and go to `chrome://extensions/`
    - Enable "Developer mode"
    - Click "Load unpacked" and select the project folder
 
-## Usage
+3. **Start Development**
+   - Make changes to the code
+   - Reload the extension to see changes
+   - Use the test page to verify functionality
 
-### First Time Setup (Encrypted Storage)
+### Building
 
-1. **Set Key Storage Name**: Enter your key storage name (cannot be changed)
-2. **Set Password**: Create a strong password for your encrypted storage
-3. **Storage Created**: Your encrypted `.ASoc` storage file is created
-4. **Session Authentication**: Password required each time you open the extension
+The extension is ready to use as-is. For distribution:
 
-### Creating Writer Keys
+1. **Test Thoroughly**: Use the test page and manual testing
+2. **Package Extension**: Use Chrome's "Pack extension" feature
+3. **Submit to Store**: Follow Chrome Web Store submission process
 
-1. Click the Asocial extension icon
-2. Click "Create New Writer Key"
-3. Enter a writer key name (e.g., "Family", "Work", "Close Friends")
-4. The extension will generate one RSA-4096 writer key pair for the group
+## 📚 Documentation
 
-### Sharing Writer Keys
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Detailed technical architecture
+- **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)**: Step-by-step installation guide
+- **[KEY_EXCHANGE_GUIDE.md](KEY_EXCHANGE_GUIDE.md)**: Key exchange and security guide
+- **[TODO.md](TODO.md)**: Development task list and progress
 
-1. In the extension popup, select a group
-2. Click "Export Writer Key"
-3. Share the **same writer key** with all people in the group via:
-   - Export key (includes "magic" key ID for proper decryption)
-   - Copy/paste JSON format
-   - QR code (future feature)
-   - File export (future feature)
+## 🤝 Contributing
 
-### Encrypting Messages
+### Development Process
 
-**Method 1: Keyboard Shortcut (Recommended)**
-1. **Click in any text input field** (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, etc.)
-2. **Press Ctrl+Shift+E** - automatically selects all text and shows encryption modal
-3. **Choose writer key** from the modal
-4. **Text is encrypted and pasted automatically**
+1. **Fork the Repository**: Create your own fork
+2. **Create Feature Branch**: `git checkout -b feature/amazing-feature`
+3. **Make Changes**: Implement your changes
+4. **Test Thoroughly**: Use the test page and manual testing
+5. **Submit Pull Request**: Create a pull request with your changes
 
-**Method 2: Right-Click Menu**
-1. **Select any text** in any input field
-2. **Right-click** → "Encrypt with Asocial"
-3. **Choose writer key** from the modal
-4. **Text is encrypted and pasted automatically**
+### Code Standards
 
-### Decrypting Messages
+- **JavaScript**: Use modern ES6+ features
+- **Comments**: Document complex functions and algorithms
+- **Error Handling**: Implement proper error handling and user feedback
+- **Security**: Follow security best practices for cryptographic operations
 
-- **Decrypted messages** show as `[ASOCIAL] decrypted message text`
-- **Encrypted messages** show as `[ASOCIAL ENCRYPTED] encrypted message text`
-- **Automatic decryption** if you have the correct reader key
-- **Simple text display** that doesn't break websites
+## 🐛 Troubleshooting
 
-## Security Features
+### Common Issues
 
-- **RSA-2048 Encryption**: Strong RSA key strength for high security
-- **AES-256-GCM**: Advanced symmetric encryption with authentication
-- **Secure Key Sharing**: Keys include "magic" key IDs for proper decryption
-- **URL Security**: No encrypted content exposure in share URLs
-- **CSP Compliance**: Follows LinkedIn's Content Security Policy
-- **Argon2id Key Derivation**: Secure key derivation from passphrases
-- **SHA-512 Hashing**: Maximum hash security for signatures
-- **Local Key Storage**: Keys never leave your device
-- **End-to-End Encryption**: Only intended recipients can decrypt
+1. **Extension Not Working**
+   - Check if extension is enabled
+   - Reload the extension and try again
+   - Check browser console for errors
 
-## Architecture
+2. **Encryption Not Working**
+   - Make sure you have writer keys available
+   - Check keyboard shortcut (Ctrl+Shift+E)
+   - Verify text is selected before pressing shortcut
 
-- **Manifest V3**: Latest Chrome extension standard
-- **WebCrypto API**: Browser-native cryptographic functions
-- **Content Scripts**: Platform-specific integration
-- **Background Service Worker**: Extension lifecycle management
-- **Popup Interface**: Key management and settings
+3. **Decryption Not Working**
+   - Make sure you have reader keys for the messages
+   - Check if the message format is correct
+   - Verify the sender's key is in your reader keys
 
-## Development
+### Getting Help
 
-```bash
-# Install dependencies
-npm install
+1. **Check Console**: Press F12 and look for error messages
+2. **Test Page**: Use the included test page to isolate issues
+3. **Documentation**: Check the guides for detailed instructions
+4. **Report Issues**: Create an issue with detailed information
 
-# Development build with watch
-npm run dev
+## 📄 License
 
-# Production build
-npm run build
+This project is open source and available under the MIT License.
 
-# Run tests
-npm test
+## 🙏 Acknowledgments
 
-# Lint code
-npm run lint
+- **WebCrypto API**: For modern cryptographic operations
+- **Chrome Extension APIs**: For browser integration
+- **ECDSA-256**: For secure key pair generation
+- **PBKDF2**: For secure key derivation
+- **AES-256-GCM**: For authenticated encryption
 
-# Format code
-npm run format
+## 🎯 Roadmap
 
-# Package for distribution
-npm run package
-```
+### Future Features
 
-## Supported Platforms
+- **Mobile Support**: iOS and Android versions
+- **Key Synchronization**: Secure key sync across devices
+- **Group Management**: Advanced group key management
+- **Message History**: Encrypted message history
+- **Advanced Security**: Additional security features
 
-- ✅ **LinkedIn** (Fully implemented)
-- 🚧 **Facebook** (Planned)
-- 🚧 **Twitter** (Planned)
+### Known Limitations
 
-## Security Considerations
+- **Chrome Only**: Currently only works in Chrome-based browsers
+- **Local Storage**: Keys are not synced across devices
+- **Manual Key Exchange**: Keys must be exchanged manually
+- **Text Only**: Currently only supports text messages
 
-- All encryption is performed client-side
-- Private keys are never transmitted
-- Keys are encrypted with master passphrase
-- No server-side key storage
-- Open source for security auditing
+## 🔒 Security Notice
 
-## Contributing
+This extension is designed for educational and personal use. While it implements strong cryptographic practices, users should:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+- **Understand the Risks**: Encryption is only as strong as your key management
+- **Keep Keys Secure**: Protect your private keys and passwords
+- **Regular Backups**: Backup your keys regularly
+- **Stay Updated**: Keep the extension updated for security patches
 
-## License
+## 📞 Support
 
-MIT License - see LICENSE file for details
+For support, issues, or questions:
 
-## Support
+1. **Check Documentation**: Review the guides and architecture
+2. **Test Page**: Use the test page to verify functionality
+3. **Console Logs**: Check browser console for error messages
+4. **Create Issue**: Submit detailed issue reports
 
-For issues and feature requests, please use the GitHub Issues page.
+---
+
+**Happy Encrypted Communicating! 🔒**
+
+*Asocial - Keep your social media posts private and secure.*
+

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asocial Extension Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .test-message {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 Asocial Extension Test Page</h1>
+    
+    <div class="instructions">
+        <h3>Testing Instructions:</h3>
+        <ol>
+            <li>Make sure the Asocial extension is installed and enabled</li>
+            <li>Open the extension popup and create a KeyStore</li>
+            <li>Create a writer key and a reader key</li>
+            <li>Test the encryption workflow below</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Text Input Test</h3>
+        <p>Type some text here and press <strong>Ctrl+Shift+E</strong> to encrypt it:</p>
+        <textarea id="test-textarea" rows="4" placeholder="Type your message here, then press Ctrl+Shift+E to encrypt..."></textarea>
+        <input type="text" id="test-input" placeholder="Or type here and press Ctrl+Shift+E...">
+    </div>
+
+    <div class="test-section">
+        <h3>💬 Social Media Simulation</h3>
+        <p>Simulate a social media post:</p>
+        <div class="test-message">
+            <strong>John Doe</strong> - 2 hours ago<br>
+            <span id="social-post">This is a test message. Try encrypting it with Ctrl+Shift+E!</span>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 Decryption Test</h3>
+        <p>If you see encrypted messages below, they should be automatically decrypted:</p>
+        <div id="encrypted-content">
+            <p>No encrypted content detected yet. Create some encrypted messages first!</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h3>🧪 Manual Test</h3>
+        <button onclick="testEncryption()">Test Encryption API</button>
+        <button onclick="testDecryption()">Test Decryption API</button>
+        <button onclick="testKeyStore()">Test KeyStore API</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Test functions
+        async function testEncryption() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing encryption API...</p>';
+            
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'encryptMessage',
+                    text: 'Test message for encryption',
+                    writerKeyId: 'test-key'
+                });
+                
+                results.innerHTML = `<p>Encryption test result: ${JSON.stringify(response)}</p>`;
+            } catch (error) {
+                results.innerHTML = `<p>Encryption test error: ${error.message}</p>`;
+            }
+        }
+
+        async function testDecryption() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing decryption API...</p>';
+            
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'decryptMessage',
+                    encryptedText: '[ASOCIAL TEST123] encrypted_data_here'
+                });
+                
+                results.innerHTML = `<p>Decryption test result: ${JSON.stringify(response)}</p>`;
+            } catch (error) {
+                results.innerHTML = `<p>Decryption test error: ${error.message}</p>`;
+            }
+        }
+
+        async function testKeyStore() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '<p>Testing KeyStore API...</p>';
+            
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    action: 'getActiveKeyStore'
+                });
+                
+                results.innerHTML = `<p>KeyStore test result: ${JSON.stringify(response)}</p>`;
+            } catch (error) {
+                results.innerHTML = `<p>KeyStore test error: ${error.message}</p>`;
+            }
+        }
+
+        // Listen for extension messages
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            console.log('Test page received message:', message);
+            if (message.action === 'showEncryptionModal') {
+                console.log('Encryption modal requested for text:', message.selectedText);
+            }
+        });
+
+        // Add some test encrypted content
+        setTimeout(() => {
+            const encryptedDiv = document.getElementById('encrypted-content');
+            encryptedDiv.innerHTML = `
+                <p><strong>Test Encrypted Messages:</strong></p>
+                <p>[ASOCIAL TEST123] This is a test encrypted message that should be decrypted automatically.</p>
+                <p>[ASOCIAL ABC1234] Another test message with different magic code.</p>
+                <p>This is a regular message that should not be affected.</p>
+            `;
+        }, 2000);
+    </script>
+</body>
+</html>
+

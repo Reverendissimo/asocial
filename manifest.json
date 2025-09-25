@@ -1,49 +1,47 @@
 {
   "manifest_version": 3,
-  "name": "Asocial - Cypher Squatting Tool",
+  "name": "Asocial - Encrypted Social Posts",
   "version": "1.0.0",
-  "description": "Encrypt your social media posts with encrypted local storage and multi-user support using maximum security encryption",
+  "description": "Encrypt your social media posts with end-to-end encryption. Works on any website with text inputs.",
+  
   "permissions": [
-    "activeTab",
     "storage",
-    "clipboardWrite",
-    "clipboardRead",
-    "scripting",
-    "contextMenus"
+    "activeTab",
+    "scripting"
   ],
+  
   "host_permissions": [
     "<all_urls>"
   ],
+  
   "background": {
     "service_worker": "background/background.js"
   },
+  
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": [
-        "utils/debug.js",
-        "utils/crypto.js",
-        "utils/keyManager.js", 
-        "utils/encryptionEngine.js",
-        "utils/encryptedStorage.js",
-        "content/universal.js"
-      ],
+      "js": ["content/universal.js"],
       "css": ["content/universal.css"],
       "run_at": "document_end"
     }
   ],
+  
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Asocial - Cypher Squatting Tool"
+    "default_title": "Asocial - Encrypted Social Posts"
   },
+  
   "icons": {
-    "16": "assets/icon16.png",
-    "48": "assets/icon48.png",
-    "128": "assets/icon128.png"
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
+  
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "utils/*", "content/*"],
+      "resources": ["content/*.css"],
       "matches": ["<all_urls>"]
     }
   ],
