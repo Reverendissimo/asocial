@@ -15,7 +15,6 @@ class AsocialEncryptionEngine {
    */
   async encryptMessage(message, writerKey) {
     try {
-      console.log(`Encrypting message with writer key: ${writerKey.name}`);
       
       // Validate message size (LinkedIn limit: 3000 chars)
       if (message.length > 3000) {
@@ -58,7 +57,6 @@ class AsocialEncryptionEngine {
         throw new Error(`Encrypted message too long (${encryptedMessage.length} chars). Try a shorter message.`);
       }
       
-      console.log(`Message encrypted successfully (${encryptedMessage.length} chars)`);
       return encryptedMessage;
     } catch (error) {
       console.error('Encryption failed:', error);
@@ -71,19 +69,13 @@ class AsocialEncryptionEngine {
    */
   async decryptMessage(encryptedMessage) {
     try {
-      console.log('Attempting to decrypt message');
-      console.log('Full message content:', encryptedMessage);
-      console.log('Message length:', encryptedMessage.length);
       
       // Check if message has our tag and extract key ID (more flexible regex)
       const tagMatch = encryptedMessage.match(/\[ASOCIAL\s+([A-Z0-9]+)\]/);
-      console.log('Tag match result:', tagMatch);
       
       // Also try alternative patterns
       const altMatch1 = encryptedMessage.match(/\[ASOCIAL\s([A-Z0-9]+)\]/);
       const altMatch2 = encryptedMessage.match(/\[ASOCIAL\s*([A-Z0-9]+)\]/);
-      console.log('Alternative match 1:', altMatch1);
-      console.log('Alternative match 2:', altMatch2);
       
       // Use the first successful match
       const finalMatch = tagMatch || altMatch1 || altMatch2;
@@ -96,7 +88,6 @@ class AsocialEncryptionEngine {
       }
       
       const keyId = finalMatch[1];
-      console.log(`Message encrypted with key ID: ${keyId}`);
       
       // Extract payload
       const payloadStart = encryptedMessage.indexOf('] ') + 2;
@@ -113,20 +104,11 @@ class AsocialEncryptionEngine {
       }
       
       // First try to find a reader key with matching key ID
-      console.log(`Looking for reader key with key ID: ${keyId}`);
-      
-      // Debug: List all available reader keys
-      const allReaderKeys = await this.keyManager.getReaderKeys();
-      console.log('All available reader keys:', allReaderKeys);
-      console.log('Reader key IDs:', allReaderKeys.map(key => key.keyId));
-      
       const readerKey = await this.keyManager.getReaderKeyByKeyId(keyId);
-      console.log('Reader key found:', readerKey);
       
       let privateKey, keySource;
       
       if (readerKey) {
-        console.log(`Found matching reader key: ${readerKey.senderName} (${readerKey.keyId})`);
         // Import the reader's private key
         privateKey = await this.crypto.importKey(readerKey.privateKey, 'private', ['decrypt']);
         keySource = { type: 'reader', name: readerKey.senderName, id: readerKey.id };
@@ -139,7 +121,6 @@ class AsocialEncryptionEngine {
           throw new Error(`No key found for key ID: ${keyId}`);
         }
         
-        console.log(`Found matching group: ${matchingGroup.name} (${matchingGroup.keyId})`);
         privateKey = await this.keyManager.getPrivateKeyForGroup(matchingGroup.id);
         keySource = { type: 'group', name: matchingGroup.name, id: matchingGroup.id };
       }
@@ -160,7 +141,6 @@ class AsocialEncryptionEngine {
         );
         
         // Skip signature verification since we're not using signatures with RSA-OAEP
-        console.log(`✅ Message decrypted successfully with ${keySource.type}: ${keySource.name}`);
         return {
           message: decryptedMessage,
           groupName: keySource.name,
@@ -217,28 +197,19 @@ class AsocialEncryptionEngine {
     
     for (const selector of postSelectors) {
       const elements = document.querySelectorAll(selector);
-      console.log(`Checking selector "${selector}": found ${elements.length} elements`);
       
       for (const element of elements) {
-        // Log element details for debugging
-        console.log(`Element classes: ${element.className}, text: ${element.textContent.substring(0, 50)}...`);
-        
         if (element.textContent && element.textContent.includes(this.messageTagPrefix)) {
-          console.log(`Found potential encrypted message in ${selector}:`, element.textContent.substring(0, 100));
           
           // Check if already processed
           if (element.classList.contains('asocial-processed')) {
-            console.log('Message already processed, skipping');
             continue;
           }
           
           // Check if this is actually an encrypted message (starts with [ASOCIAL)
           if (!element.textContent.trim().startsWith('[ASOCIAL')) {
-            console.log('Message does not start with [ASOCIAL, skipping');
             continue;
           }
-          
-          console.log('Adding encrypted message to processing queue');
           messages.push({
             node: element,
             text: element.textContent,
@@ -266,28 +237,20 @@ class AsocialEncryptionEngine {
     }
     
     // Final fallback: check ALL p elements on the page
-    console.log('Running final fallback: checking ALL p elements on page');
     const allPElements = document.querySelectorAll('p');
-    console.log(`Found ${allPElements.length} total p elements on page`);
     
     for (const pElement of allPElements) {
       if (pElement.textContent && pElement.textContent.includes(this.messageTagPrefix)) {
-        console.log(`FALLBACK: Found encrypted message in p element with classes: ${pElement.className}`);
-        console.log(`FALLBACK: Message content: ${pElement.textContent.substring(0, 100)}`);
         
         // Check if already processed
         if (pElement.classList.contains('asocial-processed')) {
-          console.log('FALLBACK: Message already processed, skipping');
           continue;
         }
         
         // Check if this is actually an encrypted message (starts with [ASOCIAL)
         if (!pElement.textContent.trim().startsWith('[ASOCIAL')) {
-          console.log('FALLBACK: Message does not start with [ASOCIAL, skipping');
           continue;
         }
-        
-        console.log('FALLBACK: Adding encrypted message to processing queue');
         messages.push({
           node: pElement,
           text: pElement.textContent,
@@ -355,30 +318,21 @@ class AsocialEncryptionEngine {
           
           // Add event listener after the element is in the DOM
           const toggleButton = replacement.querySelector('.asocial-toggle');
-          console.log('Toggle button found:', toggleButton);
           if (toggleButton) {
-            console.log('Adding click listener to toggle button');
             toggleButton.addEventListener('click', (e) => {
-              console.log('Toggle button clicked!');
               e.preventDefault();
               e.stopPropagation();
               
               const encryptedDiv = replacement.querySelector('.asocial-encrypted');
-              console.log('Encrypted div found:', encryptedDiv);
               if (encryptedDiv) {
                 if (encryptedDiv.textContent === '') {
-                  console.log('Loading encrypted content...');
                   encryptedDiv.textContent = replacement.getAttribute('data-encrypted-content');
                 }
                 replacement.classList.toggle('show-encrypted');
-                console.log('Toggled show-encrypted class:', replacement.classList.contains('show-encrypted'));
-                console.log('Element classes:', replacement.className);
-                console.log('Encrypted div display style:', getComputedStyle(encryptedDiv).display);
                 
                 // Update button text
                 const buttonText = replacement.classList.contains('show-encrypted') ? 'Hide Encrypted' : 'Show Encrypted';
                 toggleButton.textContent = buttonText;
-                console.log('Updated button text to:', buttonText);
               }
             });
           } else {
@@ -400,30 +354,21 @@ class AsocialEncryptionEngine {
           
           // Add event listener after the element is in the DOM
           const toggleButton = replacement.querySelector('.asocial-toggle');
-          console.log('Toggle button found (text node):', toggleButton);
           if (toggleButton) {
-            console.log('Adding click listener to toggle button (text node)');
             toggleButton.addEventListener('click', (e) => {
-              console.log('Toggle button clicked (text node)!');
               e.preventDefault();
               e.stopPropagation();
               
               const encryptedDiv = replacement.querySelector('.asocial-encrypted');
-              console.log('Encrypted div found (text node):', encryptedDiv);
               if (encryptedDiv) {
                 if (encryptedDiv.textContent === '') {
-                  console.log('Loading encrypted content (text node)...');
                   encryptedDiv.textContent = replacement.getAttribute('data-encrypted-content');
                 }
                 replacement.classList.toggle('show-encrypted');
-                console.log('Toggled show-encrypted class (text node):', replacement.classList.contains('show-encrypted'));
-                console.log('Element classes:', replacement.className);
-                console.log('Encrypted div display style:', getComputedStyle(encryptedDiv).display);
                 
                 // Update button text
                 const buttonText = replacement.classList.contains('show-encrypted') ? 'Hide Encrypted' : 'Show Encrypted';
                 toggleButton.textContent = buttonText;
-                console.log('Updated button text to (text node):', buttonText);
               }
             });
           } else {

@@ -21,6 +21,7 @@
     {
       "matches": ["<all_urls>"],
       "js": [
+        "utils/debug.js",
         "utils/crypto.js",
         "utils/keyManager.js", 
         "utils/encryptionEngine.js",

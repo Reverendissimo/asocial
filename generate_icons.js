@@ -1,3 +1,19 @@
+/**
+ * Icon Generation Utility - UNUSED (development tool)
+ * 
+ * COMMENTED OUT: This is a development utility for generating icons
+ * Keep for testing purposes - can be uncommented if icon generation is needed
+ */
+
+/*
+/**
+ * Icon Generation Utility - UNUSED (development tool)
+ * 
+ * COMMENTED OUT: This is a development utility for generating icons
+ * Keep for testing purposes - can be uncommented if icon generation is needed
+ */
+
+/*
 const fs = require('fs');
 const path = require('path');
 
@@ -106,3 +122,5 @@ fs.writeFileSync('generate_icons.html', iconHTML);
 console.log('Icon generator created!');
 console.log('Open generate_icons.html in your browser to create and download the icons.');
 console.log('Save them as icon16.png, icon48.png, and icon128.png in the assets/ folder.');
+
+*/

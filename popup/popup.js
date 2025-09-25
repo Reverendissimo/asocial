@@ -5,29 +5,17 @@
 
 class AsocialPopup {
   constructor() {
-    console.log('=== ASOCIAL POPUP CONSTRUCTOR START ===');
     try {
-      console.log('Creating AsocialEncryptedStorage...');
       this.encryptedStorage = new AsocialEncryptedStorage();
-      console.log('AsocialEncryptedStorage created successfully');
-      
-      console.log('Creating AsocialKeyManager...');
       this.keyManager = new AsocialKeyManager();
-      console.log('AsocialKeyManager created successfully');
-      
-      console.log('Creating AsocialCrypto...');
       this.crypto = new AsocialCrypto();
-      console.log('AsocialCrypto created successfully');
       
       this.currentMode = 'simple';
       this.currentWriterKeyId = null;
       
-      console.log('Calling init()...');
       this.init();
-      console.log('=== ASOCIAL POPUP CONSTRUCTOR END ===');
     } catch (error) {
       console.error('Error in AsocialPopup constructor:', error);
-      console.error('Error stack:', error.stack);
       throw error;
     }
   }
@@ -36,109 +24,65 @@ class AsocialPopup {
    * Initialize the popup
    */
   async init() {
-    console.log('Initializing Asocial popup');
-    
     // Wait for authentication state to be properly set
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     try {
       // First restore the session if user is logged in
       const isLoggedIn = await this.encryptedStorage.isLoggedIn();
-      console.log('Authentication check - isLoggedIn:', isLoggedIn);
       
       if (isLoggedIn) {
         // Restore the session
         const currentStorageName = await this.encryptedStorage.getCurrentStorageName();
-        console.log('Restoring session for storage:', currentStorageName);
         
         if (currentStorageName && !this.encryptedStorage.currentStorage) {
           try {
             // Try to restore the storage without password (since we're already logged in)
-            const filename = `asocial_storage_${currentStorageName}.ASoc`;
-            console.log('Attempting to restore storage:', filename);
-            
-            // For now, mark the storage as authenticated but storage needs to be opened
             this.encryptedStorage.currentStorageName = currentStorageName;
-            console.log('Session restored - currentStorageName:', this.encryptedStorage.currentStorageName);
           } catch (error) {
             console.error('Failed to restore storage:', error);
           }
         }
       }
       
-      console.log('After session restore - Current storage name:', this.encryptedStorage.currentStorageName);
-      console.log('After session restore - Current storage:', this.encryptedStorage.currentStorage);
-      
-      // Also check chrome storage directly
-      const chromeStorage = await chrome.storage.local.get(['asocial_current_storage']);
-      console.log('Chrome storage check:', chromeStorage);
-      
       // Check for temporary storage data first
       const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_storage_name']);
-      console.log('Checking for temporary storage data:', tempData);
       
       if (tempData.asocial_temp_storage && tempData.asocial_temp_storage_name) {
-        console.log('Found temporary storage data, restoring session...');
         this.encryptedStorage.currentStorage = tempData.asocial_temp_storage;
         this.encryptedStorage.currentStorageName = tempData.asocial_temp_storage_name;
-        console.log('Session restored from temporary data');
       }
       
       // Check again after session restore
       const finalAuthCheck = isLoggedIn && this.encryptedStorage.currentStorageName;
-      console.log('Final authentication check:', finalAuthCheck);
       
       if (!finalAuthCheck) {
-        console.log('User not authenticated, checking for existing storage files...');
-        
         // Check if there are any existing storage files
         const storageFiles = await this.encryptedStorage.getStorageFiles();
-        console.log('Existing storage files:', storageFiles);
-        
-        if (storageFiles.length > 0) {
-          console.log('Found existing storage files, redirecting to login to select one');
-        } else {
-          console.log('No storage files found, redirecting to login to create one');
-        }
         
         // Redirect to login
         this.redirectToLogin();
         return;
       }
       
-      console.log('User is authenticated, proceeding to main interface');
-      
       // Check if storage is actually open
       if (!this.encryptedStorage.currentStorage) {
-        console.log('Storage not open, checking for temporary data...');
         // Try to restore from temporary storage
         const tempData = await chrome.storage.local.get(['asocial_temp_storage', 'asocial_temp_storage_name']);
-        console.log('Temporary data found:', tempData);
         
         if (tempData.asocial_temp_storage && tempData.asocial_temp_storage_name) {
-          console.log('Restoring storage from temporary data');
           this.encryptedStorage.currentStorage = tempData.asocial_temp_storage;
           this.encryptedStorage.currentStorageName = tempData.asocial_temp_storage_name;
-          
-          // Don't clean up temporary data immediately - keep it for session persistence
-          console.log('Storage restored successfully');
-          console.log('Restored storage:', this.encryptedStorage.currentStorage);
-          console.log('Restored storage name:', this.encryptedStorage.currentStorageName);
         } else {
-          console.log('User is authenticated but storage is not open');
-          console.log('This means the temporary storage data was lost');
-          console.log('Checking if storage file exists...');
-          
           // Check if storage file exists
           const currentStorageName = this.encryptedStorage.currentStorageName;
           if (currentStorageName) {
             const filename = `asocial_storage_${currentStorageName}.ASoc`;
             const storageData = await chrome.storage.local.get([filename]);
             if (storageData[filename]) {
-              console.log('Storage file exists, but user needs to re-authenticate');
-              console.log('Redirecting to login to re-authenticate');
+              // Storage file exists, but user needs to re-authenticate
             } else {
-              console.log('Storage file not found, redirecting to login');
+              // Storage file not found
             }
           }
           
@@ -148,36 +92,20 @@ class AsocialPopup {
       }
       
       // Ensure storage session is maintained
-      console.log('Maintaining storage session...');
-      console.log('Current storage:', this.encryptedStorage.currentStorage);
-      console.log('Current storage name:', this.encryptedStorage.currentStorageName);
-      
-      console.log('Storage is open:', this.encryptedStorage.currentStorage);
       
       // Force popup size
-      console.log('Setting popup size...');
       this.forcePopupSize();
-      console.log('Popup size set');
       
       // Setup event listeners
-      console.log('Setting up event listeners...');
       this.setupEventListeners();
-      console.log('Event listeners set up');
       
       // Load initial data
-      console.log('Loading initial data...');
       await this.loadWriterKeys();
-      console.log('Initial data loaded');
-      console.log('Loading reader keys...');
       await this.loadReaderKeys();
-      console.log('Reader keys loaded');
       
       // Setup mode switching
-      console.log('Setting up mode switching...');
       this.setupModeSwitching();
-      console.log('Mode switching set up');
       
-      console.log('Popup initialized successfully');
       
       // Add cleanup when popup is closed
       window.addEventListener('beforeunload', () => {
@@ -197,7 +125,6 @@ class AsocialPopup {
     try {
       // Only clean up if user is not actively using the extension
       // This prevents the loop issue when switching windows
-      console.log('Popup cleanup - keeping session data for persistence');
     } catch (error) {
       console.error('Failed to cleanup:', error);
     }
@@ -219,7 +146,6 @@ class AsocialPopup {
       container.style.maxWidth = '500px';
     }
     
-    console.log('Forced popup size to 500px');
   }
 
   /**
@@ -227,11 +153,7 @@ class AsocialPopup {
    */
   setupEventListeners() {
     try {
-    // Mode switching
-      const simpleMode = document.getElementById('simple-mode');
-      const advancedMode = document.getElementById('advanced-mode');
-      if (simpleMode) simpleMode.addEventListener('click', () => this.switchMode('simple'));
-      if (advancedMode) advancedMode.addEventListener('click', () => this.switchMode('advanced'));
+    // Mode switching is handled in setupModeSwitching() method
     
     // Quick actions
       const createGroupBtn = document.getElementById('create-group-btn');
@@ -277,7 +199,6 @@ class AsocialPopup {
       if (backupKeys) backupKeys.addEventListener('click', () => this.backupKeys());
       if (restoreKeys) restoreKeys.addEventListener('click', () => this.restoreKeys());
       
-      console.log('Event listeners setup successfully');
     } catch (error) {
       console.error('Failed to setup event listeners:', error);
     }
@@ -327,7 +248,6 @@ class AsocialPopup {
       
       // Clean up temporary storage data
       await chrome.storage.local.remove(['asocial_temp_storage', 'asocial_temp_user']);
-      console.log('Temporary storage data cleaned up');
       
       // Redirect to login
       this.redirectToLogin();
@@ -794,11 +714,8 @@ class AsocialPopup {
 
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('=== POPUP DOM LOADED ===');
   try {
-    console.log('Creating AsocialPopup instance...');
     window.popup = new AsocialPopup();
-    console.log('AsocialPopup instance created successfully');
   } catch (error) {
     console.error('Failed to initialize popup:', error);
     console.error('Error stack:', error.stack);

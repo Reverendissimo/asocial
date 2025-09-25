@@ -1,4 +1,13 @@
 /**
+ * LinkedIn Asocial Styles - UNUSED (replaced by universal.css)
+ * Matches LinkedIn's design language
+ * 
+ * COMMENTED OUT: This file is no longer used since we switched to universal content script
+ * Keep for testing purposes - can be uncommented if LinkedIn-specific styling is needed
+ */
+
+/*
+/**
  * LinkedIn Asocial Styles
  * Matches LinkedIn's design language
  */
@@ -298,3 +307,5 @@
     color: #00ff00 !important;
   }
 }
+
+*/

@@ -1,7 +1,12 @@
 /**
- * LinkedIn Content Script
+ * LinkedIn Content Script - UNUSED (replaced by universal.js)
  * Injects "Be Asocial" button and handles encryption/decryption
+ * 
+ * COMMENTED OUT: This file is no longer used since we switched to universal content script
+ * Keep for testing purposes - can be uncommented if LinkedIn-specific functionality is needed
  */
+
+/*
 
 class LinkedInAsocial {
   constructor() {
@@ -16,20 +21,14 @@ class LinkedInAsocial {
    */
   async init() {
     if (this.isInitialized) {
-      console.log('Already initialized, skipping');
       return;
     }
-    
-    console.log('Initializing LinkedIn Asocial integration');
-    console.log('Document ready state:', document.readyState);
     
     try {
       // Wait for page to be ready
       if (document.readyState === 'loading') {
-        console.log('Document still loading, waiting for DOMContentLoaded');
         document.addEventListener('DOMContentLoaded', () => this.setup());
       } else {
-        console.log('Document already ready, setting up immediately');
         this.setup();
       }
       
@@ -43,7 +42,6 @@ class LinkedInAsocial {
    * Setup LinkedIn integration
    */
   async setup() {
-    console.log('Setting up LinkedIn integration...');
     
     // Inject "Be Asocial" buttons
     this.injectAsocialButtons();
@@ -56,20 +54,16 @@ class LinkedInAsocial {
     
     // Add a fallback retry mechanism
     setTimeout(() => {
-      console.log('Fallback: Checking for buttons after 3 seconds...');
       const existingButtons = document.querySelectorAll('.asocial-button');
       if (existingButtons.length === 0) {
-        console.log('No buttons found, retrying injection...');
         this.injectAsocialButtons();
       }
     }, 3000);
     
     // Add another retry after 6 seconds
     setTimeout(() => {
-      console.log('Fallback: Checking for buttons after 6 seconds...');
       const existingButtons = document.querySelectorAll('.asocial-button');
       if (existingButtons.length === 0) {
-        console.log('No buttons found, retrying injection again...');
         this.injectAsocialButtons();
       }
     }, 6000);
@@ -80,12 +74,9 @@ class LinkedInAsocial {
       const buttons = document.querySelectorAll('.asocial-button');
       
       if (inputs.length > 0 && buttons.length === 0) {
-        console.log('Periodic check: Found inputs but no buttons, re-injecting...');
         this.injectAsocialButtons();
       }
     }, 10000);
-    
-    console.log('LinkedIn Asocial integration setup complete');
   }
 
   /**
@@ -94,18 +85,14 @@ class LinkedInAsocial {
   injectAsocialButtons() {
     // Prevent multiple simultaneous injections
     if (this.injecting) {
-      console.log('Already injecting buttons, skipping');
       return;
     }
     
     this.injecting = true;
     
     try {
-      console.log('Starting button injection...');
-      
       // Remove all existing buttons first to prevent duplicates
       const existingButtons = document.querySelectorAll('.asocial-button');
-      console.log(`Removing ${existingButtons.length} existing buttons`);
       existingButtons.forEach(button => {
         if (button.parentNode) {
           button.parentNode.removeChild(button);
@@ -114,19 +101,14 @@ class LinkedInAsocial {
       
     // Find LinkedIn post input areas
     const postInputs = this.findLinkedInPostInputs();
-      console.log(`Found ${postInputs.length} input areas`);
       
       if (postInputs.length === 0) {
-        console.log('No input areas found, will retry later');
         return;
       }
     
     for (const input of postInputs) {
-        console.log('Creating button for input:', input);
       this.createAsocialButton(input);
       }
-      
-      console.log('Button injection completed');
     } catch (error) {
       console.error('Error during button injection:', error);
     } finally {
@@ -151,7 +133,6 @@ class LinkedInAsocial {
     const inputs = [];
     for (const selector of selectors) {
       const elements = document.querySelectorAll(selector);
-      console.log(`Selector "${selector}" found ${elements.length} elements`);
       
       // Filter out hidden or invalid elements
       const validElements = Array.from(elements).filter(el => {
@@ -176,7 +157,6 @@ class LinkedInAsocial {
     // Remove duplicates
     const uniqueInputs = [...new Set(inputs)];
     
-    console.log(`Total valid input areas found: ${uniqueInputs.length}`);
     return uniqueInputs;
   }
 
@@ -184,7 +164,6 @@ class LinkedInAsocial {
    * Create "Be Asocial" button for input area
    */
   createAsocialButton(inputArea) {
-    console.log('Creating button for input area:', inputArea);
     
     const button = document.createElement('button');
     button.className = 'asocial-button';
@@ -230,14 +209,12 @@ class LinkedInAsocial {
     // Insert button next to input area
     this.insertButtonNextToInput(inputArea, button);
     
-    console.log('Button created and inserted successfully');
   }
 
   /**
    * Insert button next to input area
    */
   insertButtonNextToInput(inputArea, button) {
-    console.log('Inserting button next to input area:', inputArea);
     
     // Find the parent container with multiple fallbacks
     let container = inputArea.closest('.ql-toolbar') || 
@@ -250,7 +227,6 @@ class LinkedInAsocial {
                    inputArea.closest('[class*="input"]') ||
                    inputArea.parentElement;
     
-    console.log('Found container:', container);
     
     if (container) {
       // Create wrapper for button
@@ -261,7 +237,6 @@ class LinkedInAsocial {
       
       // Insert after the input area
       container.appendChild(wrapper);
-      console.log('Button inserted successfully into container');
     } else {
       console.error('No suitable container found for button insertion');
       // Fallback: try to insert directly after the input area
@@ -271,7 +246,6 @@ class LinkedInAsocial {
         wrapper.style.cssText = 'display: inline-block; margin-left: 8px;';
         wrapper.appendChild(button);
         inputArea.parentNode.insertBefore(wrapper, inputArea.nextSibling);
-        console.log('Button inserted using fallback method');
       }
     }
   }
@@ -281,7 +255,6 @@ class LinkedInAsocial {
    */
   async handleAsocialClick(inputArea, button) {
     try {
-      console.log('Be Asocial button clicked');
       
       // Show the encryption modal
       const result = await this.showEncryptionModal(inputArea);
@@ -311,7 +284,6 @@ class LinkedInAsocial {
       setTimeout(() => {
         const currentContent = this.extractMessageContent(inputArea);
         if (!currentContent || currentContent.trim() === '') {
-          console.log('Content disappeared, restoring once...');
           // Use a more gentle approach to avoid triggering LinkedIn's observers
           if (inputArea.contentEditable === 'true') {
             inputArea.innerHTML = encryptedMessage;
@@ -359,7 +331,6 @@ class LinkedInAsocial {
    */
   insertTextSafely(inputArea, text) {
     try {
-      console.log('Using execCommand to safely insert text');
       
       // Focus the input first
       inputArea.focus();
@@ -385,9 +356,8 @@ class LinkedInAsocial {
       const success = document.execCommand('insertText', false, text);
       
       if (success) {
-        console.log('Text inserted successfully with execCommand');
+        // Text inserted successfully
       } else {
-        console.log('execCommand failed, using fallback');
         // Fallback: set content directly
         if (inputArea.contentEditable === 'true') {
           inputArea.textContent = text;
@@ -466,7 +436,6 @@ class LinkedInAsocial {
    */
   async simulateTyping(inputArea, text) {
     try {
-      console.log('Using execCommand with proper event triggering for LinkedIn');
       
       // Focus the input first
       inputArea.focus();
@@ -482,7 +451,6 @@ class LinkedInAsocial {
       const success = document.execCommand('insertText', false, text);
       
       if (success) {
-        console.log('Text inserted with execCommand');
         
         // Now trigger the specific events that LinkedIn's React components need
         // Trigger input event with proper data
@@ -523,7 +491,6 @@ class LinkedInAsocial {
         }, 50);
         
       } else {
-        console.log('execCommand failed, using direct content setting');
         // Fallback: set content directly
         if (inputArea.contentEditable === 'true') {
           inputArea.textContent = text;
@@ -548,7 +515,6 @@ class LinkedInAsocial {
         sel.addRange(range);
       }
       
-      console.log('Events dispatched successfully');
       
     } catch (error) {
       console.error('Error with execCommand approach:', error);
@@ -562,7 +528,6 @@ class LinkedInAsocial {
    */
   replaceInputContentGentle(inputArea, newContent) {
     try {
-      console.log('Using gentle content replacement for messaging');
       
       // For messaging, we need to be very careful not to break LinkedIn's state
       if (inputArea.contentEditable === 'true') {
@@ -838,9 +803,8 @@ class LinkedInAsocial {
    */
   async showKeyGroupSelection() {
     return new Promise(async (resolve) => {
-      try {
-        console.log('Getting writer keys from new storage...');
-        // Get writer keys from the new encrypted storage
+        try {
+          // Get writer keys from the new encrypted storage
         const result = await chrome.storage.local.get(['asocial_temp_storage']);
         const tempStorage = result.asocial_temp_storage;
         
@@ -854,7 +818,6 @@ class LinkedInAsocial {
           ...group,
           storageName: tempStorage.storageName || 'Unknown'
         }));
-        console.log('Found writer keys:', groups);
       
       if (groups.length === 0) {
           this.showNotification('No writer keys found. Please create one in the extension popup.', 'error');
@@ -992,22 +955,16 @@ class LinkedInAsocial {
    */
   async decryptExistingMessages() {
     try {
-      console.log('Looking for encrypted messages...');
       const encryptedMessages = this.encryptionEngine.detectEncryptedMessages();
-      console.log(`Found ${encryptedMessages.length} encrypted messages`);
       
       for (const message of encryptedMessages) {
         try {
-          console.log('Attempting to decrypt message:', message.text.substring(0, 100) + '...');
           const decrypted = await this.encryptionEngine.decryptMessage(message.text);
-          console.log('Successfully decrypted message');
           await this.encryptionEngine.replaceEncryptedMessage(message.node, decrypted.message);
         } catch (error) {
           if (error.message.includes('Not an Asocial encrypted message')) {
-            console.log('Skipping non-encrypted message');
             continue;
           }
-          console.log('Cannot decrypt message:', error.message);
           this.encryptionEngine.showCannotDecryptMessage(message.node);
         }
       }
@@ -1020,7 +977,6 @@ class LinkedInAsocial {
    * Setup mutation observer for dynamic content
    */
   setupMutationObserver() {
-    console.log('Setting up mutation observer...');
     
     this.observer = new MutationObserver((mutations) => {
       let shouldUpdate = false;
@@ -1033,7 +989,6 @@ class LinkedInAsocial {
               // Look for new post input areas - be more comprehensive
               const inputs = node.querySelectorAll('.ql-editor[contenteditable="true"]:not(.ql-clipboard)');
               if (inputs.length > 0) {
-                console.log(`Mutation observer found ${inputs.length} new input areas`);
                 shouldUpdate = true;
               }
               
@@ -1041,13 +996,11 @@ class LinkedInAsocial {
               if (node.classList && node.classList.contains('ql-editor') && 
                   node.getAttribute('contenteditable') === 'true' && 
                   !node.classList.contains('ql-clipboard')) {
-                console.log('Mutation observer found direct input area');
                 shouldUpdate = true;
               }
               
               // Look for encrypted messages in feed posts
       if (node.textContent && node.textContent.includes('[ASOCIAL')) {
-                console.log('Mutation observer found encrypted message');
         shouldUpdate = true;
       }
             }
@@ -1059,7 +1012,6 @@ class LinkedInAsocial {
         // Debounce updates to prevent multiple rapid calls
         clearTimeout(this.updateTimeout);
         this.updateTimeout = setTimeout(() => {
-          console.log('Updating LinkedIn integration...');
           this.injectAsocialButtons();
           // Only decrypt if we're not in the middle of encryption
           if (!this.injecting) {
@@ -1076,7 +1028,6 @@ class LinkedInAsocial {
       subtree: true // Re-enable subtree to catch input areas
     });
     
-    console.log('Mutation observer setup complete');
   }
 
   /**
@@ -1113,7 +1064,6 @@ class LinkedInAsocial {
    * Manual trigger for button injection (for testing)
    */
   manualInjectButtons() {
-    console.log('Manual button injection triggered');
     this.injectAsocialButtons();
   }
 
@@ -1121,28 +1071,22 @@ class LinkedInAsocial {
    * Force refresh - manually trigger button injection and decryption
    */
   forceRefresh() {
-    console.log('Force refresh triggered');
     this.injectAsocialButtons();
     this.decryptExistingMessages();
   }
 }
 
 // Initialize when script loads
-console.log('LinkedIn content script loading...');
-console.log('Document ready state:', document.readyState);
-console.log('Window location:', window.location.href);
-
 try {
 const linkedinAsocial = new LinkedInAsocial();
-  console.log('LinkedIn content script instance created');
 linkedinAsocial.init();
-  console.log('LinkedIn content script initialization called');
 
   // Expose for manual testing
   window.linkedinAsocial = linkedinAsocial;
-  console.log('LinkedIn Asocial instance exposed as window.linkedinAsocial for manual testing');
 } catch (error) {
   console.error('Failed to initialize LinkedIn content script:', error);
 }
 
 // LinkedIn username detection removed - using storage name instead
+
+*/

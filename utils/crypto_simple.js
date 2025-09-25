@@ -1,4 +1,13 @@
 /**
+ * Asocial Crypto Utilities - UNUSED (simplified version)
+ * Basic RSA encryption for Chrome extensions
+ * 
+ * COMMENTED OUT: This is a simplified crypto implementation
+ * Keep for testing purposes - can be uncommented if simple crypto is needed
+ */
+
+/*
+/**
  * Asocial Crypto Utilities - Simplified Version
  * Basic RSA encryption for Chrome extensions
  */
@@ -324,3 +333,5 @@ class AsocialCrypto {
     }
   }
 }
+
+*/

@@ -1,15 +1,16 @@
 /**
- * Asocial Simplified Storage Manager
- * Handles simple JSON storage with multi-user support (no encryption bullshit)
+ * Asocial Encrypted Storage Manager
+ * Handles encrypted .ASoc file storage with multi-user support
  */
 
 class AsocialEncryptedStorage {
   constructor() {
     this.currentStorageName = null;
     this.currentStorage = null;
-    this.currentPassword = null; // Store password temporarily for saving
+    this.currentPassword = null;
     this.storageKey = 'asocial_current_storage';
     this.storageFilesKey = 'asocial_storage_files';
+    this.debug = window.AsocialDebug || { log: () => {}, error: console.error };
   }
 
   /**
@@ -21,7 +22,7 @@ class AsocialEncryptedStorage {
       const isLoggedIn = result[this.storageKey] !== null && result[this.storageKey] !== undefined;
       return isLoggedIn;
     } catch (error) {
-      console.error('Failed to check storage status:', error);
+      this.debug.error('Failed to check storage status:', error);
       return false;
     }
   }
@@ -34,7 +35,7 @@ class AsocialEncryptedStorage {
       const result = await chrome.storage.local.get([this.storageKey]);
       return result[this.storageKey];
     } catch (error) {
-      console.error('Failed to get current storage name:', error);
+      this.debug.error('Failed to get current storage name:', error);
       return null;
     }
   }

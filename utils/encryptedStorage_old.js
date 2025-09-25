@@ -1,4 +1,13 @@
 /**
+ * Asocial Encrypted Storage Manager - UNUSED (old version)
+ * Handles encrypted .ASoc file storage with multi-user support
+ * 
+ * COMMENTED OUT: This is the old complex encrypted storage implementation
+ * Keep for testing purposes - can be uncommented if complex encryption is needed
+ */
+
+/*
+/**
  * Asocial Encrypted Storage Manager
  * Handles encrypted .ASoc file storage with multi-user support
  */
@@ -711,3 +720,5 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
   window.AsocialEncryptedStorage = AsocialEncryptedStorage;
 }
+
+*/

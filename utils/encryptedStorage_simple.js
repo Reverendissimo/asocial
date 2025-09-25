@@ -1,4 +1,13 @@
 /**
+ * Asocial Simplified Storage Manager - UNUSED (backup version)
+ * Handles simple JSON storage with multi-user support (no encryption bullshit)
+ * 
+ * COMMENTED OUT: This is a backup of the simplified storage implementation
+ * Keep for testing purposes - can be uncommented if simple storage is needed
+ */
+
+/*
+/**
  * Asocial Simplified Storage Manager
  * Handles simple JSON storage with multi-user support (no encryption bullshit)
  */
@@ -314,3 +323,5 @@ class AsocialEncryptedStorage {
     return this.currentStorage !== null && this.currentUser !== null;
   }
 }
+
+*/

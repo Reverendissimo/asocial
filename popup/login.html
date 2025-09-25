@@ -15,15 +15,15 @@
       </div>
     </div>
 
-    <!-- Login Form -->
+    <!-- Open Keystore Form -->
     <div id="login-form" class="login-form active">
-      <h2>Welcome Back</h2>
-      <p>Enter your credentials to access your encrypted storage</p>
+      <h2>Open Keystore</h2>
+      <p>Select your KeyStore file and enter password to access your keys</p>
       
       <div class="form-group">
-        <label for="login-storage-select">Select Storage File:</label>
+        <label for="login-storage-select">Select KeyStore File:</label>
         <select id="login-storage-select" required>
-          <option value="">Loading storage files...</option>
+          <option value="">Loading KeyStore files...</option>
         </select>
       </div>
       
@@ -33,24 +33,21 @@
       </div>
       
       <div class="form-actions">
-        <button id="login-btn" class="primary-btn">Login</button>
-        <button id="switch-user-btn" class="secondary-btn">Switch User</button>
-      </div>
-      
-      <div class="login-footer">
-        <p>No key storage yet? <a href="#" id="create-account-link">Create new storage</a></p>
+        <button id="login-btn" class="primary-btn">Open Keystore</button>
+        <button id="switch-user-btn" class="secondary-btn">Switch KeyStore</button>
+        <button id="create-account-link" class="secondary-btn">Create New KeyStore</button>
       </div>
     </div>
 
     <!-- Create Account Form -->
     <div id="create-account-form" class="login-form">
-      <h2>Create New Storage</h2>
-      <p>Set up your encrypted key storage with name and password</p>
+      <h2>Create New KeyStore</h2>
+      <p>Set up your encrypted KeyStore with name and password</p>
       
       <div class="form-group">
-        <label for="new-username">Key Storage Name:</label>
+        <label for="new-username">KeyStore Name:</label>
         <input type="text" id="new-username" placeholder="e.g., Family, Work, Personal" required>
-        <small>This will be your key storage identity</small>
+        <small>This will be your KeyStore identity</small>
       </div>
       
       <div class="form-group">
@@ -65,22 +62,22 @@
       </div>
       
       <div class="form-actions">
-        <button id="create-account-btn" class="primary-btn">Create Storage</button>
-        <button id="back-to-login-btn" class="secondary-btn">Back to Login</button>
+        <button id="create-account-btn" class="primary-btn">Create KeyStore</button>
+        <button id="back-to-login-btn" class="secondary-btn">Back to Open Keystore</button>
       </div>
     </div>
 
-    <!-- Switch User Form -->
+    <!-- Switch KeyStore Form -->
     <div id="switch-user-form" class="login-form">
-      <h2>Switch User</h2>
-      <p>Select a storage file to open</p>
+      <h2>Switch KeyStore</h2>
+      <p>Select a different KeyStore file to open</p>
       
       <div class="storage-files-list" id="storage-files-list">
-        <!-- Storage files will be populated here -->
+        <!-- KeyStore files will be populated here -->
       </div>
       
       <div class="form-actions">
-        <button id="back-to-login-from-switch-btn" class="secondary-btn">Back to Login</button>
+        <button id="back-to-login-from-switch-btn" class="secondary-btn">Back to Open Keystore</button>
       </div>
     </div>
 

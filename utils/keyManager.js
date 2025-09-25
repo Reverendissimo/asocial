@@ -39,7 +39,6 @@ class AsocialKeyManager {
       // Store group
       await this.storeKeyGroup(groupData);
       
-      console.log(`Key group "${groupName}" created successfully`);
       return groupData;
     } catch (error) {
       console.error('Failed to create key group:', error);
@@ -83,7 +82,6 @@ class AsocialKeyManager {
       const filteredGroups = groups.filter(g => g.id !== groupId);
       await this.storeKeyGroups(filteredGroups);
       
-      console.log(`Key group deleted`);
     } catch (error) {
       console.error('Failed to delete key group:', error);
       throw new Error(`Failed to delete key group: ${error.message}`);
@@ -121,15 +119,12 @@ class AsocialKeyManager {
    */
   async importReaderKey(keyData) {
     try {
-      console.log('Importing reader key');
-      console.log('Key data length:', keyData.length);
       
       let privateKey, keyId, senderName;
       
       // Try to parse as JSON first (for structured key data)
       try {
         const importData = JSON.parse(keyData);
-        console.log('Parsed JSON data:', importData);
         
         if (importData.privateKey) {
           privateKey = importData.privateKey;
@@ -139,24 +134,18 @@ class AsocialKeyManager {
           if (keyId) {
             keyId = keyId.toUpperCase();
           }
-          console.log('Parsed as JSON format with keyId:', keyId);
-          console.log('Sender name from storage:', importData.storageName);
         } else {
           throw new Error('Invalid JSON format - missing privateKey');
         }
       } catch (jsonError) {
         // If JSON parsing fails, treat as raw base64 private key
-        console.log('Not JSON format, treating as raw base64 private key');
         privateKey = keyData.trim();
         senderName = 'Unknown Sender';
         keyId = null; // No key ID for raw keys
-        console.log('Raw key length:', privateKey.length);
       }
       
       // Validate the private key by trying to import it
-      console.log('Validating reader private key...');
       await this.crypto.importKey(privateKey, 'private', ['decrypt']);
-      console.log('Reader private key validation successful');
       
       // Store the reader key independently
       const readerKey = {
@@ -168,7 +157,6 @@ class AsocialKeyManager {
         importedAt: new Date().toISOString()
       };
       
-      console.log(`Reader key imported successfully for ${senderName}`);
       return readerKey;
     } catch (error) {
       console.error('Failed to import reader key:', error);
@@ -181,8 +169,6 @@ class AsocialKeyManager {
    */
   async importGroupPublicKey(keyData, groupName) {
     try {
-      console.log('Importing key data:', keyData.substring(0, 50) + '...');
-      console.log('Key data length:', keyData.length);
       
       let publicKey, groupNameFromData;
       
@@ -191,7 +177,6 @@ class AsocialKeyManager {
       // Try to parse as JSON first (for QR code data)
       try {
         const importData = JSON.parse(keyData);
-        console.log('Parsed JSON data:', importData);
         
         if (importData.privateKey) {
           publicKey = importData.privateKey; // We're importing the private key
@@ -201,26 +186,18 @@ class AsocialKeyManager {
           if (keyId) {
             keyId = keyId.toUpperCase();
           }
-          console.log('Parsed as JSON format with keyId:', keyId);
-          console.log('Group name:', groupNameFromData);
         } else {
           throw new Error('Invalid JSON format - missing privateKey');
         }
       } catch (jsonError) {
         // If JSON parsing fails, treat as raw base64 public key
-        console.log('Not JSON format, treating as raw base64 public key');
         publicKey = keyData.trim();
         groupNameFromData = groupName || 'Imported Group';
         keyId = null; // No key ID for raw keys
-        console.log('Raw key length:', publicKey.length);
-        console.log('Key starts with:', publicKey.substring(0, 20));
-        console.log('Key ends with:', publicKey.substring(publicKey.length - 20));
       }
       
       // Validate the private key by trying to import it
-      console.log('Validating private key...');
       await this.crypto.importKey(publicKey, 'private', ['decrypt']);
-      console.log('Private key validation successful');
       
       return {
         groupName: groupNameFromData,
@@ -238,14 +215,8 @@ class AsocialKeyManager {
    */
   async updateGroupPublicKey(groupId, newPublicKey, importData = null) {
     try {
-      console.log(`Updating public key for group: ${groupId}`);
-      console.log(`New public key length: ${newPublicKey.length}`);
-      
       const groups = await this.getStoredKeyGroups();
-      console.log(`Found ${groups.length} groups`);
-      
       const groupIndex = groups.findIndex(g => g.id === groupId);
-      console.log(`Group index: ${groupIndex}`);
       
       if (groupIndex === -1) {
         console.error('Group not found. Available groups:', groups.map(g => ({ id: g.id, name: g.name })));
@@ -259,20 +230,12 @@ class AsocialKeyManager {
             // Use the imported key ID if available, otherwise generate a new one
             if (importData && importData.keyId) {
               groups[groupIndex].keyId = importData.keyId.toUpperCase();
-              console.log(`Using imported key ID: ${importData.keyId.toUpperCase()}`);
-              console.log(`This means encrypted messages with key ID ${importData.keyId.toUpperCase()} can now be decrypted`);
             } else {
               groups[groupIndex].keyId = this.generateKeyId();
-              console.log(`Generated new key ID: ${groups[groupIndex].keyId}`);
-              console.log(`Note: This new key ID won't match existing encrypted messages`);
             }
-      
-      console.log(`Updated group ${groupId}: old keyId=${oldKeyId}, new keyId=${groups[groupIndex].keyId}`);
       
       // Store the updated groups
       await this.storeKeyGroups(groups);
-      
-      console.log(`Successfully updated public key for group ${groupId}`);
     } catch (error) {
       console.error('Failed to update group public key:', error);
       throw new Error(`Failed to update group public key: ${error.message}`);
@@ -399,18 +362,17 @@ class AsocialKeyManager {
       // Convert to base36 for shorter, more readable format
       const keyId = this.hexToBase36(hashHex.substring(0, 12));
       
-      console.log('Generated key ID:', keyId, 'from factors:', { storageName, groupName, timestamp });
       return keyId;
     } catch (error) {
       console.error('Failed to generate key ID:', error);
       // Fallback to random generation
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let result = '';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
       for (let i = 0; i < 12; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return result;
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    return result;
+  }
   }
 
   /**
@@ -462,7 +424,6 @@ class AsocialKeyManager {
       
       tempStorage.readerKeys.push(readerKey);
       await chrome.storage.local.set({ asocial_temp_storage: tempStorage });
-      console.log('Reader key stored in new storage system');
     } catch (error) {
       console.error('Failed to store reader key:', error);
       throw new Error('Failed to store reader key');
@@ -477,13 +438,11 @@ class AsocialKeyManager {
       // Try new storage system first
       const result = await chrome.storage.local.get(['asocial_temp_storage']);
       if (result.asocial_temp_storage && result.asocial_temp_storage.readerKeys) {
-        console.log('Found reader keys in new storage system:', result.asocial_temp_storage.readerKeys);
         return result.asocial_temp_storage.readerKeys;
       }
       
       // Fallback to old storage system
       const oldResult = await chrome.storage.local.get(['asocial_reader_keys']);
-      console.log('Found reader keys in old storage system:', oldResult.asocial_reader_keys);
       return oldResult.asocial_reader_keys || [];
     } catch (error) {
       console.error('Failed to get stored reader keys:', error);
@@ -508,13 +467,8 @@ class AsocialKeyManager {
    */
   async getReaderKeyByKeyId(keyId) {
     try {
-      console.log(`Looking for reader key with key ID: ${keyId}`);
       const readerKeys = await this.getStoredReaderKeys();
-      console.log('All stored reader keys:', readerKeys);
-      console.log('Reader key IDs:', readerKeys.map(key => key.keyId));
-      
       const foundKey = readerKeys.find(key => key.keyId && key.keyId.toUpperCase() === keyId.toUpperCase());
-      console.log('Found key:', foundKey);
       
       return foundKey;
     } catch (error) {

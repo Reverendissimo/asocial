@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 """
+Create PNG icons for Asocial Chrome Extension - UNUSED (development tool)
+
+COMMENTED OUT: This is a development utility for creating icons
+Keep for testing purposes - can be uncommented if icon creation is needed
+"""
+
+'''
+#!/usr/bin/env python3
+"""
 Create PNG icons for Asocial Chrome Extension
 """
 
@@ -49,4 +58,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+'''
 
