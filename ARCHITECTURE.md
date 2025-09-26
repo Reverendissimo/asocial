@@ -38,7 +38,7 @@ The central component that manages all core functionality:
 #### **Key Types**
 - **Writer Keys**: Public keys for encrypting messages you send
 - **Reader Keys**: Private keys for decrypting messages you receive (auto-generated with writer keys)
-- **Magic Code System**: 7-character Base36 codes for key identification
+- **Magic Code System**: Variable-length Base36 codes for key identification
 - **Key Structure** (in memory):
   ```javascript
   Key = {
@@ -47,7 +47,7 @@ The central component that manages all core functionality:
     type: "writer" | "reader",
     publicKey: "base64_encoded_public_key", // For writer keys
     privateKey: "base64_encoded_private_key", // For reader keys
-    magicCode: "ABC1234", // 7-character Base36 magic code
+    magicCode: "ABC1234", // Variable-length Base36 magic code
     createdAt: "timestamp"
   }
   ```
@@ -225,10 +225,11 @@ Authentication system for KeyStore access (integrated into single panel):
 ### **Key Management**
 - **Magic Code System**: Unique identifiers for automatic key matching
 - **Message Tagging**: `[ASOCIAL MAGIC_CODE] encrypted_content`
-- **Magic Code Generation**: Base36, 7 characters, 78.3 billion combinations
+- **Magic Code Generation**: Base36, variable length for flexibility
 - **Generated from Reader Key**: Magic code derived from reader key for uniqueness
 - **Automatic Decryption**: Key lookup by magic code for fast decryption
 - **Secure Storage**: Encrypted KeyStore files with password protection
+- **✅ WORKING DECRYPTION**: Complete decryption flow with proper key management
 
 ### **Multi-KeyStore Support**
 - **Separate KeyStores**: Each KeyStore has its own encrypted storage

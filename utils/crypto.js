@@ -34,15 +34,15 @@ class AsocialCrypto {
    */
   async generateKeyPair(keyName) {
     try {
-      console.log('AsocialCrypto: Generating ECDSA-256 key pair for:', keyName);
+      console.log('AsocialCrypto: Generating ECIES-256 key pair for:', keyName);
       
       const keyPair = await crypto.subtle.generateKey(
         {
-          name: this.algorithm.ecdsa.name,
-          namedCurve: this.algorithm.ecdsa.namedCurve
+          name: "ECDH",
+          namedCurve: "P-256"
         },
         true, // extractable
-        ['sign', 'verify'] // key usages
+        ['deriveKey'] // ECIES uses key derivation
       );
 
       // Export keys to Base64
@@ -190,17 +190,25 @@ class AsocialCrypto {
    */
   async exportKey(key) {
     try {
-      const exported = await crypto.subtle.exportKey('pkcs8', key);
-      return this.arrayBufferToBase64(exported);
-    } catch (error) {
-      // Try spki format for public keys
-      try {
+      // Check key type to determine format
+      const keyType = key.type;
+      
+      if (keyType === 'public') {
+        // Export public key as spki
         const exported = await crypto.subtle.exportKey('spki', key);
-        return this.arrayBufferToBase64(exported);
-      } catch (error2) {
-        console.error('AsocialCrypto: Error exporting key:', error2);
-        throw new Error('Failed to export key: ' + error2.message);
+        const base64 = this.arrayBufferToBase64(exported);
+        return base64;
+      } else if (keyType === 'private') {
+        // Export private key as pkcs8
+        const exported = await crypto.subtle.exportKey('pkcs8', key);
+        const base64 = this.arrayBufferToBase64(exported);
+        return base64;
+      } else {
+        throw new Error('Unknown key type: ' + keyType);
       }
+    } catch (error) {
+      console.error('AsocialCrypto: Error exporting key:', error);
+      throw new Error('Failed to export key: ' + error.message);
     }
   }
 
@@ -228,17 +236,34 @@ class AsocialCrypto {
    */
   async importKey(keyData, format, type) {
     try {
+      
+      // Validate input
+      if (!keyData || typeof keyData !== 'string') {
+        throw new Error('Key data must be a string');
+      }
+      
+      if (keyData.length === 0) {
+        throw new Error('Key data is empty');
+      }
+      
+      // Validate base64 format
+      try {
+        atob(keyData);
+      } catch (error) {
+        throw new Error('Key data is not valid base64: ' + error.message);
+      }
+      
       const keyBuffer = this.base64ToArrayBuffer(keyData);
       
       const key = await crypto.subtle.importKey(
         format,
         keyBuffer,
         {
-          name: this.algorithm.ecdsa.name,
-          namedCurve: this.algorithm.ecdsa.namedCurve
+          name: "ECDH",
+          namedCurve: "P-256"
         },
         true,
-        type === 'private' ? ['sign'] : ['verify']
+        type === 'private' ? ['deriveKey'] : ['deriveKey']
       );
 
       return key;
@@ -357,12 +382,23 @@ class AsocialCrypto {
    * @returns {ArrayBuffer} ArrayBuffer
    */
   base64ToArrayBuffer(base64) {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
+    console.log('AsocialCrypto: base64ToArrayBuffer called with length:', base64.length);
+    console.log('AsocialCrypto: Base64 string (first 50 chars):', base64.substring(0, 50));
+    console.log('AsocialCrypto: Base64 string (last 50 chars):', base64.substring(base64.length - 50));
+    
+    try {
+      const binary = atob(base64);
+      console.log('AsocialCrypto: atob successful, binary length:', binary.length);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes.buffer;
+    } catch (error) {
+      console.error('AsocialCrypto: atob failed with error:', error.message);
+      console.log('AsocialCrypto: Full Base64 string that failed:', base64);
+      throw error;
     }
-    return bytes.buffer;
   }
 
   /**

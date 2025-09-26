@@ -28,6 +28,11 @@ class AsocialKeyManager {
       // Generate ECDSA-256 key pair
       const keyPair = await this.crypto.generateKeyPair(name.trim());
       
+      // Generate magic code for the key pair (same for both writer and reader)
+      console.log('AsocialKeyManager: Generating magic code for key pair');
+      const magicCode = await this.crypto.generateMagicCode(keyPair.privateKey);
+      console.log('AsocialKeyManager: Generated magic code:', magicCode);
+
       // Create writer key data (public key for writing)
       const writerKeyData = {
         id: keyPair.id,
@@ -35,15 +40,12 @@ class AsocialKeyManager {
         type: 'writer',
         publicKey: keyPair.publicKey,
         createdAt: keyPair.createdAt,
-        magicCode: null // Writer keys don't have magic codes
+        magicCode: magicCode // Store the same magic code as the reader key
       };
 
         // Create reader key data (private key for reading)
         // The private key is already exported as Base64 from generateKeyPair
-        // Generate magic code for the reader key
-        console.log('AsocialKeyManager: Generating magic code for reader key');
-        const magicCode = await this.crypto.generateMagicCode(keyPair.privateKey);
-        console.log('AsocialKeyManager: Generated magic code:', magicCode);
+        console.log('AsocialKeyManager: Using same magic code for reader key');
         
         const readerKeyData = {
           id: keyPair.id + '_reader', // Different ID for reader key
@@ -232,7 +234,7 @@ class AsocialKeyManager {
       
       const keys = await this.keyStore.getDecryptedKeys(keyStoreId, derivedKey, 'writer', keyStoreData);
       
-      // Return only metadata (no actual keys)
+      // Return only metadata (no actual keys) - UI only needs ID
       const keyMetadata = keys.map(key => ({
         id: key.id,
         name: key.name,
@@ -262,12 +264,12 @@ class AsocialKeyManager {
       
       const keys = await this.keyStore.getDecryptedKeys(keyStoreId, derivedKey, 'reader', keyStoreData);
       
-      // Filter out auto-generated reader keys (those with '_reader' suffix)
-      // These are the private keys that correspond to writer keys
-      const manualReaderKeys = keys.filter(key => !key.id.endsWith('_reader'));
+      // Include ALL reader keys (both manual and auto-generated)
+      // Auto-generated reader keys correspond to writer keys and should be available
+      const allReaderKeys = keys;
       
       // Return only metadata (no actual keys)
-      const keyMetadata = manualReaderKeys.map(key => ({
+      const keyMetadata = allReaderKeys.map(key => ({
         id: key.id,
         name: key.name,
         type: key.type,
@@ -290,11 +292,11 @@ class AsocialKeyManager {
    * @param {CryptoKey} derivedKey - Derived key for decryption
    * @returns {Promise<Object>} Writer key with public key
    */
-  async getWriterKeyForEncryption(keyStoreId, keyId, derivedKey) {
+  async getWriterKeyForEncryption(keyStoreId, keyId, derivedKey, keyStoreData = null) {
     try {
       console.log('AsocialKeyManager: Getting writer key for encryption:', keyId);
       
-      const keys = await this.keyStore.getDecryptedKeys(keyStoreId, derivedKey, 'writer');
+      const keys = await this.keyStore.getDecryptedKeys(keyStoreId, derivedKey, 'writer', keyStoreData);
       const writerKey = keys.find(key => key.id === keyId);
       
       if (!writerKey) {

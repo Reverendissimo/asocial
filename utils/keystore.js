@@ -382,6 +382,9 @@ class AsocialKeyStore {
           );
 
           const keyData = JSON.parse(decryptedData);
+          console.log('AsocialKeyStore: Decrypted key data:', keyData);
+          console.log('AsocialKeyStore: Key has publicKey field:', 'publicKey' in keyData);
+          console.log('AsocialKeyStore: Public key value:', keyData.publicKey);
           decryptedKeys.push(keyData);
         } catch (error) {
           console.error('AsocialKeyStore: Error decrypting key:', encryptedKey.id, error);

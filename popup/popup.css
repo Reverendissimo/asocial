@@ -128,6 +128,14 @@ body {
   align-items: center;
 }
 
+.magic-code {
+  color: #ffff00 !important;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
 .key-info {
   flex: 1;
 }

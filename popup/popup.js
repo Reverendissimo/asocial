@@ -177,8 +177,8 @@ class AsocialExtension {
       const targetPanel = document.getElementById(panelId);
       if (!targetPanel) {
         console.error('Asocial Extension: Target panel not found:', panelId);
-        return;
-      }
+      return;
+    }
     
       targetPanel.classList.add('active');
       this.currentPanel = panelId;
@@ -569,13 +569,8 @@ class AsocialExtension {
    */
   async loadWriterKeys() {
     try {
-      const result = await chrome.runtime.sendMessage({ action: 'getWriterKeys' });
-      
-      if (result.success) {
-        this.displayKeys('writer-keys-list', result.keys, 'writer');
-      } else {
-        console.error('Asocial Extension: Error loading writer keys:', result.error);
-      }
+      const keys = await chrome.runtime.sendMessage({ action: 'getWriterKeys' });
+      this.displayKeys('writer-keys-list', keys, 'writer');
     } catch (error) {
       console.error('Asocial Extension: Error loading writer keys:', error);
     }
@@ -586,13 +581,8 @@ class AsocialExtension {
    */
   async loadReaderKeys() {
     try {
-      const result = await chrome.runtime.sendMessage({ action: 'getReaderKeys' });
-      
-      if (result.success) {
-        this.displayKeys('reader-keys-list', result.keys, 'reader');
-      } else {
-        console.error('Asocial Extension: Error loading reader keys:', result.error);
-      }
+      const keys = await chrome.runtime.sendMessage({ action: 'getReaderKeys' });
+      this.displayKeys('reader-keys-list', keys, 'reader');
     } catch (error) {
       console.error('Asocial Extension: Error loading reader keys:', error);
     }
@@ -622,6 +612,7 @@ class AsocialExtension {
         <div class="key-info">
           <h4>${key.name}</h4>
           <p>Created: ${new Date(key.createdAt).toLocaleDateString()}</p>
+          <p class="magic-code">Magic: ${key.magicCode || 'N/A'}</p>
         </div>
         <div class="key-actions">
           ${copyButton}

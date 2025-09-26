@@ -51,6 +51,70 @@ class AsocialBackgroundWorker {
       this.handleMessage(message, sender, sendResponse);
       return true; // Keep message channel open for async responses
     });
+    
+    // Handle persistent connections from content scripts
+    chrome.runtime.onConnect.addListener((port) => {
+      if (port.name === 'content-port') {
+        console.log('Asocial Background Worker: Content script connected');
+        
+        port.onMessage.addListener(async (message) => {
+          try {
+            console.log('=== BACKGROUND WORKER RECEIVED FROM CONTENT SCRIPT ===');
+            console.log('Asocial Background Worker: Received message from content script:', message.action);
+            console.log('Asocial Background Worker: Full message object:', message);
+            console.log('Asocial Background Worker: Message type:', typeof message);
+            console.log('Asocial Background Worker: Message keys:', Object.keys(message));
+            console.log('=== END BACKGROUND WORKER RECEIVED ===');
+            
+            switch (message.action) {
+              case 'getWriterKeys':
+                console.log('=== BACKGROUND WORKER PROCESSING getWriterKeys ===');
+                const writerKeys = await this.getWriterKeys();
+                console.log('=== BACKGROUND WORKER SENDING TO CONTENT SCRIPT ===');
+                console.log('Asocial Background Worker: Sending writer keys to content script:', writerKeys);
+                console.log('Asocial Background Worker: Writer keys type:', typeof writerKeys);
+                console.log('Asocial Background Worker: Writer keys is array:', Array.isArray(writerKeys));
+                console.log('Asocial Background Worker: Writer keys length:', writerKeys?.length);
+                if (writerKeys.length > 0) {
+                  console.log('Asocial Background Worker: First writer key being sent:', writerKeys[0]);
+                  console.log('Asocial Background Worker: First writer key fields:', Object.keys(writerKeys[0]));
+                  console.log('Asocial Background Worker: First writer key has publicKey:', 'publicKey' in writerKeys[0]);
+                  console.log('Asocial Background Worker: First writer key has privateKey:', 'privateKey' in writerKeys[0]);
+                }
+                console.log('=== END BACKGROUND WORKER SENDING ===');
+                port.postMessage(writerKeys);
+                break;
+                
+              case 'encryptMessage':
+                console.log('=== BACKGROUND WORKER PROCESSING encryptMessage ===');
+                console.log('Asocial Background Worker: - Text:', message.text);
+                console.log('Asocial Background Worker: - Text length:', message.text?.length);
+                console.log('Asocial Background Worker: - Writer Key ID:', message.writerKeyId);
+                const encryptResult = await this.encryptMessage(message.text, message.writerKeyId);
+                console.log('=== BACKGROUND WORKER SENDING ENCRYPTION RESULT ===');
+                console.log('Asocial Background Worker: Encryption result:', encryptResult);
+                console.log('Asocial Background Worker: Result success:', encryptResult.success);
+                console.log('Asocial Background Worker: Result error:', encryptResult.error);
+                console.log('Asocial Background Worker: Result encryptedMessage length:', encryptResult.encryptedMessage?.length);
+                console.log('=== END BACKGROUND WORKER SENDING ENCRYPTION ===');
+                port.postMessage(encryptResult);
+                break;
+                
+              default:
+                console.log('Asocial Background Worker: Unknown action from content script:', message.action);
+                port.postMessage({ success: false, error: 'Unknown action' });
+            }
+          } catch (error) {
+            console.error('Asocial Background Worker: Error handling content script message:', error);
+            port.postMessage({ success: false, error: error.message });
+          }
+        });
+        
+        port.onDisconnect.addListener(() => {
+          console.log('Asocial Background Worker: Content script disconnected');
+        });
+      }
+    });
   }
 
   /**
@@ -101,12 +165,12 @@ class AsocialBackgroundWorker {
           
         case 'getWriterKeys':
           const writerKeys = await this.getWriterKeys();
-          sendResponse({ success: true, keys: writerKeys });
+          sendResponse(writerKeys);
           break;
           
         case 'getReaderKeys':
           const readerKeys = await this.getReaderKeys();
-          sendResponse({ success: true, keys: readerKeys });
+          sendResponse(readerKeys);
           break;
           
         case 'createWriterKey':
@@ -130,7 +194,7 @@ class AsocialBackgroundWorker {
           break;
           
         case 'decryptMessage':
-          const decryptResult = await this.decryptMessage(message.encryptedText);
+          const decryptResult = await this.decryptMessage(message.magicCode, message.encryptedPayload);
           sendResponse(decryptResult);
           break;
           
@@ -221,6 +285,50 @@ class AsocialBackgroundWorker {
         });
         
         console.log('Asocial Background Worker: KeyStore opened and set as active');
+        
+        // COMPREHENSIVE KEYSTORE MEMORY DUMP
+        console.log('=== KEYSTORE MEMORY DUMP ===');
+        console.log('Asocial Background Worker: Active KeyStore ID:', this.activeKeyStore.id);
+        console.log('Asocial Background Worker: Active KeyStore Name:', this.activeKeyStore.name);
+        console.log('Asocial Background Worker: Active KeyStore Description:', this.activeKeyStore.description);
+        console.log('Asocial Background Worker: Active KeyStore Created:', this.activeKeyStore.createdAt);
+        console.log('Asocial Background Worker: Writer Keys Count:', this.activeKeyStore.writerKeys?.length || 0);
+        console.log('Asocial Background Worker: Reader Keys Count:', this.activeKeyStore.readerKeys?.length || 0);
+        
+        if (this.activeKeyStore.writerKeys && this.activeKeyStore.writerKeys.length > 0) {
+          console.log('=== WRITER KEYS DUMP ===');
+          this.activeKeyStore.writerKeys.forEach((key, index) => {
+            console.log(`Writer Key ${index}:`, {
+              id: key.id,
+              name: key.name,
+              type: key.type,
+              createdAt: key.createdAt,
+              hasPublicKey: 'publicKey' in key,
+              publicKeyType: typeof key.publicKey,
+              publicKeyValue: key.publicKey,
+              allFields: Object.keys(key)
+            });
+          });
+        }
+        
+        if (this.activeKeyStore.readerKeys && this.activeKeyStore.readerKeys.length > 0) {
+          console.log('=== READER KEYS DUMP ===');
+          this.activeKeyStore.readerKeys.forEach((key, index) => {
+            console.log(`Reader Key ${index}:`, {
+              id: key.id,
+              name: key.name,
+              type: key.type,
+              createdAt: key.createdAt,
+              hasPrivateKey: 'privateKey' in key,
+              privateKeyType: typeof key.privateKey,
+              magicCode: key.magicCode,
+              allFields: Object.keys(key)
+            });
+          });
+        }
+        
+        console.log('=== END KEYSTORE MEMORY DUMP ===');
+        
         return { success: true, keyStore: this.activeKeyStore };
       } else {
         return { success: false, error: result.error };
@@ -369,7 +477,16 @@ class AsocialBackgroundWorker {
    */
   async getWriterKeys() {
     try {
-      if (!this.activeKeyStore || !this.derivedKey) {
+      if (!this.activeKeyStore) {
+        console.log('Asocial Background Worker: No active KeyStore');
+        return [];
+      }
+      
+      if (!this.derivedKey) {
+        console.log('Asocial Background Worker: KeyStore loaded but no derived key - session expired');
+        // Clear the active KeyStore since we can't use it without the derived key
+        this.activeKeyStore = null;
+        await chrome.storage.local.remove(['asocial_active_keystore']);
         return [];
       }
       
@@ -379,6 +496,7 @@ class AsocialBackgroundWorker {
         this.activeKeyStore
       );
       
+      console.log('Asocial Background Worker: Retrieved writer keys:', keys.length);
       return keys;
     } catch (error) {
       console.error('Asocial Background Worker: Error getting writer keys:', error);
@@ -391,7 +509,16 @@ class AsocialBackgroundWorker {
    */
   async getReaderKeys() {
     try {
-      if (!this.activeKeyStore || !this.derivedKey) {
+      if (!this.activeKeyStore) {
+        console.log('Asocial Background Worker: No active KeyStore');
+        return [];
+      }
+      
+      if (!this.derivedKey) {
+        console.log('Asocial Background Worker: KeyStore loaded but no derived key - session expired');
+        // Clear the active KeyStore since we can't use it without the derived key
+        this.activeKeyStore = null;
+        await chrome.storage.local.remove(['asocial_active_keystore']);
         return [];
       }
       
@@ -401,6 +528,7 @@ class AsocialBackgroundWorker {
         this.activeKeyStore
       );
       
+      console.log('Asocial Background Worker: Retrieved reader keys:', keys.length);
       return keys;
     } catch (error) {
       console.error('Asocial Background Worker: Error getting reader keys:', error);
@@ -540,19 +668,40 @@ class AsocialBackgroundWorker {
         return { success: false, error: 'No active KeyStore' };
       }
       
-      // Get writer key for encryption
-      const keyResult = await this.keyManager.getWriterKeyForEncryption(
-        this.activeKeyStore.id, 
-        writerKeyId, 
+      // Get the specific writer key by ID from the already loaded KeyStore
+      console.log('Asocial Background Worker: Looking for writer key with ID:', writerKeyId);
+      console.log('Asocial Background Worker: Available writer keys in memory:', this.activeKeyStore.writerKeys?.length || 0);
+      
+      // Find the encrypted writer key in memory
+      const encryptedWriterKey = this.activeKeyStore.writerKeys?.find(key => key.id === writerKeyId);
+      
+      if (!encryptedWriterKey) {
+        console.log('Asocial Background Worker: Writer key not found in memory');
+        return { success: false, error: 'Writer key not found' };
+      }
+      
+      console.log('Asocial Background Worker: Found encrypted writer key:', encryptedWriterKey.id);
+      
+      // Decrypt the specific writer key
+      const decryptedKeyData = await this.crypto.decryptData(
+        {
+          data: this.crypto.base64ToArrayBuffer(encryptedWriterKey.encryptedData),
+          iv: this.crypto.base64ToArrayBuffer(encryptedWriterKey.iv),
+          tag: this.crypto.base64ToArrayBuffer(encryptedWriterKey.tag)
+        },
         this.derivedKey
       );
       
-      if (!keyResult.success) {
-        return { success: false, error: keyResult.error };
-      }
+      const writerKey = JSON.parse(decryptedKeyData);
+      console.log('Asocial Background Worker: Decrypted writer key:', writerKey);
+      
+      console.log('Asocial Background Worker: Using decrypted writer key:', writerKey.name);
+      console.log('Asocial Background Worker: Writer key object:', writerKey);
+      console.log('Asocial Background Worker: Public key type:', typeof writerKey.publicKey);
+      console.log('Asocial Background Worker: Public key value:', writerKey.publicKey);
       
       // Encrypt message with writer key
-      const encryptResult = await this.messageCrypto.encryptMessage(text, keyResult.key);
+      const encryptResult = await this.messageCrypto.encryptMessage(text, writerKey);
       
       if (encryptResult.success) {
         return { success: true, encryptedMessage: encryptResult.encryptedMessage };
@@ -568,30 +717,36 @@ class AsocialBackgroundWorker {
   /**
    * Decrypt message with reader key
    */
-  async decryptMessage(encryptedText) {
+  async decryptMessage(magicCode, encryptedPayload) {
     try {
       console.log('Asocial Background Worker: Decrypting message');
+      console.log('Asocial Background Worker: Magic code:', magicCode);
+      console.log('Asocial Background Worker: Encrypted payload length:', encryptedPayload.length);
       
       if (!this.activeKeyStore || !this.derivedKey) {
+        console.log('Asocial Background Worker: No active KeyStore or derived key');
         return { success: false, error: 'No active KeyStore' };
       }
       
-      // Extract magic code from encrypted message
-      const magicCode = this.messageCrypto.extractMagicCode(encryptedText);
-      if (!magicCode) {
-        return { success: false, error: 'Invalid encrypted message format' };
+      if (!magicCode || !encryptedPayload) {
+        return { success: false, error: 'Missing magic code or encrypted payload' };
       }
       
-      // Get reader key by magic code
-      const readerKeys = await this.keyManager.getReaderKeys(this.activeKeyStore.id, this.derivedKey);
+      // Get reader key by magic code - decrypt keys from already loaded KeyStore
+      console.log('Asocial Background Worker: Getting reader keys from memory...');
+      const readerKeys = await this.keyStore.getDecryptedKeys(this.activeKeyStore.id, this.derivedKey, 'reader', this.activeKeyStore);
+      console.log('Asocial Background Worker: Found reader keys:', readerKeys.length);
+      console.log('Asocial Background Worker: Reader key magic codes:', readerKeys.map(k => k.magicCode));
+      
       const readerKey = this.messageCrypto.findReaderKeyByMagicCode(magicCode, readerKeys);
+      console.log('Asocial Background Worker: Found matching reader key:', readerKey ? readerKey.name : 'None');
       
       if (!readerKey) {
         return { success: false, error: 'No reader key found for magic code' };
       }
       
       // Decrypt message with reader key
-      const decryptResult = await this.messageCrypto.decryptMessage(encryptedText, readerKey);
+      const decryptResult = await this.messageCrypto.decryptMessage(magicCode, encryptedPayload, readerKey);
       
       if (decryptResult.success) {
         return { success: true, decryptedMessage: decryptResult.message };
