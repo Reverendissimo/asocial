@@ -268,13 +268,14 @@ class AsocialKeyManager {
       // Auto-generated reader keys correspond to writer keys and should be available
       const allReaderKeys = keys;
       
-      // Return only metadata (no actual keys)
+      // Return key data - include private key for background worker decryption
       const keyMetadata = allReaderKeys.map(key => ({
         id: key.id,
         name: key.name,
         type: key.type,
         createdAt: key.createdAt,
-        magicCode: key.magicCode
+        magicCode: key.magicCode,
+        privateKey: key.privateKey  // Include private key for decryption
       }));
 
       console.log('AsocialKeyManager: Retrieved reader keys:', keyMetadata.length);
@@ -284,6 +285,7 @@ class AsocialKeyManager {
       return [];
     }
   }
+
 
   /**
    * Get writer key for encryption
