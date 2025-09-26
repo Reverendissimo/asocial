@@ -203,8 +203,13 @@ class AsocialBackgroundWorker {
           sendResponse(exportResult);
           break;
           
+        case 'exportKeyStoreData':
+          const exportDataResult = await this.exportKeyStoreData(message.keyStoreId);
+          sendResponse(exportDataResult);
+          break;
+          
         case 'importKeyStore':
-          const importResult = await this.importKeyStore(message.keyStoreData, message.password);
+          const importResult = await this.importKeyStore(message.keyStoreData);
           sendResponse(importResult);
           break;
           
@@ -225,8 +230,16 @@ class AsocialBackgroundWorker {
     try {
       const result = await chrome.storage.local.get(['asocial_active_keystore']);
       if (result.asocial_active_keystore) {
-        this.activeKeyStore = result.asocial_active_keystore;
-        console.log('Asocial Background Worker: Active KeyStore loaded:', this.activeKeyStore.name);
+        // Only set as active if we have a valid derived key (authenticated)
+        if (this.derivedKey) {
+          this.activeKeyStore = result.asocial_active_keystore;
+          console.log('Asocial Background Worker: Active KeyStore loaded:', this.activeKeyStore.name);
+        } else {
+          // No derived key means session expired, clear the active KeyStore
+          console.log('Asocial Background Worker: KeyStore found but no derived key - session expired');
+          this.activeKeyStore = null;
+          await chrome.storage.local.remove(['asocial_active_keystore']);
+        }
       }
     } catch (error) {
       console.error('Asocial Background Worker: Error loading active KeyStore:', error);
@@ -454,12 +467,15 @@ class AsocialBackgroundWorker {
         if (key.startsWith('asocial_keystore_') && key.endsWith('_meta') && value && value.name) {
           const keystoreId = key.replace('asocial_keystore_', '').replace('_meta', '');
           console.log('Asocial Background Worker: Extracted KeyStore ID:', keystoreId);
+          console.log('Asocial Background Worker: KeyStore metadata:', value);
           keyStores.push({
             id: keystoreId,
             name: value.name,
             description: value.description,
             createdAt: value.createdAt
           });
+        } else if (key.startsWith('asocial_keystore_') && key.endsWith('_meta')) {
+          console.log('Asocial Background Worker: KeyStore metadata found but missing name:', key, value);
         }
       }
       
@@ -783,26 +799,94 @@ class AsocialBackgroundWorker {
   }
 
   /**
+   * Export KeyStore data (encrypted) without decryption
+   */
+  async exportKeyStoreData(keyStoreId) {
+    try {
+      console.log('Asocial Background Worker: Exporting KeyStore data:', keyStoreId);
+      
+      // Get the encrypted KeyStore data and metadata from storage
+      const storageKey = 'asocial_keystore_' + keyStoreId;
+      const metaKey = 'asocial_keystore_' + keyStoreId + '_meta';
+      const result = await chrome.storage.local.get([storageKey, metaKey]);
+      
+      if (!result[storageKey]) {
+        return { success: false, error: 'KeyStore not found in storage' };
+      }
+      
+      if (!result[metaKey]) {
+        return { success: false, error: 'KeyStore metadata not found in storage' };
+      }
+      
+      // Combine encrypted data with metadata for export
+      const exportData = {
+        encryptedData: result[storageKey],
+        metadata: result[metaKey]
+      };
+      
+      // Return the combined data as JSON string
+      const keyStoreData = JSON.stringify(exportData, null, 2);
+      
+      return {
+        success: true,
+        keyStoreData: keyStoreData
+      };
+    } catch (error) {
+      console.error('Asocial Background Worker: Error exporting KeyStore data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Import KeyStore from file
    */
-  async importKeyStore(keyStoreData, password) {
+  async importKeyStore(keyStoreData) {
     try {
       console.log('Asocial Background Worker: Importing KeyStore');
       
-      const result = await this.keyStore.importKeyStore(keyStoreData, password);
+      // Generate new KeyStore ID
+      const keyStoreId = this.crypto.generateKeyId();
       
-      if (result.success) {
-        // Set as active KeyStore
-        this.activeKeyStore = result.keyStore;
-        this.keyStorePasswordHash = await this.crypto.hashData(password);
-        
-        // Store active KeyStore in memory
-        await chrome.storage.local.set({ 
-          asocial_active_keystore: this.activeKeyStore 
-        });
-      }
+      // Store the imported KeyStore data directly
+      const storageKey = 'asocial_keystore_' + keyStoreId;
+      const metaKey = 'asocial_keystore_' + keyStoreId + '_meta';
       
-      return result;
+      // Extract encrypted data and metadata from import
+      const encryptedData = keyStoreData.encryptedData || keyStoreData;
+      const metadata = keyStoreData.metadata || {};
+      
+      // Update the KeyStore data with new ID
+      encryptedData.id = keyStoreId;
+      encryptedData.createdAt = new Date().toISOString();
+      
+      console.log('Asocial Background Worker: Imported KeyStore data:', encryptedData);
+      console.log('Asocial Background Worker: KeyStore metadata:', metadata);
+      console.log('Asocial Background Worker: KeyStore name:', metadata.name);
+      console.log('Asocial Background Worker: KeyStore description:', metadata.description);
+      
+      // Store the KeyStore data
+      await chrome.storage.local.set({
+        [storageKey]: encryptedData,
+        [metaKey]: {
+          id: keyStoreId,
+          name: metadata.name || 'Imported KeyStore',
+          description: metadata.description || 'Imported from file',
+          createdAt: encryptedData.createdAt
+        }
+      });
+      
+      console.log('Asocial Background Worker: Stored KeyStore with keys:', storageKey, metaKey);
+      
+      console.log('Asocial Background Worker: KeyStore imported successfully');
+      return { 
+        success: true, 
+        keyStore: {
+          id: keyStoreId,
+          name: keyStoreData.name,
+          description: keyStoreData.description,
+          createdAt: keyStoreData.createdAt
+        }
+      };
     } catch (error) {
       console.error('Asocial Background Worker: Error importing KeyStore:', error);
       return { success: false, error: error.message };

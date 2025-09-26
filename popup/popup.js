@@ -26,6 +26,9 @@ class AsocialExtension {
       // Set up event listeners
       this.setupEventListeners();
       
+      // Set up scroll handling
+      this.setupScrollHandling();
+      
       // Load initial state
       await this.loadInitialState();
       
@@ -35,6 +38,53 @@ class AsocialExtension {
       console.error('Asocial Extension: Initialization failed:', error);
       this.showNotification('Initialization failed', 'error');
     }
+  }
+
+  /**
+   * Set up scroll handling for all scrollable areas
+   */
+  setupScrollHandling() {
+    // Ensure all scrollable containers can receive wheel events
+    const scrollableSelectors = [
+      '.content',
+      '.panel',
+      '.modal-content',
+      '.keys-list',
+      '.keystore-items'
+    ];
+    
+    scrollableSelectors.forEach(selector => {
+      const elements = document.querySelectorAll(selector);
+      elements.forEach(element => {
+        // Make sure the element can receive focus for wheel events
+        element.setAttribute('tabindex', '0');
+        
+        // Add wheel event listener to ensure scrolling works
+        element.addEventListener('wheel', (e) => {
+          // Allow default wheel behavior
+          e.stopPropagation();
+        }, { passive: true });
+        
+        // Ensure the element can be focused for wheel events
+        element.addEventListener('click', () => {
+          element.focus();
+        });
+      });
+    });
+    
+    // Also handle wheel events on the document to catch any missed areas
+    document.addEventListener('wheel', (e) => {
+      // Find the closest scrollable parent
+      let target = e.target;
+      while (target && target !== document.body) {
+        const computedStyle = window.getComputedStyle(target);
+        if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
+          // Let the scrollable element handle the wheel event
+          return;
+        }
+        target = target.parentElement;
+      }
+    }, { passive: true });
   }
 
   /**
@@ -49,6 +99,7 @@ class AsocialExtension {
     document.getElementById('import-keystore-btn').addEventListener('click', () => {
       this.showModal('import-modal');
     });
+
 
     // KeyStore creation panel
     document.getElementById('keystore-creation-form').addEventListener('submit', (e) => {
@@ -186,6 +237,11 @@ class AsocialExtension {
       targetPanel.classList.add('active');
       this.currentPanel = panelId;
 
+      // Refresh scroll handling for the new panel
+      setTimeout(() => {
+        this.setupScrollHandling();
+      }, 100);
+
       // Load panel-specific data
       switch (panelId) {
         case 'keystore-selection-panel':
@@ -235,6 +291,14 @@ class AsocialExtension {
   }
 
   /**
+   * Refresh scroll handling for dynamically loaded content
+   */
+  refreshScrollHandling() {
+    // Re-run scroll handling setup for any new elements
+    this.setupScrollHandling();
+  }
+
+  /**
    * Display list of available KeyStores
    */
   displayKeyStoreList(keyStores) {
@@ -256,6 +320,9 @@ class AsocialExtension {
               <div class="keystore-actions">
                 <button class="btn btn-primary keystore-open-btn" data-keystore-id="${keystore.id}">
                   Open
+                </button>
+                <button class="btn btn-secondary keystore-export-btn" data-keystore-id="${keystore.id}">
+                  Export
                 </button>
                 <button class="btn btn-danger keystore-delete-btn" data-keystore-id="${keystore.id}">
                   Delete
@@ -281,6 +348,17 @@ class AsocialExtension {
       });
     });
 
+    // Add event listeners for export buttons
+    const exportButtons = container.querySelectorAll('.keystore-export-btn');
+    console.log('Asocial Extension: Found export buttons:', exportButtons.length);
+    exportButtons.forEach(button => {
+      button.addEventListener('click', (e) => {
+        const keystoreId = e.target.getAttribute('data-keystore-id');
+        console.log('Asocial Extension: Export button clicked, KeyStore ID:', keystoreId);
+        this.exportKeyStore(keystoreId);
+      });
+    });
+
     // Add event listeners for delete buttons
     const deleteButtons = container.querySelectorAll('.keystore-delete-btn');
     console.log('Asocial Extension: Found delete buttons:', deleteButtons.length);
@@ -291,6 +369,9 @@ class AsocialExtension {
         this.deleteKeyStore(keystoreId);
       });
     });
+    
+    // Refresh scroll handling for the new content
+    this.refreshScrollHandling();
   }
 
   /**
@@ -670,6 +751,9 @@ class AsocialExtension {
         });
       });
     }
+    
+    // Refresh scroll handling for the new content
+    this.refreshScrollHandling();
   }
 
   /**
@@ -849,26 +933,89 @@ class AsocialExtension {
   async handleKeyStoreImport() {
     try {
       const fileInput = document.getElementById('import-file');
-      const password = document.getElementById('import-password').value;
 
       if (!fileInput.files[0]) {
         this.showNotification('Please select a KeyStore file', 'error');
         return;
       }
 
-      if (!password) {
-        this.showNotification('Password is required', 'error');
+      // Read the file content
+      const file = fileInput.files[0];
+      const fileContent = await this.readFileAsText(file);
+      
+      // Parse the JSON
+      let keyStoreData;
+      try {
+        keyStoreData = JSON.parse(fileContent);
+      } catch (parseError) {
+        this.showNotification('Invalid KeyStore file format', 'error');
         return;
       }
 
-      // TODO: Implement KeyStore import
-      // This will be implemented in Phase 3
-      this.showNotification('KeyStore import not yet implemented', 'error');
+      // Send to background for import
+      const result = await chrome.runtime.sendMessage({
+        action: 'importKeyStore',
+        keyStoreData: keyStoreData
+      });
+
+      if (result.success) {
+        this.showNotification('KeyStore imported successfully!', 'success');
+        this.hideModal('import-modal');
+        this.loadKeyStoreList(); // Refresh the KeyStore list
+      } else {
+        this.showNotification('Failed to import KeyStore: ' + result.error, 'error');
+      }
     } catch (error) {
       console.error('Asocial Popup: Error importing KeyStore:', error);
       this.showNotification('Failed to import KeyStore', 'error');
     }
   }
+
+  /**
+   * Read file as text
+   */
+  readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  }
+
+  /**
+   * Export KeyStore
+   */
+  async exportKeyStore(keyStoreId) {
+    try {
+      // Get the encrypted KeyStore data from storage (no decryption needed)
+      const result = await chrome.runtime.sendMessage({
+        action: 'exportKeyStoreData',
+        keyStoreId: keyStoreId
+      });
+
+      if (result.success) {
+        // Create and download the file
+        const blob = new Blob([result.keyStoreData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `keystore_${keyStoreId}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('KeyStore exported successfully!', 'success');
+      } else {
+        this.showNotification('Failed to export KeyStore: ' + result.error, 'error');
+      }
+    } catch (error) {
+      console.error('Asocial Popup: Error exporting KeyStore:', error);
+      this.showNotification('Failed to export KeyStore', 'error');
+    }
+  }
+
 
   /**
    * Show notification to user

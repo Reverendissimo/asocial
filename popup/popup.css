@@ -58,6 +58,7 @@ body {
   height: 520px;
   overflow-y: auto;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 /* Panels */
@@ -67,6 +68,7 @@ body {
   height: 520px;
   overflow-y: auto;
   overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .panel.active {
@@ -528,6 +530,23 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #00cc00;
+}
+
+/* Ensure all scrollable areas capture wheel events */
+.content,
+.panel,
+.modal-content,
+.keys-list,
+.keystore-items {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Make sure wheel events work on all scrollable containers */
+.content:focus,
+.panel:focus,
+.modal-content:focus {
+  outline: none;
 }
 
 /* Responsive */

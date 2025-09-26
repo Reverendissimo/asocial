@@ -396,15 +396,10 @@ class AsocialUniversal {
       const newText = `[ASOCIAL] ${decryptedMessage}`;
       textNode.textContent = newText;
       
-      // Apply styling to the parent element if it exists
+      // Apply styling to the parent element if it exists - ONLY colors
       if (textNode.parentElement) {
         textNode.parentElement.style.backgroundColor = '#000000';
         textNode.parentElement.style.color = '#00FF00'; // Lime green
-        textNode.parentElement.style.padding = '2px 4px';
-        textNode.parentElement.style.borderRadius = '3px';
-        textNode.parentElement.style.fontWeight = 'bold';
-        textNode.parentElement.style.fontFamily = 'monospace';
-        textNode.parentElement.style.display = 'inline-block';
       }
       
       console.log('Asocial Universal: Message replaced with styled decrypted text');
@@ -543,21 +538,11 @@ class AsocialUniversal {
    */
   addDecryptedStyling(textNode) {
     try {
-      // Apply styling to the parent element instead of creating new DOM
+      // Gently modify parent element colors only
       const parent = textNode.parentElement;
       if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
-        // Apply black background with lime text to the parent element
-        parent.style.cssText += `
-          background: #000000 !important;
-          color: #00ff00 !important;
-          border: 1px solid #00ff00 !important;
-          padding: 4px 8px !important;
-          margin: 2px 0 !important;
-          font-family: 'Courier New', monospace !important;
-          font-size: 12px !important;
-          border-radius: 4px !important;
-        `;
-        
+        parent.style.backgroundColor = '#000000';
+        parent.style.color = '#00ff00';
         console.log('Asocial Universal: Applied decrypted styling to parent element');
       }
     } catch (error) {
@@ -570,26 +555,12 @@ class AsocialUniversal {
    */
   addEncryptedStyling(textNode) {
     try {
-      // Try to wrap in a styled element
+      // Gently modify parent element colors only
       const parent = textNode.parentElement;
       if (parent && parent.tagName !== 'SCRIPT' && parent.tagName !== 'STYLE') {
-        const wrapper = document.createElement('span');
-        wrapper.className = 'asocial-encrypted-message';
-        wrapper.style.cssText = `
-          background: #000000 !important;
-          color: #00ff00 !important;
-          border: 1px solid #00ff00 !important;
-          padding: 4px 8px !important;
-          margin: 2px 0 !important;
-          font-family: 'Courier New', monospace !important;
-          font-size: 12px !important;
-          border-radius: 4px !important;
-          display: inline-block !important;
-        `;
-        
-        // Replace text node with styled element
-        parent.replaceChild(wrapper, textNode);
-        wrapper.appendChild(textNode);
+        parent.style.backgroundColor = '#000000';
+        parent.style.color = '#00ff00';
+        console.log('Asocial Universal: Applied encrypted styling to parent element');
       }
     } catch (error) {
       console.error('Asocial Universal: Error adding encrypted styling:', error);
