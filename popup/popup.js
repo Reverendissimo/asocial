@@ -135,14 +135,16 @@ class AsocialExtension {
    */
   async loadInitialState() {
     try {
-      // Check if there's an active KeyStore
+      // Check if there's an active KeyStore in the background
       const result = await chrome.runtime.sendMessage({ action: 'getActiveKeyStore' });
       
       if (result.success && result.keyStore) {
+        // KeyStore is active, go directly to key management
         this.activeKeyStore = result.keyStore;
         this.showPanel('key-management-panel');
         this.updateKeyManagementPanel();
       } else {
+        // No active KeyStore, show selection panel
         this.showPanel('keystore-selection-panel');
         this.loadKeyStoreList();
       }
@@ -151,6 +153,7 @@ class AsocialExtension {
       // Fallback to showing the selection panel
       try {
         this.showPanel('keystore-selection-panel');
+        this.loadKeyStoreList();
       } catch (fallbackError) {
         console.error('Asocial Extension: Fallback panel display failed:', fallbackError);
       }
@@ -570,9 +573,22 @@ class AsocialExtension {
   async loadWriterKeys() {
     try {
       const keys = await chrome.runtime.sendMessage({ action: 'getWriterKeys' });
+      
+      // Check if KeyStore session expired
+      if (!keys.success && (keys.error && keys.error.includes('session expired'))) {
+        console.log('Asocial Extension: KeyStore session expired, redirecting to KeyStore selection');
+        this.showPanel('keystore-selection-panel');
+        this.loadKeyStoreList();
+        this.showNotification('KeyStore session expired. Please open KeyStore again.', 'warning');
+        return;
+      }
+      
       this.displayKeys('writer-keys-list', keys, 'writer');
     } catch (error) {
       console.error('Asocial Extension: Error loading writer keys:', error);
+      // On error, redirect to KeyStore selection
+      this.showPanel('keystore-selection-panel');
+      this.loadKeyStoreList();
     }
   }
 
@@ -582,9 +598,22 @@ class AsocialExtension {
   async loadReaderKeys() {
     try {
       const keys = await chrome.runtime.sendMessage({ action: 'getReaderKeys' });
+      
+      // Check if KeyStore session expired
+      if (!keys.success && (keys.error && keys.error.includes('session expired'))) {
+        console.log('Asocial Extension: KeyStore session expired, redirecting to KeyStore selection');
+        this.showPanel('keystore-selection-panel');
+        this.loadKeyStoreList();
+        this.showNotification('KeyStore session expired. Please open KeyStore again.', 'warning');
+        return;
+      }
+      
       this.displayKeys('reader-keys-list', keys, 'reader');
     } catch (error) {
       console.error('Asocial Extension: Error loading reader keys:', error);
+      // On error, redirect to KeyStore selection
+      this.showPanel('keystore-selection-panel');
+      this.loadKeyStoreList();
     }
   }
 

@@ -1053,18 +1053,40 @@ class AsocialUniversal {
             console.log('Asocial Universal: Input text selected for auto-paste');
           }
           
-          // Small delay then paste
+          // After selecting text, try to paste the content
           setTimeout(() => {
-            console.log('Asocial Universal: Executing paste command');
-            const pasteSuccess = document.execCommand('paste');
-            if (pasteSuccess) {
-              console.log('Asocial Universal: Auto-paste successful');
-              this.showNotification('🔒 Text encrypted and pasted automatically!', 'success');
-            } else {
-              console.log('Asocial Universal: Auto-paste failed, showing manual paste notification');
-              this.showNotification('🔒 Encrypted text copied! Paste manually (Ctrl+V)', 'success');
+            console.log('Asocial Universal: Attempting to paste encrypted text');
+            
+            // Method 1: Try execCommand paste
+            const pasteSuccess = document.execCommand('paste', false, null);
+            console.log('Asocial Universal: execCommand paste result:', pasteSuccess);
+            
+            // Method 2: If paste didn't work, try execCommand insertText
+            let insertSuccess = false;
+            if (!pasteSuccess) {
+              console.log('Asocial Universal: Paste failed, trying insertText');
+              insertSuccess = document.execCommand('insertText', false, this.encryptedText || '');
+              console.log('Asocial Universal: execCommand insertText result:', insertSuccess);
             }
-          }, 100);
+            
+            // Method 3: Direct text insertion as fallback
+            if (!pasteSuccess && !insertSuccess) {
+              console.log('Asocial Universal: Both paste methods failed, using direct insertion');
+              if (targetElement.contentEditable === 'true') {
+                targetElement.textContent = this.encryptedText || '';
+              } else {
+                targetElement.value = this.encryptedText || '';
+              }
+              
+              // Trigger input event
+              const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+              targetElement.dispatchEvent(inputEvent);
+              console.log('Asocial Universal: Direct text insertion completed');
+            }
+            
+            console.log('Asocial Universal: Paste attempt completed');
+            this.showNotification('🔒 Text encrypted and pasted automatically!', 'success');
+          }, 200); // Wait a bit longer for selection to complete
         }, 50);
       } else {
         console.log('Asocial Universal: No target element found for auto-paste');
