@@ -392,11 +392,22 @@ class AsocialUniversal {
    */
   replaceEncryptedMessage(textNode, decryptedMessage, originalText) {
     try {
-      // Simple text replacement - just replace the text content
+      // Simply replace the text content without changing DOM structure
       const newText = `[ASOCIAL] ${decryptedMessage}`;
       textNode.textContent = newText;
       
-      console.log('Asocial Universal: Message replaced with simple decrypted text');
+      // Apply styling to the parent element if it exists
+      if (textNode.parentElement) {
+        textNode.parentElement.style.backgroundColor = '#000000';
+        textNode.parentElement.style.color = '#00FF00'; // Lime green
+        textNode.parentElement.style.padding = '2px 4px';
+        textNode.parentElement.style.borderRadius = '3px';
+        textNode.parentElement.style.fontWeight = 'bold';
+        textNode.parentElement.style.fontFamily = 'monospace';
+        textNode.parentElement.style.display = 'inline-block';
+      }
+      
+      console.log('Asocial Universal: Message replaced with styled decrypted text');
     } catch (error) {
       console.error('Asocial Universal: Error replacing encrypted message:', error);
     }
