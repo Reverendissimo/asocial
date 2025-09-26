@@ -244,19 +244,25 @@ class AsocialKeyStore {
    * @param {string} keyStoreId - KeyStore ID
    * @param {Object} keyData - Key data to add
    * @param {CryptoKey} derivedKey - Derived key for encryption
+   * @param {Object} keyStoreData - Optional already loaded KeyStore data
    * @returns {Promise<Object>} Add result
    */
-  async addKeyToKeyStore(keyStoreId, keyData, derivedKey) {
+  async addKeyToKeyStore(keyStoreId, keyData, derivedKey, keyStoreData = null) {
     try {
       console.log('AsocialKeyStore: Adding key to KeyStore:', keyStoreId);
       
-      // Load current KeyStore using existing derived key
-      const loadResult = await this.loadKeyStoreWithDerivedKey(keyStoreId, derivedKey);
-      if (!loadResult.success) {
-        throw new Error('Failed to load KeyStore');
+      let currentKeyStore;
+      if (keyStoreData) {
+        // Use provided KeyStore data
+        currentKeyStore = keyStoreData;
+      } else {
+        // Load current KeyStore using existing derived key
+        const loadResult = await this.loadKeyStoreWithDerivedKey(keyStoreId, derivedKey);
+        if (!loadResult.success) {
+          throw new Error('Failed to load KeyStore');
+        }
+        currentKeyStore = loadResult.keyStore;
       }
-
-      const keyStoreData = loadResult.keyStore;
       
       // Encrypt individual key
       const encryptedKey = await this.crypto.encryptData(
@@ -276,13 +282,13 @@ class AsocialKeyStore {
       };
 
       if (keyData.type === 'writer') {
-        keyStoreData.writerKeys.push(encryptedKeyData);
+        currentKeyStore.writerKeys.push(encryptedKeyData);
       } else {
-        keyStoreData.readerKeys.push(encryptedKeyData);
+        currentKeyStore.readerKeys.push(encryptedKeyData);
       }
 
       // Save updated KeyStore
-      const saveResult = await this.saveKeyStore(keyStoreId, keyStoreData, derivedKey);
+      const saveResult = await this.saveKeyStore(keyStoreId, currentKeyStore, derivedKey);
       
       if (saveResult.success) {
         console.log('AsocialKeyStore: Key added successfully');

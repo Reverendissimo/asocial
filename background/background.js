@@ -607,7 +607,8 @@ class AsocialBackgroundWorker {
         name, 
         privateKey, 
         this.activeKeyStore.id, 
-        this.derivedKey
+        this.derivedKey,
+        this.activeKeyStore
       );
       
       if (result.success) {

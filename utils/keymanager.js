@@ -140,9 +140,10 @@ class AsocialKeyManager {
    * @param {string} privateKey - Private key from clipboard
    * @param {string} keyStoreId - KeyStore ID
    * @param {CryptoKey} derivedKey - Derived key for encryption
+   * @param {Object} keyStoreData - Optional already loaded KeyStore data
    * @returns {Promise<Object>} Added reader key
    */
-  async addReaderKeyFromClipboard(name, privateKey, keyStoreId, derivedKey) {
+  async addReaderKeyFromClipboard(name, privateKey, keyStoreId, derivedKey, keyStoreData = null) {
     try {
       console.log('AsocialKeyManager: Adding reader key from clipboard:', name);
       
@@ -201,7 +202,7 @@ class AsocialKeyManager {
       };
 
       // Add to KeyStore
-      const addResult = await this.keyStore.addKeyToKeyStore(keyStoreId, readerKeyData, derivedKey);
+      const addResult = await this.keyStore.addKeyToKeyStore(keyStoreId, readerKeyData, derivedKey, keyStoreData);
       
       if (addResult.success) {
         console.log('AsocialKeyManager: Reader key added from clipboard successfully');

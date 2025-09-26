@@ -26,8 +26,6 @@ class AsocialExtension {
       // Set up event listeners
       this.setupEventListeners();
       
-      // Set up scroll handling
-      this.setupScrollHandling();
       
       // Load initial state
       await this.loadInitialState();
@@ -40,52 +38,6 @@ class AsocialExtension {
     }
   }
 
-  /**
-   * Set up scroll handling for all scrollable areas
-   */
-  setupScrollHandling() {
-    // Ensure all scrollable containers can receive wheel events
-    const scrollableSelectors = [
-      '.content',
-      '.panel',
-      '.modal-content',
-      '.keys-list',
-      '.keystore-items'
-    ];
-    
-    scrollableSelectors.forEach(selector => {
-      const elements = document.querySelectorAll(selector);
-      elements.forEach(element => {
-        // Make sure the element can receive focus for wheel events
-        element.setAttribute('tabindex', '0');
-        
-        // Add wheel event listener to ensure scrolling works
-        element.addEventListener('wheel', (e) => {
-          // Allow default wheel behavior
-          e.stopPropagation();
-        }, { passive: true });
-        
-        // Ensure the element can be focused for wheel events
-        element.addEventListener('click', () => {
-          element.focus();
-        });
-      });
-    });
-    
-    // Also handle wheel events on the document to catch any missed areas
-    document.addEventListener('wheel', (e) => {
-      // Find the closest scrollable parent
-      let target = e.target;
-      while (target && target !== document.body) {
-        const computedStyle = window.getComputedStyle(target);
-        if (computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
-          // Let the scrollable element handle the wheel event
-          return;
-        }
-        target = target.parentElement;
-      }
-    }, { passive: true });
-  }
 
   /**
    * Set up all event listeners
@@ -237,10 +189,6 @@ class AsocialExtension {
       targetPanel.classList.add('active');
       this.currentPanel = panelId;
 
-      // Refresh scroll handling for the new panel
-      setTimeout(() => {
-        this.setupScrollHandling();
-      }, 100);
 
       // Load panel-specific data
       switch (panelId) {
@@ -290,13 +238,6 @@ class AsocialExtension {
     }
   }
 
-  /**
-   * Refresh scroll handling for dynamically loaded content
-   */
-  refreshScrollHandling() {
-    // Re-run scroll handling setup for any new elements
-    this.setupScrollHandling();
-  }
 
   /**
    * Display list of available KeyStores
@@ -370,8 +311,6 @@ class AsocialExtension {
       });
     });
     
-    // Refresh scroll handling for the new content
-    this.refreshScrollHandling();
   }
 
   /**
@@ -752,8 +691,6 @@ class AsocialExtension {
       });
     }
     
-    // Refresh scroll handling for the new content
-    this.refreshScrollHandling();
   }
 
   /**
@@ -783,6 +720,16 @@ class AsocialExtension {
     // Store the key type for form submission
     modal.dataset.keyType = type;
     this.showModal('key-creation-modal');
+    
+    // Simple auto-focus for reader keys
+    if (type === 'reader') {
+      setTimeout(() => {
+        const privateKeyInput = document.getElementById('private-key');
+        if (privateKeyInput) {
+          privateKeyInput.focus();
+        }
+      }, 100);
+    }
   }
 
 

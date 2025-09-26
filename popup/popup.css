@@ -270,7 +270,24 @@ body {
 .form-group textarea:focus {
   outline: none;
   border-color: #00ff00;
-  box-shadow: 0 0 3px #00ff00;
+  box-shadow: 0 0 5px #00ff00;
+  background: #111;
+  color: #00ff00;
+}
+
+/* Ensure focused inputs stay visible and focused */
+.form-group input:focus,
+.form-group textarea:focus {
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* Auto-focus styling for better visibility */
+.form-group input[autofocus],
+.form-group textarea[autofocus] {
+  border-color: #00ff00;
+  box-shadow: 0 0 5px #00ff00;
+  background: #111;
 }
 
 .form-group textarea {
@@ -532,22 +549,6 @@ body {
   background: #00cc00;
 }
 
-/* Ensure all scrollable areas capture wheel events */
-.content,
-.panel,
-.modal-content,
-.keys-list,
-.keystore-items {
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Make sure wheel events work on all scrollable containers */
-.content:focus,
-.panel:focus,
-.modal-content:focus {
-  outline: none;
-}
 
 /* Responsive */
 @media (max-width: 600px) {
