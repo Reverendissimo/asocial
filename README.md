@@ -199,6 +199,9 @@ The extension is ready to use as-is. For distribution:
 - **[ARCHITECTURE.md](ARCHITECTURE.md)**: Detailed technical architecture
 - **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)**: Step-by-step installation guide
 - **[KEY_EXCHANGE_GUIDE.md](KEY_EXCHANGE_GUIDE.md)**: Key exchange and security guide
+- **[INSTALLATION_FOR_FRIENDS.md](INSTALLATION_FOR_FRIENDS.md)**: Simple installation guide for non-technical users
+- **[TERMS_OF_USE.md](TERMS_OF_USE.md)**: Terms of use and important disclaimers
+- **[LICENSE](LICENSE)**: Apache License 2.0
 - **[TODO.md](TODO.md)**: Development task list and progress
 
 ## 🤝 Contributing
@@ -244,9 +247,18 @@ The extension is ready to use as-is. For distribution:
 3. **Documentation**: Check the guides for detailed instructions
 4. **Report Issues**: Create an issue with detailed information
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
+
 ## 📄 License
 
-This project is open source and available under the MIT License.
+This project is open source and available under the Apache License 2.0. See [LICENSE](LICENSE) for details.
 
 ## 🙏 Acknowledgments
 
@@ -275,12 +287,15 @@ This project is open source and available under the MIT License.
 
 ## 🔒 Security Notice
 
-This extension is designed for educational and personal use. While it implements strong cryptographic practices, users should:
+**⚠️ IMPORTANT: This is a Proof of Concept for educational purposes only.**
 
-- **Understand the Risks**: Encryption is only as strong as your key management
-- **Keep Keys Secure**: Protect your private keys and passwords
-- **Regular Backups**: Backup your keys regularly
-- **Stay Updated**: Keep the extension updated for security patches
+This extension is **NOT** intended for production use or protecting sensitive information. While it implements cryptographic practices, users should understand:
+
+- **Experimental Software**: This is not audited or production-ready
+- **Educational Purpose**: Designed for learning about encryption concepts
+- **No Guarantees**: No warranties about security, reliability, or functionality
+- **Use at Your Own Risk**: All use is entirely at your own risk
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
 
 ## 📞 Support
 

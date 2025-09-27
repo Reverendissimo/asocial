@@ -1,5 +1,14 @@
 # Asocial Key Exchange Guide
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
+
 ## 🔑 Understanding Keys
 
 ### Key Types
@@ -134,12 +143,19 @@
 
 ## 🔐 Security Best Practices
 
+**⚠️ IMPORTANT: This is experimental software for educational purposes only.**
+
 ### Key Storage
 
+- **Proof of Concept**: This is not production-ready or audited software
+- **Educational Use**: Designed for learning about encryption concepts
+- **No Guarantees**: No warranties about security, reliability, or functionality
+- **Use at Your Own Risk**: All use is entirely at your own risk
 - **Backup Your Keys**: Export your keys and store them safely
 - **Use Strong Passwords**: Protect your KeyStore with a strong password
 - **Don't Share Private Keys**: Never share your reader keys with anyone
 - **Rotate Keys Regularly**: Create new key pairs periodically
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
 
 ### Key Exchange Security
 

@@ -1,8 +1,18 @@
 # Asocial Chrome Extension - TODO List
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
+
 ## 🎯 Project Status: ✅ FULLY WORKING!
 
 **The Asocial Chrome Extension is now COMPLETE and FULLY FUNCTIONAL!**
+**This is a Proof of Concept for educational purposes only.**
 
 ### ✅ **COMPLETED FEATURES**
 - ✅ **Complete Encryption/Decryption Workflow**: Messages encrypt and decrypt automatically

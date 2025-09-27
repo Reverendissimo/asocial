@@ -1,7 +1,16 @@
 # Asocial Chrome Extension - Architecture
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
+
 ## 🎯 Core Vision
-A Chrome extension that enables encrypted messaging on ANY website using a clean, maintainable architecture with multi-user encrypted storage and universal platform support.
+A Chrome extension that demonstrates encrypted messaging concepts on ANY website using a clean, maintainable architecture with multi-user encrypted storage and universal platform support. **This is for educational purposes only.**
 
 ## 🏗️ Architecture Overview
 
@@ -293,10 +302,13 @@ asocial/
 - **No Breaking**: Doesn't interfere with websites
 
 ### **Security First**
+- **Proof of Concept**: This is experimental software for educational purposes
+- **Not Production Ready**: Not audited or suitable for protecting sensitive information
 - **Client-Side Only**: All encryption happens locally
 - **No Server Dependencies**: No external services required
 - **Secure Storage**: Encrypted local storage
 - **Key Isolation**: Users can't access each other's keys
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
 
 ## 🚀 Success Criteria
 

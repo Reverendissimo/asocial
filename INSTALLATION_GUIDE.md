@@ -1,5 +1,14 @@
 # Asocial Chrome Extension - Installation Guide
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
+
 ## 🚀 Quick Installation
 
 ### Method 1: Load Unpacked Extension (Development)
@@ -189,10 +198,17 @@
 
 ## 🔒 Security Notes
 
+**⚠️ IMPORTANT: This is experimental software for educational purposes only.**
+
+- **Proof of Concept**: This is not production-ready or audited software
+- **Educational Use**: Designed for learning about encryption concepts
+- **No Guarantees**: No warranties about security, reliability, or functionality
+- **Use at Your Own Risk**: All use is entirely at your own risk
 - **Keep Your Passwords Safe**: KeyStore passwords cannot be recovered
 - **Backup Your Keys**: Export your keys and store them safely
 - **Use Strong Passwords**: At least 8 characters with mixed case, numbers, and symbols
 - **Don't Share Private Keys**: Only share writer keys (public keys) with others
+- **See [TERMS_OF_USE.md](TERMS_OF_USE.md)** for complete terms and limitations
 
 ## 📞 Support
 

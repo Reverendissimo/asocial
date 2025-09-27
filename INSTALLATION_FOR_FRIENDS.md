@@ -1,7 +1,15 @@
 # Asocial Extension - Installation Guide
 
+## ⚠️ Important Notice
+
+**This software is a Proof of Concept (PoC) for educational purposes only.**
+
+- **NOT for production use** - This is experimental software
+- **NOT reliable** - Do not use for protecting sensitive information
+- **Use at your own risk** - No warranties or guarantees provided
+
 ## What is Asocial?
-Asocial is a Chrome extension that provides end-to-end encryption for social media posts. You can encrypt your messages so only people with the right keys can read them.
+Asocial is a Chrome extension that demonstrates end-to-end encryption concepts for social media posts. You can encrypt your messages so only people with the right keys can read them. **This is for educational purposes only.**
 
 ## Installation Steps
 
@@ -54,6 +62,13 @@ Asocial is a Chrome extension that provides end-to-end encryption for social med
 4. Only people with your reader key can decrypt it
 
 ## Security Notes
+
+**⚠️ IMPORTANT: This is experimental software for educational purposes only.**
+
+- **Proof of Concept**: This is not production-ready or audited software
+- **Educational Use**: Designed for learning about encryption concepts
+- **No Guarantees**: No warranties about security, reliability, or functionality
+- **Use at Your Own Risk**: All use is entirely at your own risk
 - Keep your KeyStore password safe
 - Only share reader keys with people you trust
 - The extension works on any website with text inputs

@@ -16,6 +16,7 @@ class AsocialBackgroundWorker {
     this.derivedKey = null;
     this.keyManager = null;
     this.keyStore = null;
+    this.keepAliveInterval = null;
     this.initialized = false;
     this.init();
   }
@@ -266,6 +267,9 @@ class AsocialBackgroundWorker {
           asocial_active_keystore: this.activeKeyStore 
         });
         
+        // Start keep-alive mechanism to prevent service worker termination
+        this.startKeepAlive();
+        
         console.log('Asocial Background Worker: KeyStore created and set as active');
         return { success: true, keyStore: this.activeKeyStore };
       } else {
@@ -287,8 +291,9 @@ class AsocialBackgroundWorker {
       const result = await this.keyStore.loadKeyStore(keyStoreId, password);
       
       if (result.success) {
-        // Set as active KeyStore
+        // Set as active KeyStore with correct storage ID
         this.activeKeyStore = result.keyStore;
+        this.activeKeyStore.id = keyStoreId; // Use the storage key ID, not the decrypted data ID
         this.derivedKey = result.derivedKey;
         this.keyStorePasswordHash = await this.crypto.hashData(password);
         
@@ -296,6 +301,9 @@ class AsocialBackgroundWorker {
         await chrome.storage.local.set({ 
           asocial_active_keystore: this.activeKeyStore 
         });
+        
+        // Start keep-alive mechanism to prevent service worker termination
+        this.startKeepAlive();
         
         console.log('Asocial Background Worker: KeyStore opened and set as active');
         
@@ -361,8 +369,41 @@ class AsocialBackgroundWorker {
     this.keyStorePasswordHash = null;
     this.derivedKey = null;
     
+    // Stop keep-alive mechanism
+    this.stopKeepAlive();
+    
     // Remove from storage
     chrome.storage.local.remove(['asocial_active_keystore']);
+  }
+
+  /**
+   * Start keep-alive mechanism to prevent service worker termination
+   */
+  startKeepAlive() {
+    // Clear any existing interval
+    this.stopKeepAlive();
+    
+    // Keep service worker alive by calling a trivial API every 25 seconds
+    this.keepAliveInterval = setInterval(() => {
+      chrome.runtime.getPlatformInfo().then(() => {
+        // Service worker stays alive
+      }).catch(() => {
+        // Ignore errors, just keep the worker alive
+      });
+    }, 25000); // 25 seconds (30 seconds is the timeout)
+    
+    console.log('Asocial Background Worker: Keep-alive started');
+  }
+
+  /**
+   * Stop keep-alive mechanism
+   */
+  stopKeepAlive() {
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+      console.log('Asocial Background Worker: Keep-alive stopped');
+    }
   }
 
   /**
