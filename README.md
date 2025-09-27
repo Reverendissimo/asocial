@@ -5,7 +5,7 @@ A Chrome extension that enables end-to-end encrypted messaging on ANY website us
 ## ✨ Features
 
 - **Universal Compatibility**: Works on any website with text inputs (LinkedIn, Facebook, Twitter, Gmail, Reddit, Discord, Slack, etc.)
-- **End-to-End Encryption**: ECDSA-256 encryption with PBKDF2 key derivation and AES-256-GCM
+- **End-to-End Encryption**: ECIES (ECDH P-256 + AES-256-GCM) with PBKDF2 key derivation
 - **Multi-User Support**: Multiple KeyStores with separate encrypted storage
 - **Automatic Workflow**: Ctrl+Shift+E to encrypt, automatic decryption on page load
 - **Hackish Design**: Black and lime green aesthetic with minimal, functional interface
@@ -81,12 +81,12 @@ A Chrome extension that enables end-to-end encrypted messaging on ANY website us
 - **Background Service Worker**: Key storage, encryption, and message handling
 - **Universal Content Script**: Text detection, encryption/decryption, and DOM manipulation
 - **Popup UI**: Single panel design with dynamic DOM manipulation
-- **Crypto Utilities**: WebCrypto API implementation for ECDSA-256, PBKDF2, AES-256-GCM
+- **Crypto Utilities**: WebCrypto API implementation for ECIES (ECDH P-256 + AES-256-GCM), PBKDF2
 
 ### Key Features
 
 - **KeyStore Management**: Multiple encrypted storage objects with password protection
-- **Key Generation**: ECDSA-256 key pairs with magic code generation
+- **Key Generation**: ECDH P-256 key pairs with magic code generation
 - **Message Encryption**: Writer keys for encrypting messages you send
 - **Message Decryption**: Reader keys for decrypting messages you receive
 - **Automatic Workflow**: Keyboard shortcuts and automatic text selection/pasting
@@ -95,7 +95,7 @@ A Chrome extension that enables end-to-end encrypted messaging on ANY website us
 
 ### Encryption
 
-- **ECDSA-256**: For message encryption/decryption
+- **ECIES**: ECDH P-256 + AES-256-GCM for message encryption/decryption
 - **PBKDF2**: Key derivation from passwords (100k iterations)
 - **AES-256-GCM**: Symmetric encryption for KeyStore and individual keys
 - **Magic Codes**: Base36, 7-character codes for key identification
@@ -264,7 +264,7 @@ This project is open source and available under the Apache License 2.0. See [LIC
 
 - **WebCrypto API**: For modern cryptographic operations
 - **Chrome Extension APIs**: For browser integration
-- **ECDSA-256**: For secure key pair generation
+- **ECDH P-256**: For secure key pair generation
 - **PBKDF2**: For secure key derivation
 - **AES-256-GCM**: For authenticated encryption
 

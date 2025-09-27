@@ -20,7 +20,7 @@
 - ✅ **Magic Code System**: Variable-length Base36 codes for key identification
 - ✅ **Multi-KeyStore Support**: Multiple encrypted storage with password protection
 - ✅ **Universal Compatibility**: Works on any website with text inputs
-- ✅ **Secure Architecture**: ECDSA-256, PBKDF2, AES-256-GCM encryption
+- ✅ **Secure Architecture**: ECIES (ECDH P-256 + AES-256-GCM), PBKDF2 encryption
 - ✅ **User Interface**: Clean popup UI with key management
 - ✅ **Documentation**: Complete guides and architecture documentation
 
@@ -34,7 +34,7 @@
 
 ### **Phase 2: Cryptographic Foundation** ✅ COMPLETED
 - ✅ **2.1** Create crypto utilities (utils/crypto.js) with WebCrypto API
-- ✅ **2.2** Implement ECDSA-256 key pair generation
+- ✅ **2.2** Implement ECDH P-256 key pair generation
 - ✅ **2.3** Implement PBKDF2 key derivation
 - ✅ **2.4** Implement AES-256-GCM encryption/decryption
 - ✅ **2.5** Implement Base64 encoding/decoding utilities
@@ -52,8 +52,8 @@
 - ✅ **3.8** Implement multiple KeyStore support (separate files)
 
 ### **Phase 4: Key Management System** ✅ COMPLETED
-- ✅ **4.1** Implement writer key generation (ECDSA-256)
-- ✅ **4.2** Implement reader key generation (ECDSA-256)
+- ✅ **4.1** Implement writer key generation (ECDH P-256)
+- ✅ **4.2** Implement reader key generation (ECDH P-256)
 - ✅ **4.3** Implement key storage in encrypted KeyStore
 - ✅ **4.4** Implement key retrieval and decryption
 - ✅ **4.5** Implement key deletion from KeyStore
@@ -160,7 +160,7 @@
 
 **Key Features Implemented:**
 - ✅ Universal Chrome extension with Manifest V3
-- ✅ ECDSA-256 encryption with PBKDF2 key derivation
+- ✅ ECIES (ECDH P-256 + AES-256-GCM) encryption with PBKDF2 key derivation
 - ✅ AES-256-GCM for KeyStore and key encryption
 - ✅ Multi-KeyStore support with password protection
 - ✅ Writer/Reader key management system

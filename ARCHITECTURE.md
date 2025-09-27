@@ -91,8 +91,8 @@ The central component that manages all core functionality:
 - **Worker-Only Access**: Only worker can access decrypted keys for encryption/decryption
 
 #### **Worker Encryption Interface**
-- **Encrypt Message**: UI sends message + writer key ID → Worker encrypts with ECDSA public key
-- **Decrypt Message**: Worker decrypts with ECDSA private key (reader key)
+- **Encrypt Message**: UI sends message + writer key ID → Worker encrypts with ECIES (ECDH + AES-GCM)
+- **Decrypt Message**: Worker decrypts with ECIES using reader key (ECDH + AES-GCM)
 - **Magic Code Generation**: Worker generates 7-character Base36 magic code from reader key
 - **Magic Code Lookup**: Worker finds reader key by magic code for decryption
 - **Key Listing**: Worker provides list of available writer and reader keys (metadata only)
@@ -225,10 +225,10 @@ Authentication system for KeyStore access (integrated into single panel):
 ## 🔐 Security Architecture
 
 ### **Encryption System**
-- **ECDSA-256**: Modern elliptic curve encryption for message encryption/decryption
+- **ECIES**: ECDH P-256 + AES-256-GCM for message encryption/decryption
 - **PBKDF2 + AES-256-GCM**: KeyStore file encryption and individual key encryption
 - **WebCrypto API**: Browser-native cryptographic functions
-- **Dual Algorithm**: ECDSA for messages, AES for storage
+- **Dual Algorithm**: ECIES (ECDH + AES) for messages, AES for storage
 - **Modern Standard**: Industry standard for new applications
 
 ### **Key Management**
