@@ -15,6 +15,10 @@ This Chrome extension is a **Proof of Concept (PoC)** designed to demonstrate en
 - **USE AT YOUR OWN RISK**: Any use of this software is entirely at your own risk
 - **NO GUARANTEES**: There are no guarantees about the security, functionality, or reliability of this software
 
+## 2.1. AS IS CLAUSE
+
+The code is provided on an "as is" and "as available" basis, without warranties, express or implied, regarding any function. The code is in an experimental phase, and its performance may be unpredictable or inconsistent.
+
 ## 3. Security Limitations
 
 - **EXPERIMENTAL CRYPTOGRAPHY**: The cryptographic implementation is for educational purposes only
